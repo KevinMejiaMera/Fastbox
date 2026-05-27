@@ -36,18 +36,19 @@ const BarraLateral = () => {
             left: 0,
             height: '100vh',
             width: isCollapsed ? '70px' : '250px',
-            background: '#1A1C20', /* Neutro corporativo (gris muy oscuro) */
-            color: '#fff',
+            background: '#f1f5f9', /* Un gris claro azulado para distinguirlo del fondo blanco */
+            color: '#475569',
             transition: 'width 0.3s ease',
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '2px 0 10px rgba(0, 0, 0, 0.1)',
-            overflowX: 'hidden'
+            boxShadow: '4px 0 24px rgba(0, 0, 0, 0.05)',
+            overflowX: 'hidden',
+            borderRight: '1px solid #e2e8f0'
         },
         sidebarHeader: {
             padding: '1.5rem 1rem',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: '1px solid #e2e8f0',
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem'
@@ -67,7 +68,7 @@ const BarraLateral = () => {
         },
         brandIcon: {
             fontSize: '1.75rem',
-            color: '#3b82f6',
+            color: '#60a5fa',
             flexShrink: 0
         },
         brandText: {
@@ -78,12 +79,12 @@ const BarraLateral = () => {
             textOverflow: 'ellipsis',
             opacity: isCollapsed ? 0 : 1,
             transition: 'opacity 0.2s',
-            color: '#ffffff' /* Blanco sólido en lugar de gradiente */
+            color: '#334155'
         },
         btnToggle: {
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: 'none',
-            color: '#fff',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            color: '#64748b',
             width: '36px',
             height: '36px',
             borderRadius: '8px',
@@ -91,27 +92,31 @@ const BarraLateral = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'all 0.2s',
+            transition: 'all 0.3s ease',
             fontSize: '1.1rem',
-            flexShrink: 0
+            flexShrink: 0,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         },
         userInfo: {
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.75rem',
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '8px',
+            background: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
             opacity: isCollapsed ? 0 : 1,
             height: isCollapsed ? 0 : 'auto',
             overflow: 'hidden',
-            transition: 'all 0.3s'
+            transition: 'all 0.3s ease'
         },
         userAvatar: {
             width: '40px',
             height: '40px',
             borderRadius: '50%',
-            background: '#2C3036', /* Gris corporativo */
+            background: '#e0f2fe',
+            color: '#0284c7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -126,14 +131,14 @@ const BarraLateral = () => {
         userName: {
             fontSize: '0.875rem',
             fontWeight: '600',
-            color: '#fff',
+            color: '#334155',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
         },
         userRole: {
             fontSize: '0.75rem',
-            color: '#94a3b8',
+            color: '#64748b',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
@@ -152,17 +157,18 @@ const BarraLateral = () => {
             display: 'flex',
             alignItems: 'center',
             padding: '0.875rem 1.25rem',
-            color: '#cbd5e1',
+            color: '#64748b',
             textDecoration: 'none',
-            transition: 'all 0.2s',
+            transition: 'all 0.3s ease',
             gap: '1rem',
-            position: 'relative'
+            position: 'relative',
+            borderRadius: '8px',
+            margin: '0 0.5rem'
         },
         navLinkActive: {
-            background: 'rgba(255, 255, 255, 0.1)', /* Gris muy sutil */
-            color: '#ffffff',
-            borderLeft: '4px solid #ffffff',
-            paddingLeft: 'calc(1.25rem - 4px)'
+            background: '#eff6ff',
+            color: '#2563eb',
+            fontWeight: '500'
         },
         navIcon: {
             fontSize: '1.25rem',
@@ -178,13 +184,13 @@ const BarraLateral = () => {
         },
         sidebarFooter: {
             padding: '1rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            borderTop: '1px solid #f1f5f9'
         },
         logoutButton: {
             width: '100%',
             padding: '0.75rem 1rem',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            background: '#fef2f2',
+            border: '1px solid #fee2e2',
             borderRadius: '8px',
             color: '#ef4444',
             cursor: 'pointer',
@@ -194,7 +200,7 @@ const BarraLateral = () => {
             gap: '0.75rem',
             fontSize: '0.875rem',
             fontWeight: '600',
-            transition: 'all 0.2s'
+            transition: 'all 0.3s ease'
         },
         versionText: {
             textAlign: 'center',
@@ -229,11 +235,11 @@ const BarraLateral = () => {
                             onClick={toggleSidebar}
                             title={isCollapsed ? 'Expandir' : 'Contraer'}
                             onMouseEnter={(e) => {
-                                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                                e.target.style.background = '#f1f5f9';
                                 e.target.style.transform = 'scale(1.05)';
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                                e.target.style.background = '#f8fafc';
                                 e.target.style.transform = 'scale(1)';
                             }}
                         >
@@ -272,16 +278,16 @@ const BarraLateral = () => {
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!active) {
-                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                                            e.currentTarget.style.color = '#ffffff';
-                                            e.currentTarget.style.paddingLeft = '1.5rem';
+                                            e.currentTarget.style.background = '#ffffff';
+                                            e.currentTarget.style.color = '#334155';
+                                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)';
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!active) {
                                             e.currentTarget.style.background = 'transparent';
-                                            e.currentTarget.style.color = '#cbd5e1';
-                                            e.currentTarget.style.paddingLeft = '1.25rem';
+                                            e.currentTarget.style.color = '#64748b';
+                                            e.currentTarget.style.boxShadow = 'none';
                                         }
                                     }}
                                 >
@@ -289,7 +295,7 @@ const BarraLateral = () => {
                                         className={`bi ${item.icon}`}
                                         style={{
                                             ...styles.navIcon,
-                                            color: active ? '#ffffff' : 'inherit'
+                                            color: active ? '#2563eb' : 'inherit'
                                         }}
                                     ></i>
                                     <span style={styles.navText}>{item.label}</span>
@@ -311,12 +317,12 @@ const BarraLateral = () => {
                         onClick={logout}
                         title="Cerrar Sesión"
                         onMouseEnter={(e) => {
-                            e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                            e.target.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                            e.target.style.background = '#fecaca';
+                            e.target.style.borderColor = '#fca5a5';
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.background = 'rgba(239, 68, 68, 0.1)';
-                            e.target.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                            e.target.style.background = '#fef2f2';
+                            e.target.style.borderColor = '#fee2e2';
                         }}
                     >
                         <i className="bi bi-box-arrow-right" style={{ fontSize: '1.1rem' }}></i>
@@ -333,17 +339,17 @@ const BarraLateral = () => {
             <style>{`
                 /* Scrollbar personalizado */
                 .sidebar-nav::-webkit-scrollbar {
-                    width: 6px;
+                    width: 4px;
                 }
                 .sidebar-nav::-webkit-scrollbar-track {
-                    background: rgba(255, 255, 255, 0.05);
+                    background: transparent;
                 }
                 .sidebar-nav::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 3px;
+                    background: #e2e8f0;
+                    border-radius: 4px;
                 }
                 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.3);
+                    background: #cbd5e1;
                 }
 
                 /* Ajuste para el contenido principal */
