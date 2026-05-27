@@ -1,0 +1,45 @@
+{
+  "name": "fastbox-system-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.6.2",
+    "jspdf": "^3.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.0",
+    "react-scripts": "5.0.1",
+    "react-datepicker": "^4.21.0",
+    "jspdf-autotable": "^4.0.0-alpha.5",
+    "recharts": "^2.10.0",
+    "date-fns": "^2.30.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "overrides": {
+    "jspdf-autotable": {
+      "jspdf": "$jspdf"
+    }
+  }
+}

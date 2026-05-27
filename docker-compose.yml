@@ -1,0 +1,136 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: fastbox_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fastbox_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - fastbox-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    cpus: 1.0
+    mem_limit: 2G
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastbox_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - fastbox-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 128M
+
+  backend:
+    build: ./backend
+    container_name: fastbox_backend
+    ports:
+      - "8000:8000"
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "🔄 Waiting for PostgreSQL..."
+        until python -c 'import socket; socket.create_connection(("postgres", 5432), timeout=1)' 2>/dev/null; do
+          sleep 1
+        done
+        echo "✅ PostgreSQL is ready!"
+        echo "🔄 Running migrations..."
+        python manage.py makemigrations
+        python manage.py migrate --noinput
+        echo "🔄 Collecting static files..."
+        python manage.py collectstatic --noinput
+        echo "🚀 Starting Django Server..."
+        python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+      - backend-static:/app/staticfiles
+      - backend-media:/app/media
+    environment:
+      - SECRET_KEY=fastbox-dev-secret-key
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/fastbox_db
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,0.0.0.0
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost,http://127.0.0.1:3000
+      - DEBUG=True
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fastbox-network
+    restart: unless-stopped
+
+  frontend:
+    build: 
+      context: ./frontend
+    container_name: fastbox_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_BASE_URL=http://localhost:8000
+      - REACT_APP_AUTH_SERVICE=http://localhost:8000
+      - REACT_APP_FAST_FOOD_SERVICE=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    stdin_open: true
+    tty: true
+    networks:
+      - fastbox-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: fastbox_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
+      - backend-static:/usr/share/nginx/html/static/backend:ro
+      - backend-media:/usr/share/nginx/html/media:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - fastbox-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  fastbox-network:
+    driver: bridge
+    name: fastbox_network
+
+volumes:
+  postgres-data:
+    name: fastbox_postgres_data
+  backend-static:
+    name: fastbox_backend_static
+  backend-media:
+    name: fastbox_backend_media
