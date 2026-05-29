@@ -14,6 +14,7 @@ import PuntosVenta from './modulos/fast-food/PuntosVenta';
 import ShiftManager from './modulos/fast-food/ShiftManager';
 import Impresoras from './modulos/fast-food/Impresoras';
 import DisenoFastFood from './modulos/fast-food/DisenoFastFood';
+import logo from './assets/logo.png';
 import './App.css';
 
 // Componente para proteger rutas
@@ -49,9 +50,23 @@ const FastFoodRoute = ({ children }) => {
 
 // Dashboard simple
 const Dashboard = () => (
-  <div className="page-container">
-    <h2>Bienvenido al Panel de Control</h2>
-    <p>Seleccione una opción del menú lateral para comenzar.</p>
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '80vh',
+    backgroundColor: 'var(--secondary-color)',
+    color: 'var(--primary-color)',
+    textAlign: 'center',
+    borderRadius: '16px',
+    padding: '3rem',
+    margin: '1rem',
+    boxShadow: '0 4px 20px rgba(100, 16, 14, 0.1)'
+  }}>
+    <img src={logo} alt="Choco Lab" style={{ height: '180px', marginBottom: '2rem', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
+    <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bienvenido a Choco Lab</h2>
+    <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>Seleccione una opción del menú lateral para comenzar a administrar su negocio.</p>
   </div>
 );
 

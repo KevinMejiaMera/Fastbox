@@ -222,7 +222,7 @@ const BarraLateral = () => {
                 <div style={styles.sidebarHeader}>
                     <div style={styles.brandContainer}>
                         <div style={styles.brandLogo}>
-                            <img src={logo} alt="Choco Lab" style={{ height: isCollapsed ? '30px' : '60px', transition: 'all 0.3s', objectFit: 'contain' }} />
+                            <img src={logo} alt="Choco Lab" style={{ height: isCollapsed ? '40px' : '120px', transition: 'all 0.3s', objectFit: 'contain', maxWidth: '100%' }} />
                         </div>
                         <button
                             style={styles.btnToggle}
