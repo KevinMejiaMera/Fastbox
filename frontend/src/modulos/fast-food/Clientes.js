@@ -135,7 +135,7 @@ const Clientes = () => {
 
     if (loading && customers.length === 0) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--sidebar-bg)' }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         display: 'inline-block',
@@ -153,7 +153,7 @@ const Clientes = () => {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f9fafb, #f3f4f6)', padding: '24px' }}>
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, var(--sidebar-bg), var(--sidebar-bg))', padding: '24px' }}>
             <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
                 {/* Header */}
                 <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
@@ -231,8 +231,8 @@ const Clientes = () => {
                                     transition: 'all 0.2s'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.style.borderColor = '#3b82f6';
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                                    e.target.style.borderColor = 'var(--primary-color)';
+                                    e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                                 }}
                                 onBlur={(e) => {
                                     e.target.style.borderColor = '#d1d5db';
@@ -284,7 +284,7 @@ const Clientes = () => {
                 <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: 'linear-gradient(to right, #f9fafb, #f3f4f6)', borderBottom: '1px solid #e5e7eb' }}>
+                            <thead style={{ background: 'linear-gradient(to right, var(--sidebar-bg), var(--sidebar-bg))', borderBottom: '1px solid #e5e7eb' }}>
                                 <tr>
                                     <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                         Cliente
@@ -333,7 +333,7 @@ const Clientes = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                                 transition: 'background-color 0.2s'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--sidebar-bg)'}
                                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                         >
                                             <td style={{ padding: '16px 24px' }}>
@@ -500,8 +500,8 @@ const Clientes = () => {
                                             transition: 'all 0.2s'
                                         }}
                                         onFocus={(e) => {
-                                            e.target.style.borderColor = '#3b82f6';
-                                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                                            e.target.style.borderColor = 'var(--primary-color)';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                                         }}
                                         onBlur={(e) => {
                                             e.target.style.borderColor = '#d1d5db';
@@ -532,8 +532,8 @@ const Clientes = () => {
                                                 transition: 'all 0.2s'
                                             }}
                                             onFocus={(e) => {
-                                                e.target.style.borderColor = '#3b82f6';
-                                                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                                                e.target.style.borderColor = 'var(--primary-color)';
+                                                e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                                             }}
                                             onBlur={(e) => {
                                                 e.target.style.borderColor = '#d1d5db';
@@ -561,8 +561,8 @@ const Clientes = () => {
                                                 transition: 'all 0.2s'
                                             }}
                                             onFocus={(e) => {
-                                                e.target.style.borderColor = '#3b82f6';
-                                                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                                                e.target.style.borderColor = 'var(--primary-color)';
+                                                e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                                             }}
                                             onBlur={(e) => {
                                                 e.target.style.borderColor = '#d1d5db';
@@ -592,8 +592,8 @@ const Clientes = () => {
                                             transition: 'all 0.2s'
                                         }}
                                         onFocus={(e) => {
-                                            e.target.style.borderColor = '#3b82f6';
-                                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                                            e.target.style.borderColor = 'var(--primary-color)';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                                         }}
                                         onBlur={(e) => {
                                             e.target.style.borderColor = '#d1d5db';
@@ -622,8 +622,8 @@ const Clientes = () => {
                                             transition: 'all 0.2s'
                                         }}
                                         onFocus={(e) => {
-                                            e.target.style.borderColor = '#3b82f6';
-                                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                                            e.target.style.borderColor = 'var(--primary-color)';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                                         }}
                                         onBlur={(e) => {
                                             e.target.style.borderColor = '#d1d5db';
@@ -658,7 +658,7 @@ const Clientes = () => {
                                 display: 'flex',
                                 justifyContent: 'flex-end',
                                 gap: '12px',
-                                backgroundColor: '#f9fafb'
+                                backgroundColor: 'var(--sidebar-bg)'
                             }}>
                                 <button
                                     type="button"
@@ -678,7 +678,7 @@ const Clientes = () => {
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!submitting) {
-                                            e.currentTarget.style.backgroundColor = '#f9fafb';
+                                            e.currentTarget.style.backgroundColor = 'var(--sidebar-bg)';
                                             e.currentTarget.style.borderColor = '#9ca3af';
                                         }
                                     }}

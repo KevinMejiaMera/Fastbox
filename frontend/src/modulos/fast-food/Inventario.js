@@ -413,15 +413,15 @@ const styles = `
         border: 1px solid transparent;
     }
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-color);
         color: white;
-        border-color: #3b82f6;
+        border-color: var(--primary-color);
     }
     .btn-primary:hover {
         background-color: #2563eb;
     }
     .btn-secondary {
-        background-color: #f3f4f6;
+        background-color: var(--sidebar-bg);
         color: #374151;
         border-color: #d1d5db;
     }
@@ -461,7 +461,7 @@ const styles = `
         border-bottom: 1px solid #e5e7eb;
     }
     .table th {
-        background-color: #f9fafb;
+        background-color: var(--sidebar-bg);
         font-weight: 600;
         color: #374151;
         font-size: 0.875rem;

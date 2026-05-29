@@ -1118,8 +1118,8 @@ const Reportes = () => {
                     const timeFormatted = validOrderDate ? format(validOrderDate, 'HH:mm:ss') : 'N/A';
 
                     return (
-                        <div key={order.order_id || index} style={{ marginBottom: 20, padding: 15, border: '1px solid #f3f4f6', borderRadius: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb', padding: '10px 15px', borderRadius: 6 }}>
+                        <div key={order.order_id || index} style={{ marginBottom: 20, padding: 15, border: '1px solid var(--sidebar-bg)', borderRadius: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--sidebar-bg)', padding: '10px 15px', borderRadius: 6 }}>
                                 <h5 style={{ margin: 0, color: '#1f77b4', fontSize: '1rem' }}>
                                     ORDEN #{order.order_number || order.order_id || index + 1} ({order.customer_name || 'Anónimo'})
                                 </h5>
@@ -1213,7 +1213,7 @@ const Reportes = () => {
                         </h3>
                         <p style={{ margin: 0, fontSize: '0.95rem', color: '#0c4a6e' }}>
                             {currentShift
-                                ? <span>Turno: <strong>#{currentShift.shift_number}</strong> | Usuario: {currentShift.user_name || 'Usuario'} | Inicio: {new Date(currentShift.opened_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | <strong style={{ color: '#059669' }}>Ventas: {formatCurrency(currentShift.total_sales || 0)}</strong></span>
+                                ? <span>Turno: <strong>#{currentShift.shift_number}</strong> | Usuario: {currentShift.user_name || 'Usuario'} | Inicio: {new Date(currentShift.opened_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | <strong style={{ color: 'var(--primary-color)' }}>Ventas: {formatCurrency(currentShift.total_sales || 0)}</strong></span>
                                 : <span style={{ color: '#dc2626', fontWeight: 'bold' }}>⚠️ No hay turno abierto. Las ventas no se registrarán correctamente.</span>}
                         </p>
                     </div>
@@ -1235,7 +1235,7 @@ const Reportes = () => {
                                 onClick={() => setShowShiftModal(true)}
                                 disabled={processingShift}
                                 style={{
-                                    backgroundColor: '#059669', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer',
+                                    backgroundColor: 'var(--primary-color)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer',
                                     display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                                 }}
                             >
@@ -1478,7 +1478,7 @@ const Reportes = () => {
                                                     <div style={{ fontWeight: 'bold' }}>Turno #{shift.shift_number} - {shift.user_name}</div>
                                                     <div style={{ fontSize: '0.85rem', color: '#666' }}>
                                                         {format(new Date(shift.opened_at), 'HH:mm')} - {shift.closed_at ? format(new Date(shift.closed_at), 'HH:mm') : 'En curso'}
-                                                        <span style={{ marginLeft: '10px', fontWeight: 'bold', color: '#059669' }}>
+                                                        <span style={{ marginLeft: '10px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
                                                             Ventas: {formatCurrency(shift.total_sales || 0)}
                                                         </span>
                                                     </div>
@@ -1588,7 +1588,7 @@ const Reportes = () => {
                                                             <div style={{ fontWeight: 'bold' }}>Turno #{shift.shift_number} - {shift.user_name}</div>
                                                             <div style={{ fontSize: '0.85rem', color: '#666' }}>
                                                                 {format(new Date(shift.opened_at), 'HH:mm')} - {shift.closed_at ? format(new Date(shift.closed_at), 'HH:mm') : 'En curso'}
-                                                                <span style={{ marginLeft: '10px', fontWeight: 'bold', color: '#059669' }}>
+                                                                <span style={{ marginLeft: '10px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
                                                                     Ventas: {formatCurrency(shift.total_sales || 0)}
                                                                 </span>
                                                             </div>
@@ -1676,7 +1676,7 @@ const Reportes = () => {
                                     <button
                                         type="submit"
                                         disabled={processingShift}
-                                        style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#059669', color: 'white', fontWeight: 'bold' }}
+                                        style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--primary-color)', color: 'white', fontWeight: 'bold' }}
                                     >
                                         {processingShift ? 'Abriendo...' : 'Abrir Turno'}
                                     </button>
@@ -1763,7 +1763,7 @@ const Reportes = () => {
                 }
                 .modal-header {
                     padding: 20px 30px;
-                    background: #f8fafc;
+                    background: var(--sidebar-bg);
                     border-bottom: 1px solid #e2e8f0;
                     display: flex;
                     justify-content: space-between;
@@ -1778,7 +1778,7 @@ const Reportes = () => {
                     padding: 30px;
                     overflow-y: auto;
                     flex: 1;
-                    background: #f9fafb;
+                    background: var(--sidebar-bg);
                 }
                 .modal-footer {
                     padding: 20px 30px;
@@ -1822,9 +1822,9 @@ const Reportes = () => {
                     display: flex;
                     flex-direction: column;
                     padding: 10px;
-                    background: #f8fafc;
+                    background: var(--sidebar-bg);
                     border-radius: 8px;
-                    border-left: 4px solid #3b82f6;
+                    border-left: 4px solid var(--primary-color);
                 }
                 .modal-stat span {
                     font-size: 0.85rem;
@@ -1859,7 +1859,7 @@ const Reportes = () => {
                     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
                 }
                 .modal-body th {
-                    background-color: #f3f4f6;
+                    background-color: var(--sidebar-bg);
                     padding: 12px 15px;
                     text-align: left;
                     font-weight: 600;
@@ -1872,7 +1872,7 @@ const Reportes = () => {
                     color: #4b5563;
                 }
                 .modal-body tr:hover {
-                    background-color: #f9fafb;
+                    background-color: var(--sidebar-bg);
                 }
                 /* Mejorar los gráficos dentro del modal */
                 .modal-body .chart-container {
@@ -1903,7 +1903,7 @@ const Reportes = () => {
                 .item-metrics {
                     margin-top: 10px;
                     padding: 10px;
-                    background: #f8fafc;
+                    background: var(--sidebar-bg);
                     border-radius: 6px;
                     border: 1px solid #e5e7eb;
                 }
@@ -1930,10 +1930,10 @@ const Reportes = () => {
                     font-weight: 600;
                 }
                 .sales-color {
-                    color: #059669;
+                    color: var(--primary-color);
                 }
                 .customer-count {
-                    color: #3b82f6;
+                    color: var(--primary-color);
                     font-weight: 700;
                 }
                 .item-date {
@@ -1952,7 +1952,7 @@ const Reportes = () => {
                     gap: 4px;
                 }
                 .closed-badge {
-                    background-color: #10b981;
+                    background-color: var(--primary-color);
                     color: white;
                 }
                 .item-source {
@@ -2046,7 +2046,7 @@ const Reportes = () => {
                 }
                 .generate-button {
                     padding: 10px 25px;
-                    background-color: #3b82f6;
+                    background-color: var(--primary-color);
                     color: white;
                     border: none;
                     border-radius: 8px;
@@ -2108,17 +2108,17 @@ const Reportes = () => {
                     font-size: 1.5rem;
                     font-weight: 700;
                 }
-                .sales-color { color: #059669; }
-                .order-color { color: #3b82f6; }
+                .sales-color { color: var(--primary-color); }
+                .order-color { color: var(--primary-color); }
                 .shift-color { color: #8b5cf6; }
                 .closed-color { color: #dc2626; }
-                .open-color { color: #059669; }
+                .open-color { color: var(--primary-color); }
 
                 .stat-trend {
                     margin: 4px 0 0 0;
                     font-size: 0.875rem;
                 }
-                .stat-trend.up { color: #059669; }
+                .stat-trend.up { color: var(--primary-color); }
                 .stat-trend.down { color: #dc2626; }
 
                 .weekly-trend {
@@ -2142,7 +2142,7 @@ const Reportes = () => {
                     text-align: center;
                 }
                 .bar-item {
-                    background-color: #3b82f6;
+                    background-color: var(--primary-color);
                     border-radius: 4px 4px 0 0;
                     margin-bottom: 5px;
                 }
@@ -2178,7 +2178,7 @@ const Reportes = () => {
                 }
                 .refresh-button {
                     padding: 6px 12px;
-                    background-color: #f3f4f6;
+                    background-color: var(--sidebar-bg);
                     color: #374151;
                     border: none;
                     border-radius: 6px;
@@ -2330,7 +2330,7 @@ const Reportes = () => {
                 }
 
                 .chart-container {
-                    background-color: #f9fafb;
+                    background-color: var(--sidebar-bg);
                     padding: 20px;
                     border-radius: 8px;
                     border-left: 4px solid var(--primary);

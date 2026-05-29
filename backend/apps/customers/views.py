@@ -36,18 +36,24 @@ def register_customer(request):
     if serializer.is_valid():
         customer = serializer.save()
         
-        # Generar token JWT
-        refresh = RefreshToken.for_user(customer)
-        
+        # Generar token JWT si es posible
+        tokens = None
+        try:
+            refresh = RefreshToken.for_user(customer)
+            tokens = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        except ValueError:
+            # SimpleJWT fails if customer is not AUTH_USER_MODEL and blacklist is enabled
+            pass
+            
         return Response({
             'status': 'success',
             'message': 'Cliente registrado exitosamente',
             'data': {
                 'customer': CustomerSerializer(customer).data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
+                'tokens': tokens
             }
         }, status=status.HTTP_201_CREATED)
     
@@ -79,18 +85,23 @@ def login_customer(request):
         customer.last_login_ip = ip
         customer.save(update_fields=['last_login_ip'])
         
-        # Generar token JWT
-        refresh = RefreshToken.for_user(customer)
-        
+        # Generar token JWT si es posible
+        tokens = None
+        try:
+            refresh = RefreshToken.for_user(customer)
+            tokens = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        except ValueError:
+            pass
+            
         return Response({
             'status': 'success',
             'message': 'Login exitoso',
             'data': {
                 'customer': CustomerSerializer(customer).data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
+                'tokens': tokens
             }
         })
     

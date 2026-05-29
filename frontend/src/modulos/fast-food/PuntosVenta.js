@@ -98,11 +98,11 @@ const PuntosVenta = () => {
                 background: #f1f1f1; 
             }
             ::-webkit-scrollbar-thumb {
-                background: #c7d2fe; 
+                background: var(--border-color); 
                 border-radius: 4px;
             }
             ::-webkit-scrollbar-thumb:hover {
-                background: #a5b4fc; 
+                background: var(--border-color); 
             }
         `;
         document.head.appendChild(style);
@@ -530,7 +530,7 @@ const PuntosVenta = () => {
         <div style={{ padding: screenWidth <= 1366 ? '0.5rem' : '0 1rem' }}>
             {/* Sección de configuración de orden */}
             <div style={{
-                backgroundColor: '#f3f4f6',
+                backgroundColor: 'var(--sidebar-bg)',
                 borderRadius: '8px',
                 padding: screenWidth <= 1366 ? '0.75rem' : '1rem',
                 marginBottom: '1rem'
@@ -582,7 +582,7 @@ const PuntosVenta = () => {
                                             style={{
                                                 padding: '0.75rem',
                                                 cursor: 'pointer',
-                                                borderBottom: '1px solid #f3f4f6',
+                                                borderBottom: '1px solid var(--sidebar-bg)',
                                                 transition: 'background-color 0.15s',
                                                 minHeight: TOUCH_MIN_SIZE,
                                                 display: 'flex',
@@ -593,13 +593,13 @@ const PuntosVenta = () => {
                                                 setCustomerSearch(`${c.first_name} ${c.last_name}`);
                                                 setCustomers([]);
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--sidebar-bg)'}
                                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                                         >
                                             <div>
                                                 <p style={{
                                                     fontWeight: '600',
-                                                    color: '#1f2937',
+                                                    color: 'var(--primary-color)',
                                                     marginBottom: '0.25rem',
                                                     fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9375rem'
                                                 }}>
@@ -622,7 +622,7 @@ const PuntosVenta = () => {
                             style={{
                                 width: TOUCH_MIN_SIZE,
                                 height: TOUCH_MIN_SIZE,
-                                backgroundColor: '#8b5cf6',
+                                backgroundColor: 'var(--primary-color)',
                                 color: '#ffffff',
                                 border: 'none',
                                 borderRadius: '8px',
@@ -661,7 +661,7 @@ const PuntosVenta = () => {
                             border: '2px solid #d1d5db',
                             borderRadius: '8px',
                             fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9375rem',
-                            color: '#1f2937',
+                            color: 'var(--primary-color)',
                             backgroundColor: '#ffffff',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
@@ -750,7 +750,7 @@ const PuntosVenta = () => {
 
             {/* Resumen de productos */}
             <div style={{ marginBottom: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '10px' }}>
-                <p style={{ fontSize: screenWidth <= 1366 ? '0.875rem' : '1rem', fontWeight: 'bold', color: '#1f2937' }}>
+                <p style={{ fontSize: screenWidth <= 1366 ? '0.875rem' : '1rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>
                     Cliente: {selectedCustomer ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}` : 'CONSUMIDOR FINAL'}
                 </p>
                 <p style={{ fontSize: screenWidth <= 1366 ? '0.75rem' : '0.9rem', color: '#4b5563' }}>
@@ -765,7 +765,7 @@ const PuntosVenta = () => {
                 fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9rem'
             }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead style={{ backgroundColor: '#f3f4f6' }}>
+                    <thead style={{ backgroundColor: 'var(--sidebar-bg)' }}>
                         <tr>
                             <th style={{
                                 textAlign: 'left',
@@ -833,13 +833,13 @@ const PuntosVenta = () => {
             <div style={{
                 marginTop: '1rem',
                 padding: '1rem',
-                backgroundColor: '#eef2ff',
+                backgroundColor: 'var(--sidebar-bg)',
                 borderRadius: '8px',
-                border: '1px solid #c7d2fe'
+                border: '1px solid var(--border-color)'
             }}>
                 <h4 style={{
                     margin: '0 0 0.5rem 0',
-                    color: '#3730a3',
+                    color: 'var(--primary-color)',
                     fontSize: screenWidth <= 1366 ? '0.9rem' : '1rem'
                 }}>
                     🧮 Calculadora de Vuelto
@@ -899,8 +899,8 @@ const PuntosVenta = () => {
                             style={{
                                 padding: '0.5rem',
                                 backgroundColor: '#ffffff',
-                                color: '#3730a3',
-                                border: '1px solid #c7d2fe',
+                                color: 'var(--primary-color)',
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '6px',
                                 fontWeight: 'bold',
                                 cursor: 'pointer',
@@ -918,7 +918,7 @@ const PuntosVenta = () => {
                         padding: '0.75rem',
                         backgroundColor: '#ffffff',
                         borderRadius: '6px',
-                        border: '1px solid #e0e7ff',
+                        border: '1px solid var(--sidebar-bg)',
                         textAlign: 'center'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
@@ -927,19 +927,19 @@ const PuntosVenta = () => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                             <span style={{ color: '#6b7280' }}>Efectivo Recibido:</span>
-                            <span style={{ fontWeight: 'bold', color: '#4f46e5' }}>{formatCurrency(cashGiven)}</span>
+                            <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{formatCurrency(cashGiven)}</span>
                         </div>
                         <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
                             marginTop: '0.5rem',
                             paddingTop: '0.5rem',
-                            borderTop: '1px dashed #c7d2fe',
+                            borderTop: '1px dashed var(--border-color)',
                             fontSize: '1.2rem',
                             fontWeight: '800'
                         }}>
-                            <span style={{ color: '#3730a3' }}>VUELTO:</span>
-                            <span style={{ color: (cashGiven - calculateTotal) < 0 ? '#ef4444' : '#059669' }}>
+                            <span style={{ color: 'var(--primary-color)' }}>VUELTO:</span>
+                            <span style={{ color: (cashGiven - calculateTotal) < 0 ? '#ef4444' : 'var(--primary-color)' }}>
                                 {formatCurrency(cashGiven - calculateTotal)}
                             </span>
                         </div>
@@ -986,7 +986,7 @@ const PuntosVenta = () => {
                     paddingTop: '0.75rem'
                 }}>
                     <span>Total Final</span>
-                    <span style={{ color: '#059669' }}>{formatCurrency(calculateTotal)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>{formatCurrency(calculateTotal)}</span>
                 </div>
             </div>
         </div>
@@ -1083,7 +1083,7 @@ const PuntosVenta = () => {
                     <button
                         style={{
                             padding: screenWidth <= 1366 ? '0.5rem 1rem' : '0.75rem 1.5rem',
-                            backgroundColor: '#3b82f6',
+                            backgroundColor: 'var(--primary-color)',
                             border: 'none',
                             borderRadius: '8px',
                             color: '#ffffff',
@@ -1109,7 +1109,7 @@ const PuntosVenta = () => {
             maxHeight: '-webkit-fill-available', // Fallback iOS
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#f9fafb',
+            backgroundColor: 'var(--sidebar-bg)',
             overflow: 'hidden',
             position: 'fixed', // Fijar viewport
             top: 0,
@@ -1151,7 +1151,7 @@ const PuntosVenta = () => {
                     <div style={{
                         padding: '0.75rem',
                         borderBottom: '1px solid #e5e7eb',
-                        backgroundColor: '#fafafa',
+                        backgroundColor: 'var(--sidebar-bg)',
                         flexShrink: 0
                     }}>
                         <div style={{
@@ -1165,7 +1165,7 @@ const PuntosVenta = () => {
                                     padding: '0.5rem 1rem',
                                     borderRadius: '6px',
                                     border: selectedCategory === 'all' ? 'none' : '2px solid #d1d5db',
-                                    backgroundColor: selectedCategory === 'all' ? '#3b82f6' : '#ffffff',
+                                    backgroundColor: selectedCategory === 'all' ? 'var(--primary-color)' : '#ffffff',
                                     color: selectedCategory === 'all' ? '#ffffff' : '#374151',
                                     fontWeight: '600',
                                     fontSize: '0.875rem',
@@ -1185,7 +1185,7 @@ const PuntosVenta = () => {
                                         padding: '0.5rem 1rem',
                                         borderRadius: '6px',
                                         border: selectedCategory === cat.id ? 'none' : '2px solid #d1d5db',
-                                        backgroundColor: selectedCategory === cat.id ? '#3b82f6' : '#ffffff',
+                                        backgroundColor: selectedCategory === cat.id ? 'var(--primary-color)' : '#ffffff',
                                         color: selectedCategory === cat.id ? '#ffffff' : '#374151',
                                         fontWeight: '600',
                                         fontSize: '0.875rem',
@@ -1207,7 +1207,7 @@ const PuntosVenta = () => {
                         flex: 1,
                         overflowY: 'auto',
                         padding: '0.75rem',
-                        backgroundColor: '#f9fafb'
+                        backgroundColor: 'var(--sidebar-bg)'
                     }}>
                         <div style={{
                             display: 'grid',
@@ -1232,7 +1232,7 @@ const PuntosVenta = () => {
                                     onMouseEnter={screenWidth > 768 ? (e) => {
                                         e.currentTarget.style.transform = 'translateY(-4px)';
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                                        e.currentTarget.style.borderColor = '#3b82f6';
+                                        e.currentTarget.style.borderColor = 'var(--primary-color)';
                                     } : undefined}
                                     onMouseLeave={screenWidth > 768 ? (e) => {
                                         e.currentTarget.style.transform = 'translateY(0)';
@@ -1242,7 +1242,7 @@ const PuntosVenta = () => {
                                 >
                                     <div style={{
                                         height: screenWidth <= 768 ? '80px' : '100px',
-                                        backgroundColor: '#f8fafc',
+                                        backgroundColor: 'var(--sidebar-bg)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -1272,7 +1272,7 @@ const PuntosVenta = () => {
                                         <h3 style={{
                                             fontSize: screenWidth <= 768 ? '0.875rem' : '0.9375rem',
                                             fontWeight: '600',
-                                            color: '#1f2937',
+                                            color: 'var(--primary-color)',
                                             marginBottom: '0.25rem',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
@@ -1283,7 +1283,7 @@ const PuntosVenta = () => {
                                         <p style={{
                                             fontSize: screenWidth <= 768 ? '1rem' : '1.125rem',
                                             fontWeight: '700',
-                                            color: '#059669',
+                                            color: 'var(--primary-color)',
                                             margin: 0
                                         }}>
                                             ${product.price}
@@ -1300,7 +1300,7 @@ const PuntosVenta = () => {
                     {/* Header de orden */}
                     <div style={{
                         padding: '0.75rem',
-                        backgroundColor: '#f3f4f6',
+                        backgroundColor: 'var(--sidebar-bg)',
                         flexShrink: 0,
                         borderBottom: '1px solid #e5e7eb',
                         display: 'flex',
@@ -1318,7 +1318,7 @@ const PuntosVenta = () => {
                         <button
                             style={{
                                 padding: '0.5rem 1rem',
-                                backgroundColor: '#3b82f6',
+                                backgroundColor: 'var(--primary-color)',
                                 border: 'none',
                                 borderRadius: '6px',
                                 color: '#ffffff',
@@ -1376,7 +1376,7 @@ const PuntosVenta = () => {
                                                 <h4 style={{
                                                     fontSize: screenWidth <= 768 ? '0.875rem' : '0.9375rem',
                                                     fontWeight: '600',
-                                                    color: '#1f2937',
+                                                    color: 'var(--primary-color)',
                                                     marginBottom: '0.25rem',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis'
@@ -1428,7 +1428,7 @@ const PuntosVenta = () => {
                                                         textAlign: 'center',
                                                         fontSize: screenWidth <= 768 ? '0.875rem' : '0.9375rem',
                                                         fontWeight: '600',
-                                                        color: '#1f2937'
+                                                        color: 'var(--primary-color)'
                                                     }}>
                                                         {item.quantity}
                                                     </span>
@@ -1489,7 +1489,7 @@ const PuntosVenta = () => {
                                                         fontSize: screenWidth <= 768 ? '0.75rem' : '0.8125rem',
                                                         color: '#6b7280',
                                                         fontStyle: 'italic',
-                                                        backgroundColor: '#f3f4f6',
+                                                        backgroundColor: 'var(--sidebar-bg)',
                                                         padding: '0.25rem 0.5rem',
                                                         borderRadius: '4px',
                                                         wordBreak: 'break-word'
@@ -1510,7 +1510,7 @@ const PuntosVenta = () => {
                                             <button
                                                 style={{
                                                     padding: '0.25rem 0.5rem',
-                                                    backgroundColor: item.note ? '#fef3c7' : '#f3f4f6',
+                                                    backgroundColor: item.note ? '#fef3c7' : 'var(--sidebar-bg)',
                                                     border: `1px solid ${item.note ? '#fbbf24' : '#d1d5db'}`,
                                                     borderRadius: '4px',
                                                     color: item.note ? '#92400e' : '#374151',
@@ -1578,7 +1578,7 @@ const PuntosVenta = () => {
                                         color: '#111827'
                                     }}>
                                         <span>Total</span>
-                                        <span style={{ color: '#059669' }}>{formatCurrency(calculateTotal)}</span>
+                                        <span style={{ color: 'var(--primary-color)' }}>{formatCurrency(calculateTotal)}</span>
                                     </div>
                                 </div>
 
@@ -1587,7 +1587,7 @@ const PuntosVenta = () => {
                                     style={{
                                         width: '100%',
                                         padding: '0.75rem',
-                                        backgroundColor: processingOrder ? '#d1d5db' : '#3b82f6',
+                                        backgroundColor: processingOrder ? '#d1d5db' : 'var(--primary-color)',
                                         border: 'none',
                                         borderRadius: '8px',
                                         color: '#ffffff',
@@ -1607,7 +1607,7 @@ const PuntosVenta = () => {
                                     style={{
                                         width: '100%',
                                         padding: '0.75rem',
-                                        backgroundColor: '#f59e0b',
+                                        backgroundColor: 'var(--primary-color)',
                                         border: 'none',
                                         borderRadius: '8px',
                                         color: '#ffffff',
@@ -1639,7 +1639,7 @@ const PuntosVenta = () => {
                     style={{
                         flex: 1,
                         padding: '0.75rem',
-                        backgroundColor: showOrderDetails ? '#e5e7eb' : '#3b82f6',
+                        backgroundColor: showOrderDetails ? '#e5e7eb' : 'var(--primary-color)',
                         border: 'none',
                         borderRadius: '8px',
                         color: showOrderDetails ? '#374151' : '#ffffff',
@@ -1656,7 +1656,7 @@ const PuntosVenta = () => {
                     style={{
                         flex: 1,
                         padding: '0.75rem',
-                        backgroundColor: !showOrderDetails ? '#e5e7eb' : '#3b82f6',
+                        backgroundColor: !showOrderDetails ? '#e5e7eb' : 'var(--primary-color)',
                         border: 'none',
                         borderRadius: '8px',
                         color: !showOrderDetails ? '#374151' : '#ffffff',
@@ -1697,7 +1697,7 @@ const PuntosVenta = () => {
             height: '100vh',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#f9fafb',
+            backgroundColor: 'var(--sidebar-bg)',
             overflow: 'hidden'
         }}>
             {/* Header */}
@@ -1737,7 +1737,7 @@ const PuntosVenta = () => {
                     <div style={{
                         padding: '1rem',
                         borderBottom: '1px solid #e5e7eb',
-                        backgroundColor: '#fafafa',
+                        backgroundColor: 'var(--sidebar-bg)',
                         flexShrink: 0
                     }}>
                         <div style={{
@@ -1751,14 +1751,14 @@ const PuntosVenta = () => {
                                     padding: '0.625rem 1.25rem',
                                     borderRadius: '6px',
                                     border: selectedCategory === 'all' ? 'none' : '2px solid #d1d5db',
-                                    backgroundColor: selectedCategory === 'all' ? '#3b82f6' : '#ffffff',
+                                    backgroundColor: selectedCategory === 'all' ? 'var(--primary-color)' : '#ffffff',
                                     color: selectedCategory === 'all' ? '#ffffff' : '#374151',
                                     fontWeight: '600',
                                     fontSize: '0.9375rem',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s',
                                     whiteSpace: 'nowrap',
-                                    boxShadow: selectedCategory === 'all' ? '0 2px 4px rgba(59, 130, 246, 0.3)' : 'none',
+                                    boxShadow: selectedCategory === 'all' ? '0 2px 4px rgba(100, 16, 14, 0.3)' : 'none',
                                     minHeight: TOUCH_MIN_SIZE
                                 }}
                                 onClick={() => setSelectedCategory('all')}
@@ -1772,14 +1772,14 @@ const PuntosVenta = () => {
                                         padding: '0.625rem 1.25rem',
                                         borderRadius: '6px',
                                         border: selectedCategory === cat.id ? 'none' : '2px solid #d1d5db',
-                                        backgroundColor: selectedCategory === cat.id ? '#3b82f6' : '#ffffff',
+                                        backgroundColor: selectedCategory === cat.id ? 'var(--primary-color)' : '#ffffff',
                                         color: selectedCategory === cat.id ? '#ffffff' : '#374151',
                                         fontWeight: '600',
                                         fontSize: '0.9375rem',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
                                         whiteSpace: 'nowrap',
-                                        boxShadow: selectedCategory === cat.id ? '0 2px 4px rgba(59, 130, 246, 0.3)' : 'none',
+                                        boxShadow: selectedCategory === cat.id ? '0 2px 4px rgba(100, 16, 14, 0.3)' : 'none',
                                         minHeight: TOUCH_MIN_SIZE
                                     }}
                                     onClick={() => setSelectedCategory(cat.id)}
@@ -1795,7 +1795,7 @@ const PuntosVenta = () => {
                         flex: 1,
                         overflowY: 'auto',
                         padding: '1.5rem',
-                        backgroundColor: '#f9fafb'
+                        backgroundColor: 'var(--sidebar-bg)'
                     }}>
                         <div style={{
                             display: 'grid',
@@ -1818,7 +1818,7 @@ const PuntosVenta = () => {
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.transform = 'translateY(-4px)';
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                                        e.currentTarget.style.borderColor = '#3b82f6';
+                                        e.currentTarget.style.borderColor = 'var(--primary-color)';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.currentTarget.style.transform = 'translateY(0)';
@@ -1828,7 +1828,7 @@ const PuntosVenta = () => {
                                 >
                                     <div style={{
                                         height: '140px',
-                                        backgroundColor: '#f8fafc',
+                                        backgroundColor: 'var(--sidebar-bg)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -1858,7 +1858,7 @@ const PuntosVenta = () => {
                                         <h3 style={{
                                             fontSize: '0.9375rem',
                                             fontWeight: '600',
-                                            color: '#1f2937',
+                                            color: 'var(--primary-color)',
                                             marginBottom: '0.375rem',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
@@ -1869,7 +1869,7 @@ const PuntosVenta = () => {
                                         <p style={{
                                             fontSize: '1.125rem',
                                             fontWeight: '700',
-                                            color: '#059669',
+                                            color: 'var(--primary-color)',
                                             margin: 0
                                         }}>
                                             ${product.price}
@@ -1893,7 +1893,7 @@ const PuntosVenta = () => {
                     {/* Header de Orden Actual */}
                     <div style={{
                         padding: '1rem 1.5rem',
-                        backgroundColor: '#f3f4f6',
+                        backgroundColor: 'var(--sidebar-bg)',
                         flexShrink: 0,
                         borderBottom: '1px solid #e5e7eb'
                     }}>
@@ -1961,7 +1961,7 @@ const PuntosVenta = () => {
                                                 <h4 style={{
                                                     fontSize: '0.9375rem',
                                                     fontWeight: '600',
-                                                    color: '#1f2937',
+                                                    color: 'var(--primary-color)',
                                                     marginBottom: '0.375rem',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis'
@@ -2013,7 +2013,7 @@ const PuntosVenta = () => {
                                                         textAlign: 'center',
                                                         fontSize: '0.9375rem',
                                                         fontWeight: '600',
-                                                        color: '#1f2937'
+                                                        color: 'var(--primary-color)'
                                                     }}>
                                                         {item.quantity}
                                                     </span>
@@ -2074,7 +2074,7 @@ const PuntosVenta = () => {
                                                         fontSize: '0.8125rem',
                                                         color: '#6b7280',
                                                         fontStyle: 'italic',
-                                                        backgroundColor: '#f3f4f6',
+                                                        backgroundColor: 'var(--sidebar-bg)',
                                                         padding: '0.375rem 0.75rem',
                                                         borderRadius: '4px',
                                                         wordBreak: 'break-word'
@@ -2095,7 +2095,7 @@ const PuntosVenta = () => {
                                             <button
                                                 style={{
                                                     padding: '0.375rem 0.75rem',
-                                                    backgroundColor: item.note ? '#fef3c7' : '#f3f4f6',
+                                                    backgroundColor: item.note ? '#fef3c7' : 'var(--sidebar-bg)',
                                                     border: `1px solid ${item.note ? '#fbbf24' : '#d1d5db'}`,
                                                     borderRadius: '4px',
                                                     color: item.note ? '#92400e' : '#374151',
@@ -2165,7 +2165,7 @@ const PuntosVenta = () => {
                                         color: '#111827'
                                     }}>
                                         <span>Total</span>
-                                        <span style={{ color: '#059669' }}>{formatCurrency(calculateTotal)}</span>
+                                        <span style={{ color: 'var(--primary-color)' }}>{formatCurrency(calculateTotal)}</span>
                                     </div>
                                 </div>
 
@@ -2174,7 +2174,7 @@ const PuntosVenta = () => {
                                     style={{
                                         width: '100%',
                                         padding: '1rem',
-                                        backgroundColor: processingOrder ? '#d1d5db' : '#3b82f6',
+                                        backgroundColor: processingOrder ? '#d1d5db' : 'var(--primary-color)',
                                         border: 'none',
                                         borderRadius: '10px',
                                         color: '#ffffff',
@@ -2182,7 +2182,7 @@ const PuntosVenta = () => {
                                         fontWeight: '700',
                                         cursor: processingOrder ? 'not-allowed' : 'pointer',
                                         transition: 'all 0.2s',
-                                        boxShadow: processingOrder ? 'none' : '0 4px 12px rgba(59, 130, 246, 0.3)',
+                                        boxShadow: processingOrder ? 'none' : '0 4px 12px rgba(100, 16, 14, 0.3)',
                                         marginBottom: '0.75rem',
                                         minHeight: TOUCH_MIN_SIZE
                                     }}
@@ -2197,7 +2197,7 @@ const PuntosVenta = () => {
                                     style={{
                                         width: '100%',
                                         padding: '0.75rem',
-                                        backgroundColor: '#f59e0b',
+                                        backgroundColor: 'var(--primary-color)',
                                         border: 'none',
                                         borderRadius: '8px',
                                         color: '#ffffff',
@@ -2274,7 +2274,7 @@ const PuntosVenta = () => {
                         <div style={{
                             padding: isSmallScreen ? '1rem' : '1.5rem',
                             borderBottom: '2px solid #e5e7eb',
-                            backgroundColor: '#1f2937',
+                            backgroundColor: 'var(--primary-color)',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
@@ -2310,7 +2310,7 @@ const PuntosVenta = () => {
                             <button
                                 style={{
                                     padding: isSmallScreen ? '0.75rem' : '0.75rem 1.5rem',
-                                    backgroundColor: '#9ca3af',
+                                    backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     color: '#ffffff',
@@ -2329,7 +2329,7 @@ const PuntosVenta = () => {
                             <button
                                 style={{
                                     padding: isSmallScreen ? '0.75rem' : '0.75rem 1.5rem',
-                                    backgroundColor: '#059669',
+                                    backgroundColor: 'var(--primary-color)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     color: '#ffffff',
@@ -2377,7 +2377,7 @@ const PuntosVenta = () => {
                         <div style={{
                             padding: isSmallScreen ? '1rem' : '1.5rem',
                             borderBottom: '2px solid #e5e7eb',
-                            backgroundColor: '#fafafa'
+                            backgroundColor: 'var(--sidebar-bg)'
                         }}>
                             <h3 style={{
                                 fontSize: isSmallScreen ? '1.25rem' : '1.5rem',
@@ -2597,7 +2597,7 @@ const PuntosVenta = () => {
                                     type="submit"
                                     style={{
                                         padding: isSmallScreen ? '0.5rem 1rem' : '0.75rem 1.5rem',
-                                        backgroundColor: '#8b5cf6',
+                                        backgroundColor: 'var(--primary-color)',
                                         border: 'none',
                                         borderRadius: '8px',
                                         color: '#ffffff',

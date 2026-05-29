@@ -210,7 +210,7 @@ const Ordenes = () => {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--sidebar-bg)' }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         display: 'inline-block',
@@ -229,7 +229,7 @@ const Ordenes = () => {
 
     if (error) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--sidebar-bg)' }}>
                 <div style={{ backgroundColor: '#fef2f2', borderLeft: '4px solid #ef4444', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '448px' }}>
                     <p style={{ color: '#991b1b', fontWeight: '500' }}>{error}</p>
                 </div>
@@ -238,7 +238,7 @@ const Ordenes = () => {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f9fafb, #f3f4f6)', padding: '24px' }}>
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, var(--sidebar-bg), var(--sidebar-bg))', padding: '24px' }}>
             <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
                 {/* Header */}
                 <div style={{ marginBottom: '32px' }}>
@@ -263,8 +263,8 @@ const Ordenes = () => {
                             transition: 'all 0.2s'
                         }}
                         onFocus={(e) => {
-                            e.target.style.borderColor = '#3b82f6';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                            e.target.style.borderColor = 'var(--primary-color)';
+                            e.target.style.boxShadow = '0 0 0 3px rgba(100, 16, 14, 0.1)';
                         }}
                         onBlur={(e) => {
                             e.target.style.borderColor = '#d1d5db';
@@ -277,7 +277,7 @@ const Ordenes = () => {
                 <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: 'linear-gradient(to right, #f9fafb, #f3f4f6)', borderBottom: '1px solid #e5e7eb' }}>
+                            <thead style={{ background: 'linear-gradient(to right, var(--sidebar-bg), var(--sidebar-bg))', borderBottom: '1px solid #e5e7eb' }}>
                                 <tr>
                                     <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                         N° Orden
@@ -322,7 +322,7 @@ const Ordenes = () => {
                                                     opacity: isCompleted ? 0.6 : 1,
                                                     cursor: 'pointer'
                                                 }}
-                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--sidebar-bg)'}
                                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                             >
                                                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
@@ -341,7 +341,7 @@ const Ordenes = () => {
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
-                                                    <span style={{ fontWeight: '600', color: '#059669' }}>
+                                                    <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>
                                                         ${order.total}
                                                     </span>
                                                 </td>
@@ -463,7 +463,7 @@ const Ordenes = () => {
                                 <button
                                     onClick={handlePrintTicket}
                                     style={{
-                                        background: '#059669',
+                                        background: 'var(--primary-color)',
                                         color: '#fff',
                                         border: 'none',
                                         borderRadius: '4px',
@@ -513,7 +513,7 @@ const Ordenes = () => {
                                 <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>
                                     Información de la Orden
                                 </h3>
-                                <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+                                <div style={{ backgroundColor: 'var(--sidebar-bg)', padding: '16px', borderRadius: '8px' }}>
                                     <p style={{ margin: '0 0 8px 0', color: '#1f2937' }}>
                                         <strong>Tipo de Orden:</strong> {selectedOrder.order_type_display}
                                     </p>
@@ -584,7 +584,7 @@ const Ordenes = () => {
                                                             </p>
                                                         )}
                                                     </div>
-                                                    <p style={{ margin: 0, fontWeight: '600', color: '#059669' }}>
+                                                    <p style={{ margin: 0, fontWeight: '600', color: 'var(--primary-color)' }}>
                                                         ${item.line_total || item.subtotal}
                                                     </p>
                                                 </div>
@@ -599,7 +599,7 @@ const Ordenes = () => {
                             </div>
 
                             {/* Order Summary */}
-                            <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+                            <div style={{ backgroundColor: 'var(--sidebar-bg)', padding: '16px', borderRadius: '8px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                     <span style={{ color: '#6b7280' }}>Subtotal:</span>
                                     <span style={{ fontWeight: '500', color: '#1f2937' }}>${selectedOrder.subtotal}</span>
@@ -618,7 +618,7 @@ const Ordenes = () => {
                                 )}
                                 <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
                                     <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>Total:</span>
-                                    <span style={{ fontSize: '18px', fontWeight: '700', color: '#059669' }}>${selectedOrder.total}</span>
+                                    <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary-color)' }}>${selectedOrder.total}</span>
                                 </div>
                             </div>
 
@@ -658,7 +658,7 @@ const Ordenes = () => {
                                     onClick={closeModal}
                                     style={{
                                         padding: '10px 20px',
-                                        backgroundColor: '#f3f4f6',
+                                        backgroundColor: 'var(--sidebar-bg)',
                                         color: '#374151',
                                         border: 'none',
                                         borderRadius: '8px',
