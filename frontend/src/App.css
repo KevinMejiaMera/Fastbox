@@ -1,15 +1,15 @@
 /* Global Styles */
 :root {
-  --primary-color: #4a90e2;
-  --secondary-color: #6c757d;
+  --primary-color: #64100e;
+  --secondary-color: #ffc4c4;
   --danger-color: #dc3545;
   --success-color: #28a745;
-  --background-color: #f4f6f9;
-  --sidebar-bg: #343a40;
-  --sidebar-text: #fff;
-  --navbar-bg: #fff;
-  --text-color: #333;
-  --border-color: #dee2e6;
+  --background-color: #fff9f9;
+  --sidebar-bg: #fcf4eb;
+  --sidebar-text: #64100e;
+  --navbar-bg: #ffffff;
+  --text-color: #333333;
+  --border-color: #64100e;
 }
 
 * {

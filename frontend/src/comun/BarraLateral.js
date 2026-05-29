@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import PrinterStatusIndicator from './PrinterStatusIndicator';
+import logo from '../assets/logo.png';
 
 const BarraLateral = () => {
     const location = useLocation();
@@ -36,19 +37,19 @@ const BarraLateral = () => {
             left: 0,
             height: '100vh',
             width: isCollapsed ? '70px' : '250px',
-            background: '#f1f5f9', /* Un gris claro azulado para distinguirlo del fondo blanco */
-            color: '#475569',
+            background: 'var(--sidebar-bg)',
+            color: 'var(--sidebar-text)',
             transition: 'width 0.3s ease',
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '4px 0 24px rgba(0, 0, 0, 0.05)',
             overflowX: 'hidden',
-            borderRight: '1px solid #e2e8f0'
+            borderRight: '1px solid var(--border-color)'
         },
         sidebarHeader: {
             padding: '1.5rem 1rem',
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem'
@@ -62,29 +63,21 @@ const BarraLateral = () => {
         brandLogo: {
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
+            justifyContent: 'center',
             flex: 1,
-            minWidth: 0
+            minWidth: 0,
+            padding: '10px 0'
         },
         brandIcon: {
-            fontSize: '1.75rem',
-            color: '#60a5fa',
-            flexShrink: 0
+            display: 'none'
         },
         brandText: {
-            fontSize: '1.25rem',
-            fontWeight: '700',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            opacity: isCollapsed ? 0 : 1,
-            transition: 'opacity 0.2s',
-            color: '#334155'
+            display: 'none'
         },
         btnToggle: {
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            color: '#64748b',
+            background: 'var(--sidebar-bg)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--sidebar-text)',
             width: '36px',
             height: '36px',
             borderRadius: '8px',
@@ -102,9 +95,9 @@ const BarraLateral = () => {
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.75rem',
-            background: '#ffffff',
+            background: 'var(--sidebar-bg)',
             borderRadius: '12px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-color)',
             boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
             opacity: isCollapsed ? 0 : 1,
             height: isCollapsed ? 0 : 'auto',
@@ -131,14 +124,14 @@ const BarraLateral = () => {
         userName: {
             fontSize: '0.875rem',
             fontWeight: '600',
-            color: '#334155',
+            color: 'var(--sidebar-text)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
         },
         userRole: {
             fontSize: '0.75rem',
-            color: '#64748b',
+            color: 'var(--primary-color)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
@@ -157,18 +150,20 @@ const BarraLateral = () => {
             display: 'flex',
             alignItems: 'center',
             padding: '0.875rem 1.25rem',
-            color: '#64748b',
+            color: 'var(--sidebar-text)',
             textDecoration: 'none',
             transition: 'all 0.3s ease',
             gap: '1rem',
             position: 'relative',
             borderRadius: '8px',
-            margin: '0 0.5rem'
+            margin: '0 0.5rem',
+            opacity: 0.8
         },
         navLinkActive: {
-            background: '#eff6ff',
-            color: '#2563eb',
-            fontWeight: '500'
+            background: 'var(--secondary-color)',
+            color: 'var(--primary-color)',
+            fontWeight: '600',
+            opacity: 1
         },
         navIcon: {
             fontSize: '1.25rem',
@@ -184,13 +179,13 @@ const BarraLateral = () => {
         },
         sidebarFooter: {
             padding: '1rem',
-            borderTop: '1px solid #f1f5f9'
+            borderTop: '1px solid var(--border-color)'
         },
         logoutButton: {
             width: '100%',
             padding: '0.75rem 1rem',
-            background: '#fef2f2',
-            border: '1px solid #fee2e2',
+            background: 'var(--sidebar-bg)',
+            border: '1px solid var(--border-color)',
             borderRadius: '8px',
             color: '#ef4444',
             cursor: 'pointer',
@@ -227,8 +222,7 @@ const BarraLateral = () => {
                 <div style={styles.sidebarHeader}>
                     <div style={styles.brandContainer}>
                         <div style={styles.brandLogo}>
-                            <i className="bi bi-stars" style={styles.brandIcon}></i>
-                            <span style={styles.brandText}>Fastbox</span>
+                            <img src={logo} alt="Choco Lab" style={{ height: isCollapsed ? '30px' : '60px', transition: 'all 0.3s', objectFit: 'contain' }} />
                         </div>
                         <button
                             style={styles.btnToggle}
@@ -278,15 +272,15 @@ const BarraLateral = () => {
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!active) {
-                                            e.currentTarget.style.background = '#ffffff';
-                                            e.currentTarget.style.color = '#334155';
+                                            e.currentTarget.style.background = 'var(--secondary-color)';
+                                            e.currentTarget.style.color = 'var(--primary-color)';
                                             e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)';
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!active) {
                                             e.currentTarget.style.background = 'transparent';
-                                            e.currentTarget.style.color = '#64748b';
+                                            e.currentTarget.style.color = 'var(--sidebar-text)';
                                             e.currentTarget.style.boxShadow = 'none';
                                         }
                                     }}
@@ -295,7 +289,7 @@ const BarraLateral = () => {
                                         className={`bi ${item.icon}`}
                                         style={{
                                             ...styles.navIcon,
-                                            color: active ? '#2563eb' : 'inherit'
+                                            color: active ? 'var(--primary-color)' : 'var(--sidebar-text)'
                                         }}
                                     ></i>
                                     <span style={styles.navText}>{item.label}</span>

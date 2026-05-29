@@ -94,12 +94,13 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
     doc.text(printDate, MARGIN, y);
 
     // Nombre del Negocio / Usuario (Derecha)
-    const businessName = "FASTBOX Carlos"; // Nombre fijo o configurar si hay
-    const userName = report.shift_info?.user || "Guacalés Carvajal"; // O nombre del usuario actual
-
+    const businessName = "FASTBOX"; 
     doc.text(businessName, pageWidth - MARGIN, y, { align: 'right' });
-    y += 5;
-    doc.text(userName, pageWidth - MARGIN, y, { align: 'right' });
+    
+    if (report.shift_info?.user) {
+        y += 5;
+        doc.text(`Usuario: ${report.shift_info.user}`, pageWidth - MARGIN, y, { align: 'right' });
+    }
 
     y += 20;
 

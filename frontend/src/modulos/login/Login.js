@@ -30,9 +30,10 @@ const Login = () => {
 
     return (
         <div className="login-container">
-            <div className="login-card">
-                <h2>Iniciar Sesión</h2>
-                <p>Bienvenido al Sistema Fastbox</p>
+            <div className="login-card" style={{ textAlign: 'center' }}>
+                <img src={require('../../assets/logo.png')} alt="Choco Lab" style={{ height: '100px', marginBottom: '20px', objectFit: 'contain' }} />
+                <h2 style={{ color: 'var(--primary-color)' }}>Iniciar Sesión</h2>
+                <p style={{ marginBottom: '20px' }}>Bienvenido a Choco Lab</p>
 
                 {error && <div className="alert alert-error">{error}</div>}
 
