@@ -80,7 +80,7 @@ services:
     image: nginx:alpine
     container_name: fastbox_nginx_prod
     ports:
-      - "8080:80"
+      - "8180:80"
     volumes:
       - ./nginx-prod.conf:/etc/nginx/nginx.conf:ro
       - backend-static-prod:/usr/share/nginx/html/static/backend:ro
