@@ -1732,20 +1732,24 @@ const PuntosVenta = () => {
                     backgroundColor: '#ffffff',
                     borderRight: '2px solid #e5e7eb',
                     minHeight: 'auto',
-                    minWidth: 0
+                    minWidth: 0,
+                    maxWidth: '100%'
                 }}>
                     {/* Filtros */}
                     <div style={{
                         padding: '1rem',
                         borderBottom: '1px solid #e5e7eb',
                         backgroundColor: 'var(--sidebar-bg)',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        maxWidth: '100%',
+                        overflow: 'hidden'
                     }}>
                         <div style={{
                             display: 'flex',
                             gap: '0.75rem',
                             overflowX: 'auto',
-                            paddingBottom: '0.25rem'
+                            paddingBottom: '0.25rem',
+                            width: '100%'
                         }}>
                             <button
                                 style={{
