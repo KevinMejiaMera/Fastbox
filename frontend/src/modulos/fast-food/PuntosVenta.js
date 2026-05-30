@@ -1731,7 +1731,8 @@ const PuntosVenta = () => {
                     flexDirection: 'column',
                     backgroundColor: '#ffffff',
                     borderRight: '2px solid #e5e7eb',
-                    minHeight: 'auto'
+                    minHeight: 'auto',
+                    minWidth: 0
                 }}>
                     {/* Filtros */}
                     <div style={{
