@@ -37,10 +37,11 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = [
             'id', 'product', 'product_details', 'size', 'size_details',
-            'quantity', 'unit_price', 'line_total', 'notes',
+            'quantity', 'unit_price', 'discount_percentage', 'discount_amount',
+            'line_total', 'notes',
             'extras', 'total_with_extras', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'unit_price', 'line_total', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'unit_price', 'discount_amount', 'line_total', 'created_at', 'updated_at']
     
     def get_total_with_extras(self, obj):
         return float(obj.get_total_with_extras())
@@ -56,6 +57,12 @@ class OrderItemCreateSerializer(serializers.Serializer):
         child=serializers.UUIDField(),
         required=False,
         allow_empty=True
+    )
+    discount_percentage = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        default=0
     )
     
     def validate_product_id(self, value):
@@ -192,7 +199,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'order_number', 'customer', 'order_type', 'order_type_display',
             'status', 'status_display', 'payment_status', 'payment_status_display',
-            'subtotal', 'tax_amount', 'discount_amount', 'delivery_fee',
+            'subtotal', 'tax_amount', 'discount_percentage', 'discount_amount', 'delivery_fee',
             'tip_amount', 'total', 'notes', 'special_instructions',
             'table_number', 'estimated_prep_time', 'items', 'delivery_info',
             'status_history', 'can_be_cancelled', 'can_be_modified',
@@ -200,7 +207,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'delivered_at', 'cancelled_at'
         ]
         read_only_fields = [
-            'id', 'order_number', 'subtotal', 'tax_amount', 'total',
+            'id', 'order_number', 'subtotal', 'tax_amount', 'discount_amount', 'total',
             'created_at', 'updated_at', 'confirmed_at', 'ready_at',
             'delivered_at', 'cancelled_at'
         ]
@@ -220,6 +227,12 @@ class OrderCreateSerializer(serializers.Serializer):
     notes = serializers.CharField(required=False, allow_blank=True)
     special_instructions = serializers.CharField(required=False, allow_blank=True)
     table_number = serializers.CharField(required=False, allow_blank=True)
+    discount_percentage = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        default=0
+    )
     discount_amount = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -302,7 +315,8 @@ class OrderCreateSerializer(serializers.Serializer):
                 product=product,
                 size=size,
                 quantity=item_data['quantity'],
-                notes=item_data.get('notes', '')
+                notes=item_data.get('notes', ''),
+                discount_percentage=item_data.get('discount_percentage', 0)
             )
             
             # Agregar extras

@@ -560,35 +560,51 @@ const Ordenes = () => {
                                     ) : (
                                         // MODO VISUALIZACIÓN: LISTA NORMAL (Código Original)
                                         selectedOrder.items && selectedOrder.items.length > 0 ? (
-                                            selectedOrder.items.map((item, index) => (
-                                                <div
-                                                    key={index}
-                                                    style={{
-                                                        padding: '12px 16px',
-                                                        borderBottom: index < selectedOrder.items.length - 1 ? '1px solid #e5e7eb' : 'none',
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center'
-                                                    }}
-                                                >
-                                                    <div>
-                                                        <p style={{ margin: 0, fontWeight: '500', color: '#1f2937' }}>
-                                                            {item.product_details?.name || item.product_name || 'Producto'}
-                                                        </p>
-                                                        <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-                                                            Cantidad: {item.quantity} × ${item.unit_price}
-                                                        </p>
-                                                        {item.notes && (
-                                                            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#d97706', fontStyle: 'italic', backgroundColor: '#fffbeb', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
-                                                                Nota: {item.notes}
+                                            selectedOrder.items.map((item, index) => {
+                                                const hasDiscount = parseFloat(item.discount_percentage) > 0;
+                                                const originalTotal = parseFloat(item.unit_price) * item.quantity;
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        style={{
+                                                            padding: '12px 16px',
+                                                            borderBottom: index < selectedOrder.items.length - 1 ? '1px solid #e5e7eb' : 'none',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center'
+                                                        }}
+                                                    >
+                                                        <div>
+                                                            <p style={{ margin: 0, fontWeight: '500', color: '#1f2937' }}>
+                                                                {item.product_details?.name || item.product_name || 'Producto'}
                                                             </p>
-                                                        )}
+                                                            <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
+                                                                Cantidad: {item.quantity} × ${item.unit_price}
+                                                                {hasDiscount && (
+                                                                    <span style={{ marginLeft: '8px', color: '#10b981', fontWeight: '500' }}>
+                                                                        (Desc: {parseFloat(item.discount_percentage)}%)
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                            {item.notes && (
+                                                                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#d97706', fontStyle: 'italic', backgroundColor: '#fffbeb', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
+                                                                    Nota: {item.notes}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div style={{ textAlign: 'right' }}>
+                                                            {hasDiscount && (
+                                                                <p style={{ margin: '0 0 2px 0', fontSize: '12px', textDecoration: 'line-through', color: '#9ca3af' }}>
+                                                                    ${originalTotal.toFixed(2)}
+                                                                </p>
+                                                            )}
+                                                            <p style={{ margin: 0, fontWeight: '600', color: hasDiscount ? '#10b981' : 'var(--primary-color)' }}>
+                                                                ${item.line_total || item.subtotal}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <p style={{ margin: 0, fontWeight: '600', color: 'var(--primary-color)' }}>
-                                                        ${item.line_total || item.subtotal}
-                                                    </p>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         ) : (
                                             <p style={{ padding: '16px', margin: 0, color: '#6b7280', textAlign: 'center' }}>
                                                 No hay productos en esta orden

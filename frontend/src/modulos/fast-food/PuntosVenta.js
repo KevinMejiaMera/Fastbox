@@ -58,6 +58,7 @@ const PuntosVenta = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTable, setSelectedTable] = useState('');
     const [discountCode, setDiscountCode] = useState('');
+    const [orderDiscountPercentage, setOrderDiscountPercentage] = useState(0);
     const [appliedDiscount, setAppliedDiscount] = useState(null);
 
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -204,7 +205,8 @@ const PuntosVenta = () => {
                     price: parseFloat(product.price),
                     quantity: 1,
                     image: product.image,
-                    note: '' // Nueva propiedad para notas
+                    note: '', // Nueva propiedad para notas
+                    discount_percentage: 0 // Nuevo porcentaje individual
                 }];
             }
         });
@@ -220,6 +222,17 @@ const PuntosVenta = () => {
                 if (item.product_id === productId) {
                     const newQuantity = Math.max(1, item.quantity + delta);
                     return { ...item, quantity: newQuantity };
+                }
+                return item;
+            });
+        });
+    }, []);
+
+    const updateItemDiscount = useCallback((productId, percentage) => {
+        setCart(prevCart => {
+            return prevCart.map(item => {
+                if (item.product_id === productId) {
+                    return { ...item, discount_percentage: Math.max(0, Math.min(100, percentage)) };
                 }
                 return item;
             });
@@ -261,16 +274,32 @@ const PuntosVenta = () => {
         return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     }, [cart]);
 
+    const calculateItemDiscounts = useMemo(() => {
+        return cart.reduce((total, item) => {
+            const percentage = parseFloat(item.discount_percentage) || 0;
+            return total + (item.price * (percentage / 100) * item.quantity);
+        }, 0);
+    }, [cart]);
+
+    const calculateOrderDiscount = useMemo(() => {
+        const subtotalAfterItemDiscounts = calculateSubtotal - calculateItemDiscounts;
+        const percentage = parseFloat(orderDiscountPercentage) || 0;
+        return subtotalAfterItemDiscounts * (percentage / 100);
+    }, [calculateSubtotal, calculateItemDiscounts, orderDiscountPercentage]);
+
     const calculateDiscountAmount = useMemo(() => {
-        if (!appliedDiscount) return 0;
-        const subtotal = calculateSubtotal;
-        if (appliedDiscount.discount_type === 'percentage') {
-            return subtotal * (parseFloat(appliedDiscount.discount_value) / 100);
-        } else if (appliedDiscount.discount_type === 'fixed_amount') {
-            return Math.min(parseFloat(appliedDiscount.discount_value), subtotal);
+        // También mantenemos appliedDiscount por si acaso
+        let oldDiscount = 0;
+        if (appliedDiscount) {
+            const subtotal = calculateSubtotal - calculateItemDiscounts;
+            if (appliedDiscount.discount_type === 'percentage') {
+                oldDiscount = subtotal * (parseFloat(appliedDiscount.discount_value) / 100);
+            } else if (appliedDiscount.discount_type === 'fixed_amount') {
+                oldDiscount = Math.min(parseFloat(appliedDiscount.discount_value), subtotal);
+            }
         }
-        return 0;
-    }, [appliedDiscount, calculateSubtotal]);
+        return calculateItemDiscounts + calculateOrderDiscount + oldDiscount;
+    }, [calculateItemDiscounts, calculateOrderDiscount, appliedDiscount, calculateSubtotal]);
 
     const calculateTotal = useMemo(() => {
         const subtotal = calculateSubtotal;
@@ -417,15 +446,17 @@ const PuntosVenta = () => {
             orderNotes = `Pago con: ${formatCurrency(cashGiven)} - Cambio: ${formatCurrency(change)}`;
         }
 
-        // Modificado para incluir notas en los items
+        // Modificado para incluir notas en los items y porcentajes de descuento
         const orderPayload = {
             order_type: orderType,
             table_number: tableNumber,
             notes: orderNotes, // Nueva nota general
+            discount_percentage: parseFloat(orderDiscountPercentage) || 0,
             items: cart.map(item => ({
                 product_id: item.product_id,
                 quantity: item.quantity,
-                notes: item.note || '' // Corregido: 'notes' (plural) para coincidir con el serializer
+                notes: item.note || '', // Corregido: 'notes' (plural) para coincidir con el serializer
+                discount_percentage: parseFloat(item.discount_percentage) || 0
             })),
             discount_code: appliedDiscount ? appliedDiscount.code : null,
             customer_id: selectedCustomer ? selectedCustomer.id : null
@@ -450,7 +481,8 @@ const PuntosVenta = () => {
                     name: item.name,
                     quantity: item.quantity,
                     price: parseFloat(item.price),
-                    total: parseFloat(item.price * item.quantity),
+                    discount_percentage: parseFloat(item.discount_percentage) || 0,
+                    total: parseFloat(item.price * item.quantity * (1 - (parseFloat(item.discount_percentage) || 0) / 100)),
                     note: item.note || '' // Incluir nota en los datos del ticket
                 })),
                 subtotal: parseFloat(calculateSubtotal),
@@ -684,7 +716,7 @@ const PuntosVenta = () => {
                     </select>
                 </div>
 
-                {/* Código de Descuento */}
+                {/* Porcentaje de Descuento (Orden) */}
                 <div>
                     <label style={{
                         display: 'block',
@@ -693,12 +725,36 @@ const PuntosVenta = () => {
                         color: '#374151',
                         marginBottom: '0.5rem'
                     }}>
-                        Código de Descuento
+                        Descuento a la Orden (%)
                     </label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                        {[25, 50, 100].map(pct => (
+                            <button
+                                key={pct}
+                                style={{
+                                    flex: 1,
+                                    padding: '0.5rem',
+                                    backgroundColor: orderDiscountPercentage === pct ? 'var(--primary-color)' : '#f3f4f6',
+                                    border: `1px solid ${orderDiscountPercentage === pct ? 'var(--primary-color)' : '#d1d5db'}`,
+                                    borderRadius: '8px',
+                                    color: orderDiscountPercentage === pct ? '#ffffff' : '#374151',
+                                    fontWeight: '600',
+                                    fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9375rem',
+                                    cursor: 'pointer',
+                                    minHeight: TOUCH_MIN_SIZE
+                                }}
+                                onClick={() => setOrderDiscountPercentage(pct)}
+                            >
+                                {pct}%
+                            </button>
+                        ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <input
-                            type="text"
-                            placeholder="Ingresa el código"
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="Otro porcentaje"
                             style={{
                                 flex: 1,
                                 padding: screenWidth <= 1366 ? '0.5rem' : '0.75rem',
@@ -708,16 +764,16 @@ const PuntosVenta = () => {
                                 transition: 'all 0.2s',
                                 minHeight: TOUCH_MIN_SIZE
                             }}
-                            value={discountCode}
-                            onChange={(e) => setDiscountCode(e.target.value)}
+                            value={orderDiscountPercentage || ''}
+                            onChange={(e) => setOrderDiscountPercentage(Math.max(0, Math.min(100, e.target.value)))}
                         />
                         <button
                             style={{
                                 padding: screenWidth <= 1366 ? '0 0.75rem' : '0 1.5rem',
-                                backgroundColor: '#fbbf24',
+                                backgroundColor: '#fee2e2',
                                 border: 'none',
                                 borderRadius: '8px',
-                                color: '#78350f',
+                                color: '#dc2626',
                                 fontWeight: '600',
                                 fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9375rem',
                                 cursor: 'pointer',
@@ -726,25 +782,11 @@ const PuntosVenta = () => {
                                 minHeight: TOUCH_MIN_SIZE,
                                 minWidth: TOUCH_MIN_SIZE
                             }}
-                            onClick={handleApplyDiscount}
+                            onClick={() => setOrderDiscountPercentage(0)}
                         >
-                            {screenWidth <= 1366 ? 'Aplicar' : 'Aplicar'}
+                            Limpiar
                         </button>
                     </div>
-                    {appliedDiscount && (
-                        <div style={{
-                            marginTop: '0.75rem',
-                            padding: '0.75rem',
-                            backgroundColor: '#d1fae5',
-                            border: '2px solid #86efac',
-                            borderRadius: '8px',
-                            fontSize: screenWidth <= 1366 ? '0.75rem' : '0.875rem',
-                            fontWeight: '600',
-                            color: '#065f46'
-                        }}>
-                            Descuento aplicado: {appliedDiscount.name}
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -820,7 +862,14 @@ const PuntosVenta = () => {
                                         fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9rem',
                                         fontWeight: '600'
                                     }}>
-                                        {formatCurrency(item.price * item.quantity)}
+                                        {item.discount_percentage > 0 && (
+                                            <div style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.75rem', fontWeight: 'normal' }}>
+                                                {formatCurrency(item.price * item.quantity)}
+                                            </div>
+                                        )}
+                                        <div style={{ color: item.discount_percentage > 0 ? '#10b981' : 'inherit' }}>
+                                            {formatCurrency(item.price * item.quantity * (1 - (parseFloat(item.discount_percentage) || 0) / 100))}
+                                        </div>
                                     </td>
                                 </tr>
                             </React.Fragment>
@@ -1388,7 +1437,18 @@ const PuntosVenta = () => {
                                                     color: '#6b7280',
                                                     margin: 0
                                                 }}>
-                                                    {formatCurrency(item.price)} c/u
+                                                    {item.discount_percentage > 0 ? (
+                                                        <>
+                                                            <span style={{ textDecoration: 'line-through', marginRight: '0.25rem', color: '#9ca3af' }}>
+                                                                {formatCurrency(item.price)}
+                                                            </span>
+                                                            <span style={{ color: '#10b981', fontWeight: 'bold' }}>
+                                                                {formatCurrency(item.price * (1 - (parseFloat(item.discount_percentage) || 0) / 100))} c/u
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>{formatCurrency(item.price)} c/u</>
+                                                    )}
                                                 </p>
                                             </div>
 
@@ -1475,7 +1535,7 @@ const PuntosVenta = () => {
                                             </div>
                                         </div>
 
-                                        {/* Nota del producto */}
+                                        {/* Nota y descuento del producto */}
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -1507,24 +1567,53 @@ const PuntosVenta = () => {
                                                 )}
                                             </div>
 
-                                            <button
-                                                style={{
-                                                    padding: '0.25rem 0.5rem',
-                                                    backgroundColor: item.note ? '#fef3c7' : 'var(--sidebar-bg)',
-                                                    border: `1px solid ${item.note ? '#fbbf24' : '#d1d5db'}`,
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    border: '1px solid #d1d5db',
                                                     borderRadius: '4px',
-                                                    color: item.note ? '#92400e' : '#374151',
-                                                    fontSize: screenWidth <= 768 ? '0.75rem' : '0.8125rem',
-                                                    fontWeight: '500',
-                                                    cursor: 'pointer',
-                                                    marginLeft: '0.5rem',
-                                                    whiteSpace: 'nowrap',
-                                                    minHeight: TOUCH_MIN_SIZE
-                                                }}
-                                                onClick={() => handleAddNote(item.product_id)}
-                                            >
-                                                {item.note ? '📝 Editar' : '✏️ Nota'}
-                                            </button>
+                                                    overflow: 'hidden',
+                                                    backgroundColor: '#ffffff'
+                                                }}>
+                                                    <span style={{ padding: '0.25rem', backgroundColor: '#f3f4f6', color: '#6b7280', fontSize: screenWidth <= 768 ? '0.75rem' : '0.8125rem' }}>%</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={item.discount_percentage || ''}
+                                                        onChange={(e) => updateItemDiscount(item.product_id, e.target.value)}
+                                                        placeholder="0"
+                                                        style={{
+                                                            width: '32px',
+                                                            border: 'none',
+                                                            padding: '0.25rem',
+                                                            textAlign: 'center',
+                                                            fontSize: screenWidth <= 768 ? '0.75rem' : '0.8125rem',
+                                                            outline: 'none'
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    style={{
+                                                        padding: '0.25rem 0.5rem',
+                                                        backgroundColor: item.note ? '#fef3c7' : 'var(--sidebar-bg)',
+                                                        border: `1px solid ${item.note ? '#fbbf24' : '#d1d5db'}`,
+                                                        borderRadius: '4px',
+                                                        color: item.note ? '#92400e' : '#374151',
+                                                        fontSize: screenWidth <= 768 ? '0.75rem' : '0.8125rem',
+                                                        fontWeight: '500',
+                                                        cursor: 'pointer',
+                                                        marginLeft: '0.25rem',
+                                                        whiteSpace: 'nowrap',
+                                                        minHeight: TOUCH_MIN_SIZE
+                                                    }}
+                                                    onClick={() => handleAddNote(item.product_id)}
+                                                >
+                                                    {item.note ? '📝 Editar' : '✏️ Nota'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -1978,7 +2067,18 @@ const PuntosVenta = () => {
                                                     color: '#6b7280',
                                                     margin: 0
                                                 }}>
-                                                    {formatCurrency(item.price)} c/u
+                                                    {item.discount_percentage > 0 ? (
+                                                        <>
+                                                            <span style={{ textDecoration: 'line-through', marginRight: '0.25rem', color: '#9ca3af' }}>
+                                                                {formatCurrency(item.price)}
+                                                            </span>
+                                                            <span style={{ color: '#10b981', fontWeight: 'bold' }}>
+                                                                {formatCurrency(item.price * (1 - (parseFloat(item.discount_percentage) || 0) / 100))} c/u
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>{formatCurrency(item.price)} c/u</>
+                                                    )}
                                                 </p>
                                             </div>
 
@@ -2065,7 +2165,7 @@ const PuntosVenta = () => {
                                             </div>
                                         </div>
 
-                                        {/* Nota del producto */}
+                                        {/* Nota y descuento del producto */}
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -2096,27 +2196,55 @@ const PuntosVenta = () => {
                                                     </span>
                                                 )}
                                             </div>
-
-                                            <button
-                                                style={{
-                                                    padding: '0.375rem 0.75rem',
-                                                    backgroundColor: item.note ? '#fef3c7' : 'var(--sidebar-bg)',
-                                                    border: `1px solid ${item.note ? '#fbbf24' : '#d1d5db'}`,
+                                            
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    border: '1px solid #d1d5db',
                                                     borderRadius: '4px',
-                                                    color: item.note ? '#92400e' : '#374151',
-                                                    fontSize: '0.8125rem',
-                                                    fontWeight: '500',
-                                                    cursor: 'pointer',
-                                                    marginLeft: '0.5rem',
-                                                    whiteSpace: 'nowrap',
-                                                    minHeight: TOUCH_MIN_SIZE,
-                                                    minWidth: '60px'
-                                                }}
-                                                onClick={() => handleAddNote(item.product_id)}
-                                                title={item.note ? "Editar nota" : "Agregar nota"}
-                                            >
-                                                {item.note ? '📝 Editar' : '✏️ Nota'}
-                                            </button>
+                                                    overflow: 'hidden',
+                                                    backgroundColor: '#ffffff'
+                                                }}>
+                                                    <span style={{ padding: '0.375rem', backgroundColor: '#f3f4f6', color: '#6b7280', fontSize: '0.8125rem' }}>%</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={item.discount_percentage || ''}
+                                                        onChange={(e) => updateItemDiscount(item.product_id, e.target.value)}
+                                                        placeholder="0"
+                                                        style={{
+                                                            width: '40px',
+                                                            border: 'none',
+                                                            padding: '0.375rem',
+                                                            textAlign: 'center',
+                                                            fontSize: '0.8125rem',
+                                                            outline: 'none'
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    style={{
+                                                        padding: '0.375rem 0.75rem',
+                                                        backgroundColor: item.note ? '#fef3c7' : 'var(--sidebar-bg)',
+                                                        border: `1px solid ${item.note ? '#fbbf24' : '#d1d5db'}`,
+                                                        borderRadius: '4px',
+                                                        color: item.note ? '#92400e' : '#374151',
+                                                        fontSize: '0.8125rem',
+                                                        fontWeight: '500',
+                                                        cursor: 'pointer',
+                                                        whiteSpace: 'nowrap',
+                                                        minHeight: TOUCH_MIN_SIZE,
+                                                        minWidth: '60px'
+                                                    }}
+                                                    onClick={() => handleAddNote(item.product_id)}
+                                                    title={item.note ? "Editar nota" : "Agregar nota"}
+                                                >
+                                                    {item.note ? '📝 Editar' : '✏️ Nota'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

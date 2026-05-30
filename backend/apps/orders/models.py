@@ -97,6 +97,14 @@ class Order(models.Model):
         verbose_name='Descuento'
     )
     
+    discount_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Porcentaje de Descuento'
+    )
+    
     delivery_fee = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -191,6 +199,11 @@ class Order(models.Model):
         # Calcular impuestos (ejemplo: 12%)
         tax_rate = Decimal('0.00')
         self.tax_amount = self.subtotal * tax_rate
+        
+        # Calcular descuento general de la orden basado en porcentaje
+        # Si tiene porcentaje, calcular sobre el subtotal
+        if self.discount_percentage and self.discount_percentage > 0:
+            self.discount_amount = self.subtotal * (self.discount_percentage / Decimal('100.0'))
         
         # Calcular total
         self.total = (
@@ -311,6 +324,22 @@ class OrderItem(models.Model):
         verbose_name='Total de Línea'
     )
     
+    discount_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Porcentaje de Descuento'
+    )
+    
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Monto de Descuento'
+    )
+    
     # Notas específicas del item
     notes = models.TextField(blank=True, verbose_name='Notas')
     
@@ -332,12 +361,14 @@ class OrderItem(models.Model):
             if self.size:
                 self.unit_price = self.size.get_final_price()
         
-        # Calcular total de extras
-        # Nota: esto requiere que la instancia ya tenga ID para acceder a m2m
-        # Se maneja mejor en señales o en el viewset
-        
+        # Calcular descuento por item
+        if self.discount_percentage and self.discount_percentage > 0:
+            self.discount_amount = self.unit_price * (self.discount_percentage / Decimal('100.0'))
+        else:
+            self.discount_amount = 0
+            
         # Calcular total de línea
-        self.line_total = self.unit_price * self.quantity
+        self.line_total = (self.unit_price - self.discount_amount) * self.quantity
         
         super().save(*args, **kwargs)
         
