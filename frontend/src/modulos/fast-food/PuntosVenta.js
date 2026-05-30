@@ -1296,7 +1296,7 @@ const PuntosVenta = () => {
                 </div>
             ) : (
                 // Vista de orden
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                     {/* Header de orden */}
                     <div style={{
                         padding: '0.75rem',
