@@ -352,7 +352,7 @@ const BarraLateral = () => {
                 }
 
                 /* Responsive */
-                @media (max-width: 768px) {
+                @media (max-width: 576px) {
                     aside {
                         transform: ${isCollapsed ? 'translateX(-100%)' : 'translateX(0)'};
                     }

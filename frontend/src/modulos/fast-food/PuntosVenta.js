@@ -1888,7 +1888,7 @@ const PuntosVenta = () => {
 
                 {/* Panel Derecho: Orden Actual */}
                 <div style={{
-                    flex: '0 0 400px',
+                    flex: screenWidth <= 1024 ? '0 0 320px' : '0 0 400px',
                     backgroundColor: '#ffffff',
                     display: 'flex',
                     flexDirection: 'column',
@@ -2241,8 +2241,8 @@ const PuntosVenta = () => {
     // 11. ESTRUCTURA PRINCIPAL CON RESPONSIVIDAD
     // =====================================
 
-    // 1366px es aproximadamente el ancho de pantallas de 15.6" o menos
-    const isSmallScreen = screenWidth <= 1366;
+    // 576px es el breakpoint para móviles, de modo que las tablets usen la vista de escritorio
+    const isSmallScreen = screenWidth <= 576;
 
     return (
         <>
