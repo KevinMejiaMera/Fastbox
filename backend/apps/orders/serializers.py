@@ -199,6 +199,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'order_number', 'customer', 'order_type', 'order_type_display',
             'status', 'status_display', 'payment_status', 'payment_status_display',
+            'payment_method', 'payment_reference',
             'subtotal', 'tax_amount', 'discount_percentage', 'discount_amount', 'delivery_fee',
             'tip_amount', 'total', 'notes', 'special_instructions',
             'table_number', 'estimated_prep_time', 'items', 'delivery_info',
@@ -245,6 +246,8 @@ class OrderCreateSerializer(serializers.Serializer):
         required=False,
         default=0
     )
+    payment_method = serializers.CharField(required=False, default='efectivo')
+    payment_reference = serializers.CharField(required=False, allow_blank=True, default='')
     delivery_info = DeliveryInfoSerializer(required=False, allow_null=True)
     
     def validate_customer_id(self, value):
@@ -377,7 +380,9 @@ class OrderCreateSerializer(serializers.Serializer):
                 'items': items,
                 'subtotal': float(order.subtotal),
                 'tax': float(order.tax_amount),
-                'total': float(order.total)
+                'total': float(order.total),
+                'payment_method': order.payment_method,
+                'payment_reference': order.payment_reference
             }
             
             # Payload completo

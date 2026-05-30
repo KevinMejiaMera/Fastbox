@@ -146,7 +146,9 @@ const Ordenes = () => {
                 subtotal: parseFloat(selectedOrder.subtotal),
                 discount: parseFloat(selectedOrder.discount_amount || 0),
                 tax: parseFloat(selectedOrder.tax_amount || 0),
-                total: parseFloat(selectedOrder.total)
+                total: parseFloat(selectedOrder.total),
+                payment_method: selectedOrder.payment_method,
+                payment_reference: selectedOrder.payment_reference
             };
 
             await printerService.printReceipt(receiptData);
@@ -635,6 +637,23 @@ const Ordenes = () => {
                                 <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
                                     <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>Total:</span>
                                     <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary-color)' }}>${selectedOrder.total}</span>
+                                </div>
+                            </div>
+
+                            {/* Información de Pago */}
+                            <div style={{ marginTop: '24px' }}>
+                                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>
+                                    Información de Pago
+                                </h3>
+                                <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px' }}>
+                                    <p style={{ margin: '0 0 8px 0', color: '#1f2937' }}>
+                                        <strong>Método de Pago:</strong> <span style={{ textTransform: 'capitalize' }}>{selectedOrder.payment_method || 'Efectivo'}</span>
+                                    </p>
+                                    {selectedOrder.payment_method === 'transferencia' && selectedOrder.payment_reference && (
+                                        <p style={{ margin: '0', color: '#1f2937' }}>
+                                            <strong>Referencia:</strong> {selectedOrder.payment_reference}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

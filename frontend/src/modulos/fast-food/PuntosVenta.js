@@ -61,6 +61,9 @@ const PuntosVenta = () => {
     const [orderDiscountPercentage, setOrderDiscountPercentage] = useState(0);
     const [appliedDiscount, setAppliedDiscount] = useState(null);
 
+    const [paymentMethod, setPaymentMethod] = useState('efectivo');
+    const [transferReference, setTransferReference] = useState('');
+
     const [showReviewModal, setShowReviewModal] = useState(false);
 
     // 3.5 ESTADO DE CALCULADORA DE VUELTO
@@ -452,6 +455,8 @@ const PuntosVenta = () => {
             table_number: tableNumber,
             notes: orderNotes, // Nueva nota general
             discount_percentage: parseFloat(orderDiscountPercentage) || 0,
+            payment_method: paymentMethod,
+            payment_reference: transferReference,
             items: cart.map(item => ({
                 product_id: item.product_id,
                 quantity: item.quantity,
@@ -489,6 +494,8 @@ const PuntosVenta = () => {
                 discount: parseFloat(calculateDiscountAmount),
                 tax: parseFloat(calculateSubtotal * 0.12), // IVA 12%
                 total: parseFloat(calculateTotal),
+                payment_method: paymentMethod,
+                payment_reference: transferReference,
                 printed_at: new Date().toISOString() // Hora del cliente para el ticket
             };
 
@@ -876,6 +883,74 @@ const PuntosVenta = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* SECCIÓN: MÉTODO DE PAGO */}
+            <div style={{
+                marginTop: '1rem',
+                padding: '1rem',
+                backgroundColor: 'var(--sidebar-bg)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)'
+            }}>
+                <h4 style={{
+                    margin: '0 0 0.5rem 0',
+                    color: 'var(--primary-color)',
+                    fontSize: screenWidth <= 1366 ? '0.9rem' : '1rem'
+                }}>
+                    💳 Método de Pago
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {[
+                            { id: 'efectivo', label: 'Efectivo' },
+                            { id: 'tarjeta', label: 'Tarjeta' },
+                            { id: 'transferencia', label: 'Transferencia' }
+                        ].map(method => (
+                            <button
+                                key={method.id}
+                                style={{
+                                    flex: 1,
+                                    padding: '0.75rem',
+                                    backgroundColor: paymentMethod === method.id ? 'var(--primary-color)' : '#ffffff',
+                                    border: `1px solid ${paymentMethod === method.id ? 'var(--primary-color)' : '#d1d5db'}`,
+                                    borderRadius: '8px',
+                                    color: paymentMethod === method.id ? '#ffffff' : '#374151',
+                                    fontWeight: '600',
+                                    fontSize: '0.875rem',
+                                    cursor: 'pointer',
+                                    minHeight: TOUCH_MIN_SIZE
+                                }}
+                                onClick={() => setPaymentMethod(method.id)}
+                            >
+                                {method.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {paymentMethod === 'transferencia' && (
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#374151' }}>
+                                Número de Referencia:
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Ej: 12345678"
+                                value={transferReference}
+                                onChange={(e) => setTransferReference(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
+                                    fontSize: '0.875rem',
+                                    outline: 'none',
+                                    minHeight: TOUCH_MIN_SIZE
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* SECCIÓN: CALCULADORA DE VUELTO */}

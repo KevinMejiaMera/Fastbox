@@ -478,6 +478,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             'tip': float(order.tip_amount),
             'total': float(order.total),
             'payment_status': order.get_payment_status_display(),
+            'payment_method': order.payment_method,
+            'payment_reference': order.payment_reference,
             'notes': order.notes,
         }
         

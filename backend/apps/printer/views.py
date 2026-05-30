@@ -830,6 +830,15 @@ class PrintReceiptView(APIView):
         lines.append(f"{'TOTAL:':<30} ${total:>10.2f}")
         lines.append("=" * chars_per_line)
     
+        # Info de Pago
+        payment_method = order_data.get('payment_method')
+        if payment_method:
+            lines.append(f"Pago en: {str(payment_method).capitalize()}".center(chars_per_line))
+            payment_ref = order_data.get('payment_reference')
+            if str(payment_method).lower() == 'transferencia' and payment_ref:
+                lines.append(f"Ref: {payment_ref}".center(chars_per_line))
+            lines.append("-" * chars_per_line)
+
         lines.append("¡GRACIAS POR SU COMPRA!".center(chars_per_line))
         lines.append("*** VUELVA PRONTO ***".center(chars_per_line))
     

@@ -72,6 +72,19 @@ class Order(models.Model):
         verbose_name='Estado de Pago'
     )
     
+    # Método de pago simplificado para POS
+    payment_method = models.CharField(
+        max_length=50,
+        default='efectivo',
+        verbose_name='Método de Pago'
+    )
+    
+    payment_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Referencia de Pago'
+    )
+    
     # Totales
     subtotal = models.DecimalField(
         max_digits=10,
