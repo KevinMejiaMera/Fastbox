@@ -566,4 +566,6 @@ class OrderReportDetailSerializer(serializers.ModelSerializer):
         payment = obj.payments.filter(status='completed').first() or obj.payments.first()
         if payment and payment.payment_method:
             return payment.payment_method.name
+        if obj.payment_method:
+            return obj.payment_method
         return obj.get_payment_status_display()

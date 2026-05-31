@@ -202,10 +202,10 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
         });
     } else if (report.orders_detail && Array.isArray(report.orders_detail)) {
         report.orders_detail.forEach(order => {
-            // Asumimos pagado si status es delivered/completed o payment_status paid
-            if (['paid'].includes(order.payment_status) || ['delivered', 'completed'].includes(order.status)) {
-                const method = String(order.payment_method || '').toLowerCase();
-                const total = parseFloat(order.total || 0);
+            // Asumimos pagado si status es delivered/completed
+            if (['delivered', 'completed'].includes(order.status) || order.payment_status === 'paid') {
+                const method = String(order.payment_method_display || order.payment_method || '').toLowerCase();
+                const total = parseFloat(order.total_amount || order.total || 0);
                 if (method.includes('efectivo') || method === 'cash') {
                     paymentStats.efectivo.count += 1;
                     paymentStats.efectivo.amount += total;
