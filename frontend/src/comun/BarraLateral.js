@@ -21,7 +21,7 @@ const BarraLateral = () => {
         { path: '/', icon: 'bi-house-door-fill', label: 'Inicio' },
         { path: '/fast-food/pos', icon: 'bi-cart-fill', label: 'Punto de Venta' },
         { path: '/fast-food/orders', icon: 'bi-receipt', label: 'Órdenes' },
-        { path: '/fast-food/inventory', icon: 'bi-box-seam', label: 'Inventario' },
+        { path: '/fast-food/inventory', icon: 'bi-box-seam', label: 'Menú' },
         { path: '/fast-food/customers', icon: 'bi-person-badge', label: 'Clientes' },
         { path: '/fast-food/reports', icon: 'bi-graph-up', label: 'Reportes' },
         { path: '/users', icon: 'bi-people-fill', label: 'Usuarios' },

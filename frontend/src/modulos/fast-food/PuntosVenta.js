@@ -1404,6 +1404,20 @@ const PuntosVenta = () => {
                                         }}>
                                             {product.name}
                                         </h3>
+                                        {product.description && (
+                                            <p style={{
+                                                fontSize: '0.75rem',
+                                                color: '#6b7280',
+                                                marginBottom: '0.25rem',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical'
+                                            }}>
+                                                {product.description}
+                                            </p>
+                                        )}
                                         <p style={{
                                             fontSize: screenWidth <= 768 ? '1rem' : '1.125rem',
                                             fontWeight: '700',
@@ -2035,6 +2049,20 @@ const PuntosVenta = () => {
                                         }}>
                                             {product.name}
                                         </h3>
+                                        {product.description && (
+                                            <p style={{
+                                                fontSize: '0.75rem',
+                                                color: '#6b7280',
+                                                marginBottom: '0.375rem',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical'
+                                            }}>
+                                                {product.description}
+                                            </p>
+                                        )}
                                         <p style={{
                                             fontSize: '1.125rem',
                                             fontWeight: '700',

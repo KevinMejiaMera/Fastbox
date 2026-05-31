@@ -20,7 +20,7 @@ const PanelFastFood = () => {
             color: '#6610f2'
         },
         {
-            title: 'Inventario',
+            title: 'Menú',
             description: 'Administrar productos y stock',
             path: '/fast-food/inventory',
             icon: 'bi-box-seam-fill',
