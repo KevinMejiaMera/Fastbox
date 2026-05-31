@@ -179,7 +179,55 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
         margin: { left: MARGIN, right: MARGIN },
     });
 
-    y = doc.lastAutoTable.finalY + 20;
+    y = doc.lastAutoTable.finalY + 15;
+
+    // --- 3.5 Desglose de Métodos de Pago ---
+    let paymentStats = {
+        efectivo: { count: 0, amount: 0 },
+        transferencia: { count: 0, amount: 0 }
+    };
+
+    if (report.payment_methods && Array.isArray(report.payment_methods)) {
+        report.payment_methods.forEach(pm => {
+            const method = String(pm.payment_method__name || pm.method || pm.name || '').toLowerCase();
+            const count = parseInt(pm.count || 0);
+            const amount = parseFloat(pm.total || pm.amount || 0);
+            if (method.includes('efectivo') || method === 'cash') {
+                paymentStats.efectivo.count += count;
+                paymentStats.efectivo.amount += amount;
+            } else if (method.includes('transferencia') || method.includes('transfer')) {
+                paymentStats.transferencia.count += count;
+                paymentStats.transferencia.amount += amount;
+            }
+        });
+    } else if (report.orders_detail && Array.isArray(report.orders_detail)) {
+        report.orders_detail.forEach(order => {
+            // Asumimos pagado si status es delivered/completed o payment_status paid
+            if (['paid'].includes(order.payment_status) || ['delivered', 'completed'].includes(order.status)) {
+                const method = String(order.payment_method || '').toLowerCase();
+                const total = parseFloat(order.total || 0);
+                if (method.includes('efectivo') || method === 'cash') {
+                    paymentStats.efectivo.count += 1;
+                    paymentStats.efectivo.amount += total;
+                } else if (method.includes('transferencia') || method.includes('transfer')) {
+                    paymentStats.transferencia.count += 1;
+                    paymentStats.transferencia.amount += total;
+                }
+            }
+        });
+    }
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Resumen de Pagos', MARGIN, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    
+    doc.text(`Efectivo: ${paymentStats.efectivo.count} pedidos - ${formatCurrency(paymentStats.efectivo.amount)}`, MARGIN, y);
+    y += 5;
+    doc.text(`Transferencia: ${paymentStats.transferencia.count} pedidos - ${formatCurrency(paymentStats.transferencia.amount)}`, MARGIN, y);
+    y += 15;
 
     // --- 4. Total Final ---
     doc.setFontSize(16);
