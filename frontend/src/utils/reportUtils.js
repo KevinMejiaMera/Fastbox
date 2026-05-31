@@ -187,7 +187,7 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
         transferencia: { count: 0, amount: 0 }
     };
 
-    if (report.payment_methods && Array.isArray(report.payment_methods)) {
+    if (report.payment_methods && Array.isArray(report.payment_methods) && report.payment_methods.length > 0) {
         report.payment_methods.forEach(pm => {
             const method = String(pm.payment_method__name || pm.method || pm.name || '').toLowerCase();
             const count = parseInt(pm.count || 0);
@@ -200,7 +200,7 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
                 paymentStats.transferencia.amount += amount;
             }
         });
-    } else if (report.orders_detail && Array.isArray(report.orders_detail)) {
+    } else if (report.orders_detail && Array.isArray(report.orders_detail) && report.orders_detail.length > 0) {
         report.orders_detail.forEach(order => {
             // Asumimos pagado si status es delivered/completed
             if (['delivered', 'completed'].includes(order.status) || order.payment_status === 'paid') {
