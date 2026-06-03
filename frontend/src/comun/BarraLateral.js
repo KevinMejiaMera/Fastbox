@@ -23,6 +23,7 @@ const BarraLateral = () => {
         { path: '/fast-food/orders', icon: 'bi-receipt', label: 'Órdenes' },
         { path: '/fast-food/inventory', icon: 'bi-box-seam', label: 'Menú' },
         { path: '/fast-food/customers', icon: 'bi-person-badge', label: 'Clientes' },
+        { path: '/fast-food/shift', icon: 'bi-cash-coin', label: 'Caja' },
         { path: '/fast-food/reports', icon: 'bi-graph-up', label: 'Reportes' },
         { path: '/users', icon: 'bi-people-fill', label: 'Usuarios' },
     ];

@@ -114,6 +114,42 @@ class ShiftViewSet(viewsets.ModelViewSet):
             'shift': ShiftSerializer(shift).data
         })
     
+    @action(detail=True, methods=['post'])
+    def add_expense(self, request, pk=None):
+        shift = self.get_object()
+        
+        if shift.status != 'open':
+            return Response({'error': 'El turno debe estar abierto para registrar gastos.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        amount = request.data.get('amount')
+        description = request.data.get('description', '')
+        
+        if not amount:
+            return Response({'error': 'El monto es requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            from decimal import Decimal
+            amount = Decimal(amount)
+            if amount <= 0:
+                raise ValueError
+        except:
+            return Response({'error': 'Monto inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if not shift.cash_register:
+            return Response({'error': 'El turno no tiene una caja registradora asignada.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from apps.payments.models import CashMovement
+        movement = CashMovement.objects.create(
+            cash_register=shift.cash_register,
+            movement_type='out',
+            reason='expense',
+            amount=amount,
+            description=description,
+            performed_by=shift.user_name or 'Sistema'
+        )
+        
+        return Response({'message': 'Gasto registrado exitosamente.', 'expense_id': movement.id})
+    
     @action(detail=False, methods=['get'])
     def current(self, request):
         # COMENTADO para desarrollo - sin filtro de usuario
@@ -206,6 +242,19 @@ class ShiftViewSet(viewsets.ModelViewSet):
             total_amount=Sum('line_total')
         ).order_by('product__name')
         
+        # 6. Obtener Gastos (Egresos) del turno
+        from apps.payments.models import CashMovement
+        expenses_queryset = CashMovement.objects.filter(
+            cash_register=shift.cash_register,
+            movement_type='out',
+            reason='expense',
+            created_at__gte=start_time,
+            created_at__lte=end_time
+        ) if shift.cash_register else CashMovement.objects.none()
+        
+        expenses = expenses_queryset.values('description', 'amount', 'created_at')
+        total_expenses = expenses_queryset.aggregate(total=Sum('amount'))['total'] or 0
+        
         report_data = {
             'shift_info': {
                 'number': shift.shift_number,
@@ -213,16 +262,20 @@ class ShiftViewSet(viewsets.ModelViewSet):
                 'opened_at': shift.opened_at,
                 'closed_at': shift.closed_at,
                 'status': shift.status,
+                'opening_cash': float(shift.opening_cash) if shift.opening_cash is not None else 0.0,
+                'closing_cash': float(shift.closing_cash) if shift.closing_cash is not None else 0.0,
                 'cash_register': shift.cash_register.register_number if shift.cash_register else 'N/A'
             },
             'summary': {
                 'total_sales': total_sales,
                 'total_orders': total_orders,
                 'average_ticket': total_sales / total_orders if total_orders > 0 else 0,
+                'total_expenses': total_expenses
             },
             'payment_methods': list(payment_methods),
             'top_products': list(top_products),
-            'orders_detail': orders_data
+            'orders_detail': orders_data,
+            'expenses': list(expenses)
         }
         
         return Response(report_data)

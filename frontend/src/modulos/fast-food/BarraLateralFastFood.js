@@ -30,7 +30,7 @@ const BarraLateralFastFood = () => {
                     <Link to="/fast-food/customers">Clientes</Link>
                 </li>
                 <li className={isActive('/fast-food/shift')}>
-                    <Link to="/fast-food/shift">Caja (Turnos)</Link>
+                    <Link to="/fast-food/shift">Caja</Link>
                 </li>
             </ul>
         </aside>

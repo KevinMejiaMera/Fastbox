@@ -11,7 +11,7 @@ import Ordenes from './modulos/fast-food/Ordenes';
 import Clientes from './modulos/fast-food/Clientes';
 import Reportes from './modulos/fast-food/Reportes';
 import PuntosVenta from './modulos/fast-food/PuntosVenta';
-import ShiftManager from './modulos/fast-food/ShiftManager';
+import PanelCaja from './modulos/fast-food/Caja/PanelCaja';
 import Impresoras from './modulos/fast-food/Impresoras';
 import DisenoFastFood from './modulos/fast-food/DisenoFastFood';
 import logo from './assets/logo.png';
@@ -123,7 +123,7 @@ function App() {
           } />
           <Route path="/fast-food/shift" element={
             <FastFoodRoute>
-              <ShiftManager onShiftActive={() => { }} />
+              <PanelCaja />
             </FastFoodRoute>
           } />
           <Route path="/fast-food/printers" element={
