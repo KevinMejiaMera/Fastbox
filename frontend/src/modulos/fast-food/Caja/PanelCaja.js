@@ -128,7 +128,7 @@ const PanelCaja = () => {
     if (loading && !shiftsHistory.length) return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando Panel de Caja...</div>;
 
     const styles = {
-        container: { minHeight: '100vh', backgroundColor: '#f0f2f5', padding: '2rem' },
+        container: { minHeight: '100vh', backgroundColor: 'var(--sidebar-bg)', padding: '2rem' },
         wrapper: { maxWidth: '1200px', margin: '0 auto' },
         header: {
             backgroundColor: '#ffffff', borderRadius: '16px', padding: '2rem',
@@ -136,9 +136,9 @@ const PanelCaja = () => {
             display: 'flex', alignItems: 'center', gap: '1.5rem'
         },
         headerIcon: {
-            width: '64px', height: '64px', backgroundColor: '#e7f1ff',
+            width: '64px', height: '64px', backgroundColor: 'var(--secondary-color)',
             borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2rem', color: '#0d6efd'
+            fontSize: '2rem', color: 'var(--primary-color)'
         },
         grid: { display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem' },
         card: {
@@ -154,17 +154,17 @@ const PanelCaja = () => {
         label: { display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#495057' },
         buttonPrimary: {
             width: '100%', padding: '0.875rem', borderRadius: '8px',
-            backgroundColor: '#0d6efd', color: '#fff', border: 'none',
-            fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s'
+            backgroundColor: 'var(--primary-color)', color: '#fff', border: 'none',
+            fontWeight: '600', cursor: 'pointer', transition: 'opacity 0.2s'
         },
         buttonDanger: {
             width: '100%', padding: '0.875rem', borderRadius: '8px',
-            backgroundColor: '#dc3545', color: '#fff', border: 'none',
-            fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s'
+            backgroundColor: 'var(--primary-color)', color: '#fff', border: 'none',
+            fontWeight: '600', cursor: 'pointer', transition: 'opacity 0.2s'
         },
         table: { width: '100%', borderCollapse: 'collapse' },
-        th: { padding: '1rem', textAlign: 'left', borderBottom: '2px solid #e9ecef', color: '#6c757d', fontWeight: '600' },
-        td: { padding: '1rem', borderBottom: '1px solid #e9ecef', verticalAlign: 'middle' },
+        th: { padding: '1rem', textAlign: 'left', borderBottom: '2px solid var(--primary-color)', color: 'var(--primary-color)', fontWeight: '600' },
+        td: { padding: '1rem', borderBottom: '1px solid var(--primary-color)', verticalAlign: 'middle' },
         statusBadge: (isOpen) => ({
             padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
             backgroundColor: isOpen ? '#d1e7dd' : '#e2e3e5',
@@ -194,10 +194,10 @@ const PanelCaja = () => {
 
                 <div style={styles.grid}>
                     {/* Panel de Acción */}
-                    <div style={{ ...styles.card, borderTop: `4px solid ${currentShift?.status === 'open' ? '#198754' : '#0d6efd'}` }}>
+                    <div style={{ ...styles.card, borderTop: `4px solid ${currentShift?.status === 'open' ? 'var(--success-color)' : 'var(--primary-color)'}` }}>
                         {currentShift && currentShift.status === 'open' ? (
                             <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#198754', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success-color)', marginBottom: '1.5rem' }}>
                                     <i className="bi bi-unlock-fill" style={{ fontSize: '1.5rem' }}></i>
                                     <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Caja Abierta</h2>
                                 </div>
@@ -219,8 +219,8 @@ const PanelCaja = () => {
                                         value={notes} onChange={(e) => setNotes(e.target.value)} />
 
                                     <button type="submit" style={styles.buttonDanger}
-                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#bb2d3b'}
-                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}>
+                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
                                         Cerrar Caja
                                     </button>
                                 </form>
@@ -236,9 +236,9 @@ const PanelCaja = () => {
                                     <textarea style={{ ...styles.input, resize: 'vertical' }} rows="2" required placeholder="Ej: Pago de agua"
                                         value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} />
 
-                                    <button type="submit" style={{...styles.buttonPrimary, backgroundColor: '#ffc107', color: '#000'}}
-                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#ffca2c'}
-                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#ffc107'}>
+                                    <button type="submit" style={{...styles.buttonPrimary, backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)'}}
+                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
                                         Registrar Gasto
                                     </button>
                                 </form>
@@ -263,8 +263,8 @@ const PanelCaja = () => {
                                         value={notes} onChange={(e) => setNotes(e.target.value)} />
 
                                     <button type="submit" style={styles.buttonPrimary}
-                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#0b5ed7'}
-                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#0d6efd'}>
+                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
                                         Abrir Caja
                                     </button>
                                 </form>
@@ -289,7 +289,7 @@ const PanelCaja = () => {
                                 <tbody>
                                     {shiftsHistory.map(shift => (
                                         <tr key={shift.id} style={{ transition: 'background-color 0.2s' }} 
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
                                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                                             <td style={styles.td}>
                                                 <div style={{ fontWeight: '600', color: '#212529' }}>{shift.shift_number}</div>
@@ -298,14 +298,14 @@ const PanelCaja = () => {
                                             <td style={styles.td}>
                                                 <div style={{ color: '#212529' }}>{new Date(shift.opened_at).toLocaleDateString()}</div>
                                                 <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.opened_at).toLocaleTimeString()}</div>
-                                                <div style={{ color: '#198754', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.opening_cash || 0).toFixed(2)}</div>
+                                                <div style={{ color: 'var(--success-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.opening_cash || 0).toFixed(2)}</div>
                                             </td>
                                             <td style={styles.td}>
                                                 {shift.closed_at ? (
                                                     <>
                                                         <div style={{ color: '#212529' }}>{new Date(shift.closed_at).toLocaleDateString()}</div>
                                                         <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.closed_at).toLocaleTimeString()}</div>
-                                                        <div style={{ color: '#0d6efd', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.closing_cash || 0).toFixed(2)}</div>
+                                                        <div style={{ color: 'var(--primary-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.closing_cash || 0).toFixed(2)}</div>
                                                     </>
                                                 ) : <span style={{ color: '#adb5bd', fontStyle: 'italic' }}>En curso</span>}
                                             </td>
@@ -319,10 +319,10 @@ const PanelCaja = () => {
                                                     <button 
                                                         onClick={() => setSelectedShiftId(shift.id)}
                                                         style={{ 
-                                                            background: 'none', border: 'none', color: '#0d6efd',
+                                                            background: 'none', border: 'none', color: 'var(--primary-color)',
                                                             cursor: 'pointer', padding: '0.5rem', borderRadius: '8px'
                                                         }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e7f1ff'}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-color)'}
                                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                                         title="Ver Reporte"
                                                     >

@@ -150,7 +150,6 @@ const ReporteCaja = ({ shiftId }) => {
         doc.text('Total General de Ventas (Todos los métodos)', MARGIN, y);
         y += 10;
         doc.setFontSize(16);
-        doc.setTextColor(25, 135, 84); // Verde
         doc.text(formatCurrency(totalSales), MARGIN, y);
         
         if (shift_info.opening_notes || shift_info.closing_notes) {
@@ -187,11 +186,11 @@ const ReporteCaja = ({ shiftId }) => {
         textTotal: { display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed #ced4da', fontWeight: '700', color: '#1a1a2e' },
         section: { backgroundColor: '#f8f9fa', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' },
         btnPDFCaja: { 
-            backgroundColor: '#0d6efd', color: '#fff', border: 'none', padding: '0.6rem 1rem', 
+            backgroundColor: 'var(--primary-color)', color: '#fff', border: 'none', padding: '0.6rem 1rem', 
             borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1'
         },
         btnPDFVentas: { 
-            backgroundColor: '#198754', color: '#fff', border: 'none', padding: '0.6rem 1rem', 
+            backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)', border: 'none', padding: '0.6rem 1rem', 
             borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1'
         }
     };
@@ -219,30 +218,30 @@ const ReporteCaja = ({ shiftId }) => {
                 <div style={styles.textRow}><span>Cierre:</span> <span>{shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}</span></div>
             </div>
 
-            <div style={{ backgroundColor: '#e7f1ff', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                <h3 style={{ ...styles.titleInfo, color: '#084298' }}>Cuadre de Caja</h3>
+            <div style={{ backgroundColor: 'var(--secondary-color)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                <h3 style={{ ...styles.titleInfo, color: 'var(--primary-color)' }}>Cuadre de Caja</h3>
                 <div style={styles.textRow}>
-                    <span style={{ color: '#052c65' }}>Efectivo Inicial:</span> 
-                    <span style={{ fontWeight: '500', color: '#052c65' }}>${openingCash.toFixed(2)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>Efectivo Inicial:</span> 
+                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${openingCash.toFixed(2)}</span>
                 </div>
                 <div style={styles.textRow}>
-                    <span style={{ color: '#052c65' }}>Ventas del Turno (Efectivo):</span> 
-                    <span style={{ fontWeight: '500', color: '#052c65' }}>${paymentStats.efectivo.toFixed(2)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>Ventas del Turno (Efectivo):</span> 
+                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${paymentStats.efectivo.toFixed(2)}</span>
                 </div>
                 <div style={styles.textRow}>
-                    <span style={{ color: '#052c65' }}>Ventas del Turno (Transferencia):</span> 
-                    <span style={{ fontWeight: '500', color: '#052c65' }}>${paymentStats.transferencia.toFixed(2)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>Ventas del Turno (Transferencia):</span> 
+                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${paymentStats.transferencia.toFixed(2)}</span>
                 </div>
                 <div style={styles.textRow}>
-                    <span style={{ color: '#052c65' }}>Ventas del Turno (Tarjeta):</span> 
-                    <span style={{ fontWeight: '500', color: '#052c65' }}>${paymentStats.tarjeta.toFixed(2)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>Ventas del Turno (Tarjeta):</span> 
+                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${paymentStats.tarjeta.toFixed(2)}</span>
                 </div>
                 <div style={styles.textRow}>
-                    <span style={{ color: '#052c65' }}>Gastos (Egresos):</span> 
-                    <span style={{ fontWeight: '500', color: '#dc3545' }}>-${totalExpenses.toFixed(2)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>Gastos (Egresos):</span> 
+                    <span style={{ fontWeight: '500', color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
                 </div>
                 
-                <div style={{ ...styles.textTotal, borderColor: '#b6d4fe', color: '#084298' }}>
+                <div style={{ ...styles.textTotal, borderColor: 'var(--primary-color)', color: 'var(--primary-color)' }}>
                     <span>Efectivo Físico Final:</span> 
                     <span style={{ fontSize: '1.1rem' }}>${closingCash.toFixed(2)}</span>
                 </div>
@@ -250,7 +249,7 @@ const ReporteCaja = ({ shiftId }) => {
 
             <div style={styles.section}>
                 <h3 style={styles.titleInfo}>Total General de Ventas (Todos los métodos)</h3>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#198754', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary-color)', textAlign: 'center' }}>
                     ${totalSales.toFixed(2)}
                 </div>
             </div>
