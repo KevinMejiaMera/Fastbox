@@ -509,3 +509,97 @@ class MenuViewSet(viewsets.ViewSet):
         categories = Category.objects.filter(is_active=True).order_by('display_order')
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
+
+
+# ============================================================================
+# VIEWSETS DE BODEGA / INVENTARIO
+# ============================================================================
+
+from .models import Supply, SupplyMovement, RecipeIngredient
+from .serializers import SupplySerializer, SupplyMovementSerializer, RecipeIngredientSerializer
+
+class SupplyViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para Insumos (Bodega)
+    """
+    queryset = Supply.objects.all()
+    serializer_class = SupplySerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['is_active', 'unit']
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'current_stock', 'created_at']
+    ordering = ['name']
+
+    @action(detail=True, methods=['post'])
+    def record_movement(self, request, pk=None):
+        """Registra un ingreso o egreso manual del insumo"""
+        supply = self.get_object()
+        movement_type = request.data.get('movement_type')
+        quantity = request.data.get('quantity')
+        reason = request.data.get('reason', '')
+        
+        try:
+            quantity = float(quantity)
+        except (TypeError, ValueError):
+            return Response({'error': 'La cantidad debe ser un número válido'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if movement_type not in ['in', 'out', 'adjustment']:
+            return Response({'error': 'Tipo de movimiento inválido'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if quantity <= 0:
+            return Response({'error': 'La cantidad debe ser mayor a cero'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Generar movimiento
+        movement = SupplyMovement.objects.create(
+            supply=supply,
+            movement_type=movement_type,
+            quantity=quantity,
+            reason=reason,
+            created_by=request.user.username if hasattr(request, 'user') and not request.user.is_anonymous else 'Admin'
+        )
+        
+        # Actualizar stock
+        from decimal import Decimal
+        if movement_type == 'in':
+            supply.current_stock += Decimal(str(quantity))
+        elif movement_type == 'out':
+            supply.current_stock -= Decimal(str(quantity))
+        elif movement_type == 'adjustment':
+            # Ajuste puede ser reemplazar el stock o sumarle, asumiremos que adjustment quantity es la diferencia real
+            # Para este caso simple, si es ajuste positivo suma, negativo resta, pero arriba validamos quantity > 0
+            # Si quiere hacer un ajuste negativo, usa 'out'.
+            supply.current_stock = Decimal(str(quantity)) # Replace completely if adjustment? Or let's just make adjustment replace current_stock.
+            movement.quantity = Decimal(str(quantity))
+            movement.save()
+            
+        supply.save()
+        
+        return Response({
+            'message': 'Movimiento registrado con éxito',
+            'current_stock': supply.current_stock
+        })
+
+
+class SupplyMovementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para leer historial de Movimientos de Bodega (solo lectura)
+    """
+    queryset = SupplyMovement.objects.all().select_related('supply')
+    serializer_class = SupplyMovementSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['supply', 'movement_type']
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+
+
+class RecipeIngredientViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para administrar la receta (Product -> Supply)
+    """
+    queryset = RecipeIngredient.objects.all().select_related('product', 'supply', 'size')
+    serializer_class = RecipeIngredientSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['product', 'supply']

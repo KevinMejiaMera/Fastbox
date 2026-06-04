@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, Size, Extra, Combo, ComboProduct
+from .models import Category, Product, Size, Extra, Combo, ComboProduct, Supply, SupplyMovement, RecipeIngredient
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -274,3 +274,37 @@ class ExtraCreateUpdateSerializer(serializers.ModelSerializer):
             instance.products.set(product_ids)
         
         return instance
+
+
+class SupplySerializer(serializers.ModelSerializer):
+    """Serializer para insumos"""
+    unit_display = serializers.CharField(source='get_unit_display', read_only=True)
+    
+    class Meta:
+        model = Supply
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class SupplyMovementSerializer(serializers.ModelSerializer):
+    """Serializer para movimientos de inventario"""
+    supply_name = serializers.CharField(source='supply.name', read_only=True)
+    movement_type_display = serializers.CharField(source='get_movement_type_display', read_only=True)
+    
+    class Meta:
+        model = SupplyMovement
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at']
+
+
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """Serializer para ingredientes de receta"""
+    supply_name = serializers.CharField(source='supply.name', read_only=True)
+    supply_unit = serializers.CharField(source='supply.get_unit_display', read_only=True)
+    size_name = serializers.CharField(source='size.name', read_only=True, allow_null=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    
+    class Meta:
+        model = RecipeIngredient
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at']

@@ -330,3 +330,119 @@ class ComboProduct(models.Model):
     
     def __str__(self):
         return f'{self.combo.name} - {self.product.name} (x{self.quantity})'
+
+
+class Supply(models.Model):
+    """Insumos y materias primas de bodega"""
+    UNIT_CHOICES = [
+        ('unit', 'Unidad'),
+        ('kg', 'Kilogramo (kg)'),
+        ('g', 'Gramo (g)'),
+        ('l', 'Litro (L)'),
+        ('ml', 'Mililitro (ml)'),
+        ('oz', 'Onza (oz)'),
+        ('lb', 'Libra (lb)'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, unique=True, verbose_name='Nombre')
+    description = models.TextField(blank=True, verbose_name='Descripción')
+    
+    unit = models.CharField(
+        max_length=20, 
+        choices=UNIT_CHOICES, 
+        default='unit',
+        verbose_name='Unidad de medida'
+    )
+    
+    current_stock = models.DecimalField(
+        max_digits=12,
+        decimal_places=3,
+        default=0,
+        verbose_name='Stock Actual'
+    )
+    
+    minimum_stock = models.DecimalField(
+        max_digits=12,
+        decimal_places=3,
+        default=0,
+        verbose_name='Stock Mínimo'
+    )
+    
+    cost_per_unit = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Costo por unidad'
+    )
+    
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Insumo / Materia Prima'
+        verbose_name_plural = 'Insumos'
+        ordering = ['name']
+    
+    def __str__(self):
+        return f'{self.name} ({self.get_unit_display()})'
+
+
+class SupplyMovement(models.Model):
+    """Movimientos de inventario (Ingresos, Egresos, Ajustes, Ventas)"""
+    MOVEMENT_TYPES = [
+        ('in', 'Ingreso (Compra/Reabastecimiento)'),
+        ('out', 'Egreso (Desecho/Pérdida)'),
+        ('sale', 'Egreso por Venta'),
+        ('adjustment', 'Ajuste de Inventario'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    supply = models.ForeignKey(Supply, on_delete=models.CASCADE, related_name='movements', verbose_name='Insumo')
+    
+    movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES, verbose_name='Tipo de Movimiento')
+    quantity = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='Cantidad')
+    
+    reason = models.CharField(max_length=255, blank=True, verbose_name='Motivo / Razón')
+    reference_id = models.CharField(max_length=100, blank=True, verbose_name='ID Referencia (Venta/Factura)')
+    
+    created_by = models.CharField(max_length=100, blank=True, verbose_name='Registrado por')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha')
+    
+    class Meta:
+        verbose_name = 'Movimiento de Bodega'
+        verbose_name_plural = 'Movimientos de Bodega'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        sign = "+" if self.movement_type in ["in", "adjustment"] and self.quantity > 0 else "-"
+        return f'{self.supply.name}: {sign}{abs(self.quantity)} ({self.get_movement_type_display()})'
+
+
+class RecipeIngredient(models.Model):
+    """Asigna insumos a los productos del menú (La Receta)"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='recipe_ingredients', verbose_name='Producto')
+    
+    # Opcional: si el insumo depende del tamaño (ej: vaso pequeño o vaso grande)
+    size = models.ForeignKey(Size, on_delete=models.CASCADE, related_name='recipe_ingredients', null=True, blank=True, verbose_name='Tamaño (Opcional)')
+    
+    supply = models.ForeignKey(Supply, on_delete=models.PROTECT, related_name='used_in_recipes', verbose_name='Insumo')
+    
+    quantity = models.DecimalField(max_digits=10, decimal_places=3, verbose_name='Cantidad requerida')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Ingrediente de Receta'
+        verbose_name_plural = 'Ingredientes de Receta'
+        unique_together = ['product', 'size', 'supply']
+        
+    def __str__(self):
+        if self.size:
+            return f'{self.quantity} {self.supply.get_unit_display()} de {self.supply.name} para {self.product.name} ({self.size.name})'
+        return f'{self.quantity} {self.supply.get_unit_display()} de {self.supply.name} para {self.product.name}'

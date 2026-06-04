@@ -345,6 +345,10 @@ class OrderCreateSerializer(serializers.Serializer):
         order.calculate_totals()
         order.save()
         
+        # Descontar inventario si nace como pagada (Ej. en el POS)
+        if order.payment_status == 'paid':
+            order.deduct_inventory()
+            
         # ========================================
         # ENVIAR A IMPRESIÓN AUTOMÁTICAMENTE
         # ========================================

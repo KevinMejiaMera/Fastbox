@@ -711,9 +711,11 @@ class PrintReceiptView(APIView):
             
             return Response({
                 'status': 'success',
-                'message': 'Ticket creado, el agente lo imprimirá',
+                'message': 'Ticket creado',
                 'job_id': str(print_job.id),
-                'job_number': print_job.job_number
+                'job_number': print_job.job_number,
+                'receipt_text': content,
+                'connection_type': printer.connection_type
             })
                 
         except Exception as e:

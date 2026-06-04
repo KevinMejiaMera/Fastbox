@@ -12,6 +12,9 @@ router.register(r'sizes', views.SizeViewSet, basename='size')
 router.register(r'extras', views.ExtraViewSet, basename='extra')
 router.register(r'combos', views.ComboViewSet, basename='combo')
 router.register(r'menu', views.MenuViewSet, basename='menu')
+router.register(r'supplies', views.SupplyViewSet, basename='supply')
+router.register(r'supply-movements', views.SupplyMovementViewSet, basename='supply-movement')
+router.register(r'recipe-ingredients', views.RecipeIngredientViewSet, basename='recipe-ingredient')
 
 # URLs
 urlpatterns = [

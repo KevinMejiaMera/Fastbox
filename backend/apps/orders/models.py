@@ -185,6 +185,17 @@ class Order(models.Model):
         return f'Orden #{self.order_number}'
     
     def save(self, *args, **kwargs):
+        # Detectar si acaba de ser pagado
+        is_newly_paid = False
+        is_new = self._state.adding
+        if not is_new:
+            try:
+                old_order = Order.objects.get(pk=self.pk)
+                if old_order.payment_status != 'paid' and self.payment_status == 'paid':
+                    is_newly_paid = True
+            except Order.DoesNotExist:
+                pass
+            
         # Generar número de orden si no existe
         if not self.order_number:
             self.order_number = self.generate_order_number()
@@ -194,6 +205,47 @@ class Order(models.Model):
             self.calculate_totals()
         
         super().save(*args, **kwargs)
+        
+        if is_newly_paid:
+            self.deduct_inventory()
+            
+    def deduct_inventory(self):
+        """Deduce el inventario basado en los items de la orden y sus recetas"""
+        try:
+            from apps.menu.models import RecipeIngredient, SupplyMovement
+        except ImportError:
+            return
+            
+        if getattr(self, '_inventory_deducted', False):
+            return
+            
+        for item in self.items.all():
+            recipes = RecipeIngredient.objects.filter(product=item.product)
+            if item.size:
+                size_recipes = recipes.filter(size=item.size)
+                if size_recipes.exists():
+                    recipes = size_recipes
+                else:
+                    recipes = recipes.filter(size__isnull=True)
+            else:
+                recipes = recipes.filter(size__isnull=True)
+                
+            for recipe in recipes:
+                total_qty_to_deduct = recipe.quantity * item.quantity
+                
+                SupplyMovement.objects.create(
+                    supply=recipe.supply,
+                    movement_type='sale',
+                    quantity=total_qty_to_deduct,
+                    reason=f'Venta orden {self.order_number}',
+                    reference_id=self.order_number,
+                    created_by='Sistema POS'
+                )
+                
+                recipe.supply.current_stock -= total_qty_to_deduct
+                recipe.supply.save()
+                
+        self._inventory_deducted = True
     
     @staticmethod
     def generate_order_number():
