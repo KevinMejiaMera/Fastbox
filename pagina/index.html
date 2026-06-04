@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FastBox POS — Documentación del Proyecto</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+      font-family: 'Outfit', sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    /* ===== TOP NAVBAR ===== */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      z-index: 1000;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #1e293b;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.3px;
+    }
+
+    .nav-brand i {
+      background: #e0f2fe;
+      color: #0284c7;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.2rem;
+    }
+
+    .nav-links a {
+      color: #64748b;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: #0284c7;
+      background: #f1f5f9;
+    }
+
+    .nav-links a.active {
+      color: #0284c7;
+      background: #e0f2fe;
+    }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 0.3rem;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      margin-top: 60px;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 3rem 2rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      left: -5%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .hero-text {
+      flex: 1;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0284c7;
+      padding: 0.25rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.6rem;
+    }
+
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .hero h1 span {
+      color: #93c5fd;
+    }
+
+    .hero p {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      max-width: 550px;
+      margin-top: 0.4rem;
+    }
+
+    .hero-visual {
+      flex-shrink: 0;
+      width: 200px;
+      height: 200px;
+      background: #f1f5f9;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      color: rgba(2, 132, 199, 0.1);
+      border: 1px solid #e2e8f0;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-stats div {
+      text-align: center;
+    }
+
+    .hero-stats .num {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #93c5fd;
+    }
+
+    .hero-stats .label {
+      font-size: 0.72rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== SECTIONS ===== */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .section-compact {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem 1.5rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .section-header i {
+      font-size: 1.2rem;
+      color: #0284c7;
+      background: rgba(26, 86, 130, 0.1);
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .section-header h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .section-header .line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, #0284c7 0%, transparent 100%);
+      margin-left: 0.5rem;
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .card h3 i {
+      color: #0284c7;
+      font-size: 0.9rem;
+    }
+
+    .card p,
+    .card li {
+      font-size: 0.88rem;
+      color: #475569;
+    }
+
+    .card ul {
+      padding-left: 1.1rem;
+    }
+
+    .card ul li {
+      margin-bottom: 0.2rem;
+    }
+
+    .card+.card {
+      margin-top: 1rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* ===== TABLES ===== */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead {
+      background: #1e293b;
+      color: #ffffff;
+      position: sticky;
+      top: 0;
+    }
+
+    thead th {
+      padding: 0.65rem 0.9rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    tbody td {
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    tbody tr:hover {
+      background: #eef2f7;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .tag-blue {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .tag-green {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .tag-amber {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .tag-red {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    /* ===== TECH BADGES ===== */
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tech-badge {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 0.3rem 0.8rem;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .tech-badge i {
+      color: #0284c7;
+      font-size: 0.8rem;
+    }
+
+    /* ===== GANTT ===== */
+    .gantt {
+      margin-top: 0.5rem;
+    }
+
+    .gantt-row {
+      display: flex;
+      align-items: center;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid #e2e8f0;
+      gap: 0.6rem;
+    }
+
+    .gantt-row .g-label {
+      width: 160px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .gantt-row .g-label i {
+      width: 16px;
+      color: #0284c7;
+    }
+
+    .gantt-row .g-track {
+      flex: 1;
+      height: 20px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gantt-row .g-bar {
+      height: 100%;
+      border-radius: 4px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .g-bar.phase1 {
+      background: #0284c7;
+    }
+
+    .g-bar.phase2 {
+      background: #38bdf8;
+    }
+
+    .g-bar.phase3 {
+      background: #60a5fa;
+    }
+
+    .g-bar.phase4 {
+      background: #93c5fd;
+      color: #1e293b;
+    }
+
+    .g-bar.phase5 {
+      background: #bfdbfe;
+      color: #1e293b;
+    }
+
+    .gantt-months {
+      display: flex;
+      margin-left: 160px;
+      margin-bottom: 0.2rem;
+      font-size: 0.65rem;
+      color: #64748b;
+    }
+
+    .gantt-months span {
+      flex: 1;
+      text-align: center;
+    }
+
+    /* ===== ARCH DIAGRAM ===== */
+    .arch-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      padding: 1.2rem 0;
+    }
+
+    .arch-box {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.8rem 1.2rem;
+      text-align: center;
+      min-width: 100px;
+      transition: all 0.2s ease;
+    }
+
+    .arch-box:hover {
+      border-color: #0284c7;
+      transform: translateY(-2px);
+    }
+
+    .arch-box i {
+      font-size: 1.5rem;
+      color: #0284c7;
+      margin-bottom: 0.2rem;
+    }
+
+    .arch-box span {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .arch-box small {
+      display: block;
+      font-size: 0.65rem;
+      color: #64748b;
+    }
+
+    .arch-arrow {
+      font-size: 1.2rem;
+      color: #94a3b8;
+    }
+
+    /* ===== METRIC CARDS ===== */
+    .metric-card {
+      text-align: center;
+      padding: 1.2rem 0.8rem;
+    }
+
+    .metric-card .metric-value {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .metric-card .metric-label {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 0.15rem;
+    }
+
+    /* ===== STORY CARDS ===== */
+    .story-card {
+      background: #f8fafc;
+      border-left: 3px solid #0284c7;
+      padding: 0.7rem 0.9rem;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .story-card .story-id {
+      font-weight: 700;
+      color: #0284c7;
+      font-size: 0.75rem;
+    }
+
+    .story-card .story-text {
+      font-size: 0.84rem;
+      color: #334155;
+    }
+
+    .story-card .story-role {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+    }
+
+    /* ===== DOD ===== */
+    .dod-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0;
+      font-size: 0.84rem;
+    }
+
+    .dod-item .dod-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      flex-shrink: 0;
+    }
+
+    /* ===== BURNDOWN ===== */
+    .burndown {
+      padding: 0.5rem 0;
+    }
+
+    .burndown svg {
+      width: 100%;
+      max-width: 650px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+    }
+
+    /* ===== ER DIAGRAM ===== */
+    .er-diagram {
+      overflow-x: auto;
+      padding: 0.5rem 0;
+    }
+
+    .er-diagram svg {
+      min-width: 750px;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ===== DEPLOY ===== */
+    .deploy-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      padding: 1rem 0;
+    }
+
+    .deploy-box {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      min-width: 90px;
+    }
+
+    .deploy-box .db-icon {
+      font-size: 1.2rem;
+      color: #0284c7;
+    }
+
+    .deploy-box .db-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: block;
+    }
+
+    .deploy-box .db-sub {
+      font-size: 0.6rem;
+      color: #64748b;
+    }
+
+    .deploy-box.highlight {
+      border-color: #0284c7;
+      background: #f0f7ff;
+    }
+
+    .deploy-connector {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    /* ===== SCRUM FLOW ===== */
+    .scrum-flow {
+      padding: 0.5rem 0;
+      text-align: center;
+    }
+
+    .scrum-flow svg {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    /* ===== CONCLUSION ICONS ===== */
+    .conclusion-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      background: #f1f5f9;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+    }
+
+    .footer strong {
+      color: #1e293b;
+    }
+
+    /* ===== SCROLL ANIMATION ===== */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .grid-4 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+
+      .hero-visual {
+        width: 140px;
+        height: 140px;
+        font-size: 3rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #1e293b;
+        flex-direction: column;
+        padding: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      }
+
+      .nav-links.open {
+        display: flex;
+      }
+
+      .nav-links a {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .nav-toggle {
+        display: block;
+      }
+
+      .hero-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .hero p {
+        max-width: 100%;
+      }
+
+      .hero-stats {
+        justify-content: center;
+      }
+
+      .hero-visual {
+        display: none;
+      }
+
+      .section,
+      .section-compact {
+        padding: 1.5rem 1rem;
+      }
+
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .arch-diagram {
+        flex-direction: column;
+      }
+
+      .arch-arrow {
+        transform: rotate(90deg);
+      }
+
+      .gantt-row .g-label {
+        width: 100px;
+        font-size: 0.7rem;
+      }
+
+      .gantt-months {
+        margin-left: 100px;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+
+      .section-header h2 {
+        font-size: 1.15rem;
+      }
+
+      .deploy-diagram {
+        flex-direction: column;
+      }
+
+      .deploy-connector {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== TOP NAVBAR ===== -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <i class="fas fa-utensils"></i>
+      <span>FastBox POS</span>
+    </div>
+    <div class="nav-links" id="navLinks">
+      <a href="#inicio" class="active">Inicio</a>
+      <a href="#metodologia">Metodología</a>
+      <a href="#arquitectura">Arquitectura</a>
+      <a href="#normativas">Normativas</a>
+      <a href="#metricas">Métricas</a>
+      <a href="#requerimientos">Requerimientos</a>
+      <a href="#planificacion">Planificación</a>
+      <a href="#producto">Producto Final</a>
+      <a href="#galeria">Galería</a>
+      <a href="#conclusiones">Conclusiones</a>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Menú">
+      <i class="fas fa-bars"></i>
+    </button>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section id="inicio">
+    <div class="hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <div class="hero-badge"><i class="fas fa-graduation-cap"></i> UPEC — 7mo Nivel · PAO 2026-A</div>
+          <h1>FastBox <span>POS</span></h1>
+          <p>Sistema de punto de venta para restaurantes de comida rápida. Django, PostgreSQL, Redis y Docker. Frontend
+            con React, Docker, Microservicios, Django REST Framework y Redis.</p>
+          <div class="hero-stats">
+            <div>
+              <div class="num">3</div>
+              <div class="label">Desarrolladores</div>
+            </div>
+            <div>
+              <div class="num">70</div>
+              <div class="label">Días</div>
+            </div>
+            <div>
+              <div class="num">780</div>
+              <div class="label">Horas</div>
+            </div>
+            <div>
+              <div class="num">5</div>
+              <div class="label">Módulos</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <i class="fas fa-cash-register"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-compact">
+      <div class="grid-2">
+        <div class="card">
+          <h3><i class="fas fa-bullseye"></i> Objetivo General</h3>
+          <p>Desarrollar un sistema POS para restaurantes de comida rápida que permita registrar pedidos, procesar
+            ventas, gestionar inventario, administrar usuarios y generar reportes.</p>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-list"></i> Objetivos Específicos</h3>
+          <ul>
+            <li>Módulo de ventas con interfaz rápida (Django Templates + JS)</li>
+            <li>Inventario con Redis para caché de stock y alertas</li>
+            <li>Usuarios con roles (admin, cajero, cocina)</li>
+            <li>Dashboard de reportes con indicadores clave</li>
+            <li>Calidad basada en ISO 25010, 12207, 9001, 15504, CMMI, OWASP, WCAG</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-compact">
+      <div class="card">
+        <h3><i class="fas fa-expand-arrows-alt"></i> Alcance</h3>
+        <p>Sistema orientado a restaurantes de comida rápida. Cubre el ciclo completo: pedidos, pagos, ticket,
+          inventario y reportes. No incluye facturación electrónica ni integración con proveedores en v1.</p>
+      </div>
+    </div>
+
+    <div class="section-compact">
+      <div class="card">
+        <h3><i class="fas fa-microchip"></i> Tecnologías</h3>
+        <div class="tech-stack">
+          <span class="tech-badge"><i class="fab fa-python"></i> Django</span>
+          <span class="tech-badge"><i class="fab fa-react"></i> React</span>
+          <span class="tech-badge"><i class="fas fa-database"></i> PostgreSQL</span>
+          <span class="tech-badge"><i class="fas fa-database"></i> Redis</span>
+          <span class="tech-badge"><i class="fab fa-docker"></i> Docker</span>
+          <span class="tech-badge"><i class="fas fa-network-wired"></i> Microservicios</span>
+          <span class="tech-badge"><i class="fab fa-git-alt"></i> Git / GitHub</span>
+          <span class="tech-badge"><i class="fas fa-project-diagram"></i> ProjectLibre</span>
+          <span class="tech-badge"><i class="fas fa-users"></i> Scrum</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== METODOLOGÍA ===== -->
+  <section id="metodologia" class="section">
+    <div class="section-header">
+      <i class="fas fa-sync-alt"></i>
+      <h2>Metodología</h2>
+      <span class="line"></span>
+    </div>
+
+    <div class="grid-3" style="margin-bottom:1rem;">
+      <div class="card">
+        <h3><i class="fas fa-user-tie"></i> Product Owner</h3>
+        <p><strong>Kevin Mejia</strong> — Define historias de usuario, prioriza el backlog y asegura el valor del
+          producto.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-people-arrows"></i> Scrum Master</h3>
+        <p><strong>Jhon Palacios</strong> — Facilita ceremonias Scrum, elimina impedimentos y guía al equipo.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-code"></i> Developers</h3>
+        <p><strong>Jimmy Montenegro</strong> — Implementación backend/frontend y pruebas unitarias.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-calendar-week"></i> Sprints</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Sprint</th>
+              <th>Duración</th>
+              <th>Actividades principales</th>
+              <th>Entregable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Sprint 1</strong></td>
+              <td>2 sem</td>
+              <td>Configuración Django, modelos PostgreSQL, autenticación</td>
+              <td>Microservicios base</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 2</strong></td>
+              <td>2 sem</td>
+              <td>Módulo ventas, carrito, procesamiento pedidos</td>
+              <td>POS funcional</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 3</strong></td>
+              <td>2 sem</td>
+              <td>Inventario, entradas/salidas, Redis caché</td>
+              <td>Inventario operativo</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 4</strong></td>
+              <td>2 sem</td>
+              <td>Usuarios roles, dashboard reportes</td>
+              <td>Módulo admin</td>
+            </tr>
+            <tr>
+              <td><strong>Sprint 5</strong></td>
+              <td>2 sem</td>
+              <td>Pruebas integración, Docker, documentación</td>
+              <td>Producto final</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-play-circle"></i> Caso Real: Sprint 2 — Módulo Ventas</h3>
+
+      <h4 style="color:#1e293b;margin:0.8rem 0 0.4rem;font-size:0.9rem;"><i class="fas fa-book-open"></i> Historias de
+        Usuario</h4>
+      <div class="grid-2">
+        <div class="story-card">
+          <div class="story-id">HU-01 · Alta · 5 pts</div>
+          <div class="story-text">Como <strong>cajero</strong>, quiero <strong>agregar productos al carrito</strong>
+            para <strong>conformar un pedido rápido</strong>.</div>
+        </div>
+        <div class="story-card">
+          <div class="story-id">HU-02 · Alta · 8 pts</div>
+          <div class="story-text">Como <strong>cajero</strong>, quiero <strong>procesar el pago</strong> para
+            <strong>cobrar al cliente y cerrar la venta</strong>.</div>
+        </div>
+        <div class="story-card">
+          <div class="story-id">HU-03 · Media · 3 pts</div>
+          <div class="story-text">Como <strong>cliente</strong>, quiero <strong>recibir un ticket</strong> para
+            <strong>tener comprobante de compra</strong>.</div>
+        </div>
+        <div class="story-card">
+          <div class="story-id">HU-04 · Alta · 5 pts</div>
+          <div class="story-text">Como <strong>admin</strong>, quiero <strong>ver historial de pedidos</strong> para
+            <strong>hacer corte de caja</strong>.</div>
+        </div>
+      </div>
+
+      <h4 style="color:#1e293b;margin:0.8rem 0 0.4rem;font-size:0.9rem;"><i class="fas fa-tasks"></i> Sprint Backlog
+      </h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarea</th>
+              <th>HU</th>
+              <th>Responsable</th>
+              <th>Estado</th>
+              <th>Horas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Modelo Pedido + DetallePedido</td>
+              <td>HU-01</td>
+              <td>Jimmy M.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>6h</td>
+            </tr>
+            <tr>
+              <td>Componente React del carrito</td>
+              <td>HU-01</td>
+              <td>Kevin M.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>8h</td>
+            </tr>
+            <tr>
+              <td>Lógica JS carrito (agregar/quitar)</td>
+              <td>HU-01</td>
+              <td>Kevin M.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>6h</td>
+            </tr>
+            <tr>
+              <td>Vista de procesamiento de pago</td>
+              <td>HU-02</td>
+              <td>Jhon P.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>8h</td>
+            </tr>
+            <tr>
+              <td>Formulario pago (efectivo/tarjeta)</td>
+              <td>HU-02</td>
+              <td>Jimmy M.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>5h</td>
+            </tr>
+            <tr>
+              <td>Impresión de ticket</td>
+              <td>HU-03</td>
+              <td>Jhon P.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>4h</td>
+            </tr>
+            <tr>
+              <td>Historial de pedidos del día</td>
+              <td>HU-04</td>
+              <td>Kevin M.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>5h</td>
+            </tr>
+            <tr>
+              <td>Pruebas unitarias módulo ventas</td>
+              <td>—</td>
+              <td>Jimmy M.</td>
+              <td><span class="tag tag-green">Hecho</span></td>
+              <td>4h</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 style="color:#1e293b;margin:0.8rem 0 0.4rem;font-size:0.9rem;"><i class="fas fa-chart-line"></i> Burndown
+        Chart</h4>
+      <div class="burndown">
+        <svg viewBox="0 0 650 240" xmlns="http://www.w3.org/2000/svg">
+          <rect width="650" height="240" fill="#f8fafc" rx="8" />
+          <text x="325" y="22" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">Burndown — Sprint
+            2</text>
+          <line x1="55" y1="45" x2="55" y2="205" stroke="#cbd5e1" stroke-width="1.5" />
+          <line x1="55" y1="205" x2="610" y2="205" stroke="#cbd5e1" stroke-width="1.5" />
+          <text x="46" y="209" text-anchor="end" font-size="10" fill="#64748b">0h</text>
+          <text x="46" y="125" text-anchor="end" font-size="10" fill="#64748b">23h</text>
+          <text x="46" y="46" text-anchor="end" font-size="10" fill="#64748b">46h</text>
+          <text x="150" y="222" text-anchor="middle" font-size="9" fill="#64748b">D1</text>
+          <text x="260" y="222" text-anchor="middle" font-size="9" fill="#64748b">D4</text>
+          <text x="370" y="222" text-anchor="middle" font-size="9" fill="#64748b">D7</text>
+          <text x="480" y="222" text-anchor="middle" font-size="9" fill="#64748b">D10</text>
+          <text x="590" y="222" text-anchor="middle" font-size="9" fill="#64748b">D12</text>
+          <line x1="55" y1="46" x2="610" y2="205" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"
+            opacity="0.6" />
+          <text x="615" y="128" font-size="9" fill="#dc2626">Ideal</text>
+          <polyline points="55,46 165,52 275,64 385,88 495,142 605,196" fill="none" stroke="#0284c7"
+            stroke-width="2.5" />
+          <circle cx="55" cy="46" r="3.5" fill="#0284c7" />
+          <circle cx="165" cy="52" r="3.5" fill="#0284c7" />
+          <circle cx="275" cy="64" r="3.5" fill="#0284c7" />
+          <circle cx="385" cy="88" r="3.5" fill="#0284c7" />
+          <circle cx="495" cy="142" r="3.5" fill="#0284c7" />
+          <circle cx="605" cy="196" r="3.5" fill="#0284c7" />
+          <text x="615" y="102" font-size="9" fill="#0284c7">Real</text>
+        </svg>
+      </div>
+
+      <h4 style="color:#1e293b;margin:0.8rem 0 0.4rem;font-size:0.9rem;"><i class="fas fa-check-double"></i> Definition
+        of Done</h4>
+      <div class="grid-2">
+        <div class="dod-item">
+          <div class="dod-check" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check"></i></div> Código
+          revisado en Git
+        </div>
+        <div class="dod-item">
+          <div class="dod-check" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check"></i></div> Tests
+          unitarios al 100%
+        </div>
+        <div class="dod-item">
+          <div class="dod-check" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check"></i></div> Probado en
+          navegador real
+        </div>
+        <div class="dod-item">
+          <div class="dod-check" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check"></i></div> Sin
+          errores críticos
+        </div>
+        <div class="dod-item">
+          <div class="dod-check" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check"></i></div>
+          Componentes React Responsive OK
+        </div>
+        <div class="dod-item">
+          <div class="dod-check" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check"></i></div>
+          Documentación actualizada
+        </div>
+      </div>
+
+      <h4 style="color:#1e293b;margin:0.8rem 0 0.4rem;font-size:0.9rem;"><i class="fas fa-sync-alt"></i> Flujo Scrum
+      </h4>
+      <div class="scrum-flow">
+        <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg">
+          <rect width="760" height="220" fill="#f8fafc" rx="8" />
+          <text x="380" y="20" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Ciclo Scrum —
+            FastBox POS</text>
+          <rect x="15" y="40" width="110" height="45" rx="6" fill="#1e293b" />
+          <text x="70" y="65" text-anchor="middle" font-size="9" font-weight="600" fill="#ffffff">Product Backlog</text>
+          <path d="M125,62 L150,62" stroke="#94a3b8" stroke-width="2" marker-end="url(#as)" />
+          <rect x="150" y="35" width="110" height="55" rx="6" fill="#0284c7" />
+          <text x="205" y="53" text-anchor="middle" font-size="9" font-weight="600" fill="#ffffff">Sprint Planning</text>
+          <text x="205" y="67" text-anchor="middle" font-size="7.5" fill="#e0f2fe">(Planificación</text>
+          <text x="205" y="77" text-anchor="middle" font-size="7.5" fill="#e0f2fe">Obligatoria)</text>
+          <path d="M260,62 L285,62" stroke="#94a3b8" stroke-width="2" marker-end="url(#as)" />
+          <rect x="285" y="35" width="130" height="55" rx="6" fill="#38bdf8" />
+          <text x="350" y="58" text-anchor="middle" font-size="9" font-weight="600" fill="#ffffff">Sprint Backlog</text>
+          <text x="350" y="72" text-anchor="middle" font-size="7" fill="#dbeafe">HU-01 · HU-02 · HU-03 · HU-04</text>
+          <path d="M415,62 L440,62" stroke="#94a3b8" stroke-width="2" marker-end="url(#as)" />
+          <rect x="440" y="35" width="110" height="55" rx="6" fill="#0284c7" stroke="#60a5fa" stroke-width="2" />
+          <text x="495" y="58" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">Sprint</text>
+          <text x="495" y="73" text-anchor="middle" font-size="8" fill="#93c5fd">2 semanas</text>
+          <text x="495" y="84" text-anchor="middle" font-size="7" fill="#93c5fd">Daily Stand-up</text>
+          <path d="M550,62 L575,62" stroke="#94a3b8" stroke-width="2" marker-end="url(#as)" />
+          <rect x="575" y="35" width="120" height="55" rx="6" fill="#60a5fa" />
+          <text x="635" y="53" text-anchor="middle" font-size="9" font-weight="600" fill="#1e293b">Sprint Review</text>
+          <text x="635" y="67" text-anchor="middle" font-size="7.5" fill="#1e293b">(Consulta Previa)</text>
+          <text x="635" y="77" text-anchor="middle" font-size="7" fill="#1e293b">Demo + Retro</text>
+          <path d="M635,85 L635,125 L70,125 L70,85" fill="none" stroke="#94a3b8" stroke-width="1.5"
+            stroke-dasharray="5,3" />
+          <text x="350" y="142" text-anchor="middle" font-size="8" fill="#64748b">Retroalimentación → Próximo
+            Sprint</text>
+          <rect x="290" y="155" width="140" height="40" rx="6" fill="#f0f7ff" stroke="#0284c7" stroke-width="1.5"
+            stroke-dasharray="3,2" />
+          <text x="360" y="175" text-anchor="middle" font-size="9" font-weight="600" fill="#1e293b">Incremento</text>
+          <text x="360" y="187" text-anchor="middle" font-size="7" fill="#64748b">POS funcional entregado</text>
+          <defs>
+            <marker id="as" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ARQUITECTURA ===== -->
+  <section id="arquitectura" class="section">
+    <div class="section-header">
+      <i class="fas fa-sitemap"></i>
+      <h2>Arquitectura</h2>
+      <span class="line"></span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><i class="fas fa-server"></i> Cliente-Servidor</h3>
+        <p>Frontend interactivo construido con React. Microservicios independientes manejan la lógica de negocio.
+          PostgreSQL almacena datos persistentes. Redis gestiona caché y sesiones. Docker contenedoriza todo.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-layer-group"></i> Patrón MVT (Django)</h3>
+        <p>Modelos en PostgreSQL, Vistas procesan peticiones, Templates renderizan HTML. Variante del MVC clásico
+          adaptada por Django.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-project-diagram"></i> Diagrama de Arquitectura</h3>
+      <div class="arch-diagram">
+        <div class="arch-box"><i class="fab fa-html5"></i><span>HTML+CSS+JS</span><small>Frontend</small></div>
+        <div class="arch-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="arch-box"><i class="fab fa-python"></i><span>Django</span><small>Backend MVT</small></div>
+        <div class="arch-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="arch-box"><i class="fas fa-database"></i><span>PostgreSQL</span><small>Base de Datos</small></div>
+        <div class="arch-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="arch-box"><i class="fas fa-bolt"></i><span>Redis</span><small>Caché+ Sesiones</small></div>
+      </div>
+      <div class="arch-diagram" style="padding-top:0;">
+        <div class="arch-box" style="border-style:dashed;"><i
+            class="fab fa-docker"></i><span>Docker</span><small>Contenedores</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-table"></i> Modelo de Datos — Entidad-Relación</h3>
+      <div class="er-diagram">
+        <svg viewBox="0 0 760 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <rect width="760" height="560" fill="#f8fafc" rx="8" />
+          <rect x="25" y="25" width="175" height="120" rx="5" fill="#ffffff" stroke="#0284c7" stroke-width="1.5" />
+          <rect x="25" y="25" width="175" height="25" rx="5" fill="#0284c7" />
+          <text x="112" y="42" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">usuarios</text>
+          <text x="33" y="62" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="33" y="75" font-size="8" fill="#1e293b">username (VARCHAR 50)</text>
+          <text x="33" y="88" font-size="8" fill="#1e293b">email (VARCHAR 100)</text>
+          <text x="33" y="101" font-size="8" fill="#1e293b">password (VARCHAR 128)</text>
+          <text x="33" y="114" font-size="8" fill="#1e293b">rol (VARCHAR 20)</text>
+          <text x="33" y="127" font-size="8" fill="#64748b">fecha_creacion (DATETIME)</text>
+
+          <rect x="260" y="25" width="175" height="90" rx="5" fill="#ffffff" stroke="#0284c7" stroke-width="1.5" />
+          <rect x="260" y="25" width="175" height="25" rx="5" fill="#0284c7" />
+          <text x="347" y="42" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">categorias</text>
+          <text x="268" y="62" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="268" y="75" font-size="8" fill="#1e293b">nombre (VARCHAR 50)</text>
+          <text x="268" y="88" font-size="8" fill="#1e293b">descripcion (TEXT)</text>
+
+          <rect x="25" y="185" width="210" height="140" rx="5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.5" />
+          <rect x="25" y="185" width="210" height="25" rx="5" fill="#38bdf8" />
+          <text x="130" y="202" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">productos</text>
+          <text x="33" y="222" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="33" y="235" font-size="8" fill="#1e293b">nombre (VARCHAR 100)</text>
+          <text x="33" y="248" font-size="8" fill="#1e293b">precio (DECIMAL 10,2)</text>
+          <text x="33" y="261" font-size="8" fill="#64748b">FK categoria_id (INTEGER)</text>
+          <text x="33" y="274" font-size="8" fill="#1e293b">stock_actual (INTEGER)</text>
+          <text x="33" y="287" font-size="8" fill="#1e293b">stock_minimo (INTEGER)</text>
+          <text x="33" y="300" font-size="8" fill="#1e293b">activo (BOOLEAN)</text>
+
+          <rect x="280" y="185" width="200" height="120" rx="5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.5" />
+          <rect x="280" y="185" width="200" height="25" rx="5" fill="#38bdf8" />
+          <text x="380" y="202" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">pedidos</text>
+          <text x="288" y="222" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="288" y="235" font-size="8" fill="#64748b">FK usuario_id (INTEGER)</text>
+          <text x="288" y="248" font-size="8" fill="#1e293b">total (DECIMAL 10,2)</text>
+          <text x="288" y="261" font-size="8" fill="#1e293b">estado (VARCHAR 20)</text>
+          <text x="288" y="274" font-size="8" fill="#1e293b">nombre_cliente (VARCHAR 50)</text>
+          <text x="288" y="287" font-size="8" fill="#64748b">fecha_creacion (DATETIME)</text>
+
+          <rect x="520" y="185" width="200" height="120" rx="5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.5" />
+          <rect x="520" y="185" width="200" height="25" rx="5" fill="#38bdf8" />
+          <text x="620" y="202" text-anchor="middle" font-size="10" font-weight="700"
+            fill="#ffffff">movimientos_inventario</text>
+          <text x="528" y="222" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="528" y="235" font-size="8" fill="#64748b">FK producto_id (INTEGER)</text>
+          <text x="528" y="248" font-size="8" fill="#1e293b">tipo (VARCHAR 10)</text>
+          <text x="528" y="261" font-size="8" fill="#1e293b">cantidad (INTEGER)</text>
+          <text x="528" y="274" font-size="8" fill="#1e293b">descripcion (TEXT)</text>
+          <text x="528" y="287" font-size="8" fill="#64748b">fecha (DATETIME)</text>
+
+          <rect x="25" y="365" width="220" height="120" rx="5" fill="#ffffff" stroke="#60a5fa" stroke-width="1.5" />
+          <rect x="25" y="365" width="220" height="25" rx="5" fill="#60a5fa" />
+          <text x="135" y="382" text-anchor="middle" font-size="10" font-weight="700"
+            fill="#ffffff">detalle_pedidos</text>
+          <text x="33" y="402" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="33" y="415" font-size="8" fill="#64748b">FK pedido_id (INTEGER)</text>
+          <text x="33" y="428" font-size="8" fill="#64748b">FK producto_id (INTEGER)</text>
+          <text x="33" y="441" font-size="8" fill="#1e293b">cantidad (INTEGER)</text>
+          <text x="33" y="454" font-size="8" fill="#1e293b">precio_unitario (DECIMAL 10,2)</text>
+          <text x="33" y="467" font-size="8" fill="#1e293b">subtotal (DECIMAL 10,2)</text>
+
+          <rect x="290" y="365" width="190" height="100" rx="5" fill="#ffffff" stroke="#60a5fa" stroke-width="1.5" />
+          <rect x="290" y="365" width="190" height="25" rx="5" fill="#60a5fa" />
+          <text x="385" y="382" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">pagos</text>
+          <text x="298" y="402" font-size="8" fill="#64748b">PK id (INTEGER)</text>
+          <text x="298" y="415" font-size="8" fill="#64748b">FK pedido_id (INTEGER)</text>
+          <text x="298" y="428" font-size="8" fill="#1e293b">metodo_pago (VARCHAR 20)</text>
+          <text x="298" y="441" font-size="8" fill="#1e293b">monto (DECIMAL 10,2)</text>
+          <text x="298" y="454" font-size="8" fill="#64748b">fecha (DATETIME)</text>
+
+          <line x1="200" y1="75" x2="260" y2="65" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" />
+          <text x="224" y="63" font-size="8" fill="#64748b">1:N</text>
+          <line x1="200" y1="82" x2="200" y2="220" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" />
+          <text x="178" y="155" font-size="8" fill="#64748b">1:N</text>
+          <line x1="235" y1="220" x2="280" y2="220" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" />
+          <text x="252" y="215" font-size="8" fill="#64748b">1:N</text>
+          <line x1="235" y1="280" x2="235" y2="400" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" />
+          <text x="215" y="345" font-size="8" fill="#64748b">1:N</text>
+          <line x1="480" y1="240" x2="520" y2="240" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" />
+          <text x="495" y="235" font-size="8" fill="#64748b">1:N</text>
+          <line x1="480" y1="270" x2="480" y2="420" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" />
+          <text x="462" y="350" font-size="8" fill="#64748b">1:N</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><i class="fas fa-cubes"></i> Despliegue Docker</h3>
+        <div class="deploy-diagram">
+          <div class="deploy-box highlight">
+            <div class="db-icon"><i class="fab fa-python"></i></div>
+            <span class="db-label">Django</span>
+            <span class="db-sub">:8000</span>
+          </div>
+          <div class="deploy-connector"><i class="fas fa-arrow-right"></i></div>
+          <div class="deploy-box">
+            <div class="db-icon"><i class="fas fa-database"></i></div>
+            <span class="db-label">PostgreSQL</span>
+            <span class="db-sub">:5432</span>
+          </div>
+          <div class="deploy-connector"><i class="fas fa-arrow-right"></i></div>
+          <div class="deploy-box">
+            <div class="db-icon"><i class="fas fa-bolt"></i></div>
+            <span class="db-label">Redis</span>
+            <span class="db-sub">:6379</span>
+          </div>
+        </div>
+        <p style="font-size:0.75rem;color:#64748b;text-align:center;">docker-compose.yml — 3 contenedores</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-exchange-alt"></i> Flujo de Venta</h3>
+        <ol style="padding-left:1.1rem;font-size:0.85rem;color:#475569;">
+          <li style="margin-bottom:0.3rem;"><strong>Cajero</strong> ingresa (sesión Django + Redis)</li>
+          <li style="margin-bottom:0.3rem;">Selecciona productos del menú categorizado</li>
+          <li style="margin-bottom:0.3cm;">Carrito calcula total + IVA en <strong>JavaScript</strong></li>
+          <li style="margin-bottom:0.3rem;"><strong>Django</strong> registra pedido en PostgreSQL</li>
+          <li style="margin-bottom:0.3rem;">Stock actualizado en <strong>productos</strong></li>
+          <li style="margin-bottom:0.3rem;">Movimiento guardado en <strong>movimientos_inventario</strong></li>
+          <li style="margin-bottom:0.3rem;">Ticket generado e impreso</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== NORMATIVAS ===== -->
+  <section id="normativas" class="section">
+    <div class="section-header">
+      <i class="fas fa-shield-alt"></i>
+      <h2>Normativas</h2>
+      <span class="line"></span>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3><i class="fas fa-check-circle"></i> ISO 25010 — Calidad</h3>
+        <p>Pruebas funcionales por sprint, monitoreo de tiempos de respuesta, cobertura de código. Evalúa funcionalidad,
+          confiabilidad, usabilidad y mantenibilidad del POS.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-life-ring"></i> ISO 12207 — Ciclo de Vida</h3>
+        <p>Procesos de desarrollo adaptados a Scrum: análisis, diseño, implementación, pruebas y despliegue iterativo en
+          cada sprint.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-certificate"></i> ISO 9001 — Gestión Calidad</h3>
+        <p>Enfoque al cliente (historias de usuario), mejora continua (retrospectivas), decisiones basadas en datos
+          (métricas) y procesos documentados.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-clipboard-check"></i> ISO 15504 (SPICE)</h3>
+        <p>Evaluación de capacidad de procesos: desde ejecución básica hasta gestión y medición de resultados en cada
+          sprint del proyecto.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-chart-line"></i> CMMI — Madurez</h3>
+        <p>Prácticas del Nivel 2 (Gestionado): planificación, gestión de requisitos, monitoreo y control, aseguramiento
+          de calidad y configuración con Git.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-user-secret"></i> OWASP — Seguridad</h3>
+        <p>CSRF Django, validación de entradas, bcrypt/PBKDF2, control por roles y sesiones gestionadas con Redis.</p>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-universal-access"></i> WCAG — Accesibilidad</h3>
+        <p>Contraste adecuado, navegación por teclado, etiquetas semánticas y diseño responsive para tablets y monitores
+          táctiles.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MÉTRICAS ===== -->
+  <section id="metricas" class="section">
+    <div class="section-header">
+      <i class="fas fa-chart-bar"></i>
+      <h2>Métricas</h2>
+      <span class="line"></span>
+    </div>
+    <div class="grid-4" style="margin-bottom:1rem;">
+      <div class="card metric-card">
+        <div class="metric-value">98.5%</div>
+        <div class="metric-label">Ventas exitosas</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value">&lt; 2s</div>
+        <div class="metric-label">Respuesta pedidos</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value">92%</div>
+        <div class="metric-label">Cobertura tests</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value">100%</div>
+        <div class="metric-label">Sprints cumplidos</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><i class="fas fa-bug"></i> Defectos por Sprint</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sprint</th>
+                <th>Críticos</th>
+                <th>Mayores</th>
+                <th>Menores</th>
+                <th>Total</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>S1</strong></td>
+                <td>2</td>
+                <td>5</td>
+                <td>8</td>
+                <td>15</td>
+                <td><span class="tag tag-amber">Moderado</span></td>
+              </tr>
+              <tr>
+                <td><strong>S2</strong></td>
+                <td>0</td>
+                <td>3</td>
+                <td>6</td>
+                <td>9</td>
+                <td><span class="tag tag-green">Aceptable</span></td>
+              </tr>
+              <tr>
+                <td><strong>S3</strong></td>
+                <td>0</td>
+                <td>1</td>
+                <td>4</td>
+                <td>5</td>
+                <td><span class="tag tag-blue">Bajo</span></td>
+              </tr>
+              <tr>
+                <td><strong>S4</strong></td>
+                <td>0</td>
+                <td>0</td>
+                <td>2</td>
+                <td>2</td>
+                <td><span class="tag tag-green">Aceptable</span></td>
+              </tr>
+              <tr>
+                <td><strong>S5</strong></td>
+                <td>0</td>
+                <td>0</td>
+                <td>1</td>
+                <td>1</td>
+                <td><span class="tag tag-green">Aceptable</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-clipboard-check"></i> Usabilidad — SUS Score</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dimensión</th>
+                <th>Puntaje</th>
+                <th>Nivel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Facilidad de uso</td>
+                <td>4.5 / 5</td>
+                <td><span class="tag tag-green">Excelente</span></td>
+              </tr>
+              <tr>
+                <td>Claridad interfaz</td>
+                <td>4.2 / 5</td>
+                <td><span class="tag tag-green">Excelente</span></td>
+              </tr>
+              <tr>
+                <td>Velocidad aprendizaje</td>
+                <td>4.0 / 5</td>
+                <td><span class="tag tag-blue">Bueno</span></td>
+              </tr>
+              <tr>
+                <td>Satisfacción general</td>
+                <td>4.3 / 5</td>
+                <td><span class="tag tag-green">Excelente</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== REQUERIMIENTOS ===== -->
+  <section id="requerimientos" class="section">
+    <div class="section-header">
+      <i class="fas fa-list-check"></i>
+      <h2>Requerimientos</h2>
+      <span class="line"></span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><i class="fas fa-check-circle"></i> Funcionales</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Requerimiento</th>
+                <th>Módulo</th>
+                <th>Prioridad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>RF-01</td>
+                <td>Registrar pedidos con productos y precios</td>
+                <td>Ventas</td>
+                <td><span class="tag tag-red">Alta</span></td>
+              </tr>
+              <tr>
+                <td>RF-02</td>
+                <td>Procesar pagos (efectivo/tarjeta)</td>
+                <td>Ventas</td>
+                <td><span class="tag tag-red">Alta</span></td>
+              </tr>
+              <tr>
+                <td>RF-03</td>
+                <td>Imprimir ticket de venta</td>
+                <td>Ventas</td>
+                <td><span class="tag tag-amber">Media</span></td>
+              </tr>
+              <tr>
+                <td>RF-04</td>
+                <td>Gestionar entrada/salida de insumos</td>
+                <td>Inventario</td>
+                <td><span class="tag tag-red">Alta</span></td>
+              </tr>
+              <tr>
+                <td>RF-05</td>
+                <td>Alertar stock mínimo</td>
+                <td>Inventario</td>
+                <td><span class="tag tag-amber">Media</span></td>
+              </tr>
+              <tr>
+                <td>RF-06</td>
+                <td>Gestionar usuarios con roles</td>
+                <td>Usuarios</td>
+                <td><span class="tag tag-red">Alta</span></td>
+              </tr>
+              <tr>
+                <td>RF-07</td>
+                <td>Autenticación (sesiones + Redis)</td>
+                <td>Usuarios</td>
+                <td><span class="tag tag-red">Alta</span></td>
+              </tr>
+              <tr>
+                <td>RF-08</td>
+                <td>Reporte de ventas diarias</td>
+                <td>Reportes</td>
+                <td><span class="tag tag-amber">Media</span></td>
+              </tr>
+              <tr>
+                <td>RF-09</td>
+                <td>Productos más vendidos</td>
+                <td>Reportes</td>
+                <td><span class="tag tag-amber">Media</span></td>
+              </tr>
+              <tr>
+                <td>RF-10</td>
+                <td>Historial de pedidos por fecha</td>
+                <td>Reportes</td>
+                <td><span class="tag tag-blue">Baja</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-shield-alt"></i> No Funcionales</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Requerimiento</th>
+                <th>Categoría</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>RNF-01</td>
+                <td>Respuesta &lt; 3s por operación</td>
+                <td>Rendimiento</td>
+              </tr>
+              <tr>
+                <td>RNF-02</td>
+                <td>Disponibilidad 99.5%</td>
+                <td>Disponibilidad</td>
+              </tr>
+              <tr>
+                <td>RNF-03</td>
+                <td>Contraseñas cifradas (bcrypt)</td>
+                <td>Seguridad</td>
+              </tr>
+              <tr>
+                <td>RNF-04</td>
+                <td>Interfaz responsive (tablets)</td>
+                <td>Usabilidad</td>
+              </tr>
+              <tr>
+                <td>RNF-05</td>
+                <td>Soporte 10 cajeros concurrentes</td>
+                <td>Escalabilidad</td>
+              </tr>
+              <tr>
+                <td>RNF-06</td>
+                <td>Código PEP8 + buenas prácticas</td>
+                <td>Mantenibilidad</td>
+              </tr>
+              <tr>
+                <td>RNF-07</td>
+                <td>Respaldos automáticos cada 24h</td>
+                <td>Confiabilidad</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PLANIFICACIÓN ===== -->
+  <section id="planificacion" class="section">
+    <div class="section-header">
+      <i class="fas fa-calendar-alt"></i>
+      <h2>Planificación</h2>
+      <span class="line"></span>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-chart-line"></i> Cronograma — Gantt</h3>
+      <p style="margin-bottom:0.5rem;font-size:0.82rem;">Proyecto en 10 semanas (70 días). Elaborado con ProjectLibre.
+      </p>
+      <div class="gantt">
+        <div class="gantt-months">
+          <span>Sem 1-2</span><span>Sem 3-4</span><span>Sem 5-6</span><span>Sem 7-8</span><span>Sem 9-10</span>
+        </div>
+        <div class="gantt-row">
+          <span class="g-label"><i class="fas fa-cog"></i> Sprint 1</span>
+          <div class="g-track">
+            <div class="g-bar phase1" style="width:20%; left:0%;">S1</div>
+          </div>
+        </div>
+        <div class="gantt-row">
+          <span class="g-label"><i class="fas fa-cash-register"></i> Sprint 2</span>
+          <div class="g-track">
+            <div class="g-bar phase2" style="width:20%; left:20%;">S2</div>
+          </div>
+        </div>
+        <div class="gantt-row">
+          <span class="g-label"><i class="fas fa-boxes"></i> Sprint 3</span>
+          <div class="g-track">
+            <div class="g-bar phase3" style="width:20%; left:40%;">S3</div>
+          </div>
+        </div>
+        <div class="gantt-row">
+          <span class="g-label"><i class="fas fa-users-cog"></i> Sprint 4</span>
+          <div class="g-track">
+            <div class="g-bar phase4" style="width:20%; left:60%;">S4</div>
+          </div>
+        </div>
+        <div class="gantt-row">
+          <span class="g-label"><i class="fas fa-check-double"></i> Sprint 5</span>
+          <div class="g-track">
+            <div class="g-bar phase5" style="width:20%; left:80%;">S5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-tasks"></i> Fases del Proyecto</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>Duración</th>
+              <th>Actividades</th>
+              <th>Recursos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Inicio</strong></td>
+              <td>Sem 1-2</td>
+              <td>Configuración Django, modelos BD, autenticación</td>
+              <td>3 devs</td>
+            </tr>
+            <tr>
+              <td><strong>2. POS</strong></td>
+              <td>Sem 3-4</td>
+              <td>Carrito, pago, ticket</td>
+              <td>3 devs</td>
+            </tr>
+            <tr>
+              <td><strong>3. Inventario</strong></td>
+              <td>Sem 5-6</td>
+              <td>CRUD insumos, stock, Redis</td>
+              <td>3 devs</td>
+            </tr>
+            <tr>
+              <td><strong>4. Admin</strong></td>
+              <td>Sem 7-8</td>
+              <td>Roles, dashboard reportes</td>
+              <td>3 devs</td>
+            </tr>
+            <tr>
+              <td><strong>5. Despliegue</strong></td>
+              <td>Sem 9-10</td>
+              <td>Pruebas, Docker, documentación</td>
+              <td>3 devs + QA</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRODUCTO FINAL ===== -->
+  <section id="producto" class="section">
+    <div class="section-header">
+      <i class="fas fa-box-open"></i>
+      <h2>Producto Final</h2>
+      <span class="line"></span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3><i class="fas fa-cash-register"></i> Ventas</h3>
+        <ul>
+          <li>Interfaz rápida para agregar productos al carrito</li>
+          <li>Cálculo automático de totales e IVA</li>
+          <li>Pago en efectivo y tarjeta</li>
+          <li>Impresión de ticket térmico</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-boxes"></i> Inventario</h3>
+        <ul>
+          <li>CRUD de productos e insumos</li>
+          <li>Control de entradas/salidas de stock</li>
+          <li>Alertas automáticas de stock mínimo</li>
+          <li>Historial de movimientos</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-users-cog"></i> Usuarios</h3>
+        <ul>
+          <li>Login con Auth Service + JWT + Redis (sesiones)</li>
+          <li>Roles: Administrador, Cajero, Cocina</li>
+          <li>Gestión de perfiles y permisos</li>
+          <li>Registro de actividad</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-chart-pie"></i> Reportes</h3>
+        <ul>
+          <li>Dashboard completo con KPI</li>
+          <li>Ventas diarias, semanales, mensuales</li>
+          <li>Productos más vendidos</li>
+          <li>Exportación CSV</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-info-circle"></i> Estado y Despliegue</h3>
+      <div class="grid-4" style="margin-top:0.5rem;">
+        <div style="text-align:center;">
+          <span class="tag tag-green" style="font-size:0.85rem;padding:0.35rem 1rem;"><i
+              class="fas fa-check-circle"></i> Ventas</span>
+          <p style="font-size:0.75rem;color:#64748b;margin-top:0.2rem;">Completado</p>
+        </div>
+        <div style="text-align:center;">
+          <span class="tag tag-green" style="font-size:0.85rem;padding:0.35rem 1rem;"><i
+              class="fas fa-check-circle"></i> Inventario</span>
+          <p style="font-size:0.75rem;color:#64748b;margin-top:0.2rem;">Completado</p>
+        </div>
+        <div style="text-align:center;">
+          <span class="tag tag-green" style="font-size:0.85rem;padding:0.35rem 1rem;"><i
+              class="fas fa-check-circle"></i> Usuarios</span>
+          <p style="font-size:0.75rem;color:#64748b;margin-top:0.2rem;">Completado</p>
+        </div>
+        <div style="text-align:center;">
+          <span class="tag tag-green" style="font-size:0.85rem;padding:0.35rem 1rem;"><i
+              class="fas fa-check-circle"></i> Reportes</span>
+          <p style="font-size:0.75rem;color:#64748b;margin-top:0.2rem;">Completado</p>
+        </div>
+      </div>
+      <div style="margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid #e2e8f0;">
+        <p style="font-size:0.85rem;"><strong><i class="fas fa-rocket"></i> Despliegue:</strong> 3 contenedores Docker
+          (Django + PostgreSQL + Redis) orquestados con docker-compose.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== GALERÍA ===== -->
+  <section id="galeria" class="section">
+    <div class="section-header">
+      <i class="fas fa-images"></i>
+      <h2>Galería Visual del Proyecto</h2>
+      <span class="line"></span>
+    </div>
+    <p style="margin-bottom: 1.5rem; color: #64748b; font-size: 0.9rem;">Interfaces visuales integradas al sistema
+      FastBox cumpliendo las pautas de diseño estético.</p>
+    <div class="grid-2">
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="Kroky.png" alt="Vista Kroky"
+          style="width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0; transition: transform 0.3s ease;"
+          onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="padding: 1rem; text-align: center; font-weight: 600; color: #1e293b;">Interfaz Kroky</div>
+      </div>
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="Luxury.png" alt="Vista Luxury"
+          style="width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0; transition: transform 0.3s ease;"
+          onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="padding: 1rem; text-align: center; font-weight: 600; color: #1e293b;">Interfaz Luxury</div>
+      </div>
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="PostorCafe.png" alt="Vista Postor Cafe"
+          style="width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0; transition: transform 0.3s ease;"
+          onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="padding: 1rem; text-align: center; font-weight: 600; color: #1e293b;">Interfaz PostorCafe</div>
+      </div>
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="fre.png" alt="Vista general"
+          style="width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0; transition: transform 0.3s ease;"
+          onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        <div style="padding: 1rem; text-align: center; font-weight: 600; color: #1e293b;">Interfaz Fre</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONCLUSIONES ===== -->
+  <section id="conclusiones" class="section">
+    <div class="section-header">
+      <i class="fas fa-flag-checkered"></i>
+      <h2>Conclusiones</h2>
+      <span class="line"></span>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <div class="conclusion-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-trophy"></i></div>
+          <div>
+            <h3>Resultados</h3>
+            <p style="font-size:0.85rem;">Sistema POS funcional con 4 módulos completados. Tasa de éxito del 98.5% en
+              transacciones. Todos los sprints entregados a tiempo.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <div class="conclusion-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-book-open"></i></div>
+          <div>
+            <h3>Lecciones</h3>
+            <ul style="font-size:0.85rem;">
+              <li>Scrum permitió adaptarse a cambios sin afectar el cronograma.</li>
+              <li>Las normativas ISO guiaron la calidad del código.</li>
+              <li>ProjectLibre facilitó la planificación y el seguimiento.</li>
+              <li>Pruebas tempranas redujeron defectos críticos.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <div class="conclusion-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-lightbulb"></i></div>
+          <div>
+            <h3>Recomendaciones</h3>
+            <ul style="font-size:0.85rem;">
+              <li>Facturación electrónica y reportes fiscales.</li>
+              <li>API REST para integración con apps móviles.</li>
+              <li>Pasarela de pago (PayPal, Stripe).</li>
+              <li>Pruebas de usabilidad con cajeros reales.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <p><strong>FastBox POS</strong> — Universidad Politécnica Estatal del Carchi (UPEC)</p>
+    <p>Normativas de Ingeniería de Software · 7mo Nivel · PAO 2026-A</p>
+    <p style="margin-top:0.3rem;font-size:0.72rem;">Mejia Kevin · Montenegro Jimmy · Palacios Jhon</p>
+  </footer>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    (function () {
+      /* NAVBAR TOGGLE */
+      const navToggle = document.getElementById('navToggle');
+      const navLinks = document.getElementById('navLinks');
+      if (navToggle) {
+        navToggle.addEventListener('click', function () {
+          navLinks.classList.toggle('open');
+        });
+      }
+
+      /* SCROLL SPY */
+      const sections = document.querySelectorAll('section[id]');
+      const links = document.querySelectorAll('.nav-links a');
+
+      function updateActive() {
+        let current = '';
+        const scrollPos = window.scrollY + 80;
+        sections.forEach(function (sec) {
+          const top = sec.offsetTop;
+          const height = sec.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            current = sec.getAttribute('id');
+          }
+        });
+        links.forEach(function (link) {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', updateActive);
+      window.addEventListener('load', updateActive);
+
+      /* CLOSE MOBILE NAV ON CLICK */
+      links.forEach(function (link) {
+        link.addEventListener('click', function () {
+          navLinks.classList.remove('open');
+        });
+      });
+
+      /* FADE UP ANIMATION */
+      const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.card, .story-card, .gantt-row, .arch-box, .deploy-box').forEach(function (el) {
+        el.classList.add('fade-up');
+        observer.observe(el);
+      });
+    })();
+  </script>
+</body>
+
+</html>
