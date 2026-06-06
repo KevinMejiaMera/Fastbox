@@ -952,6 +952,27 @@ const Reportes = () => {
                 description: `Promedio: ${formatCurrency(currentReport.average_order_value || 0)}`
             },
             {
+                title: 'Efectivo',
+                value: formatCurrency(currentReport.cash_sales || currentReport.total_cash_sales || 0),
+                color: '#10b981',
+                icon: 'payments',
+                description: 'Pagos en efectivo'
+            },
+            {
+                title: 'Transferencia / Otro',
+                value: formatCurrency(currentReport.other_sales || currentReport.total_other_sales || 0),
+                color: '#3b82f6',
+                icon: 'account_balance',
+                description: 'Transferencias'
+            },
+            {
+                title: 'Tarjeta',
+                value: formatCurrency(currentReport.card_sales || currentReport.total_card_sales || 0),
+                color: '#f59e0b',
+                icon: 'credit_card',
+                description: 'Pagos con tarjeta'
+            },
+            {
                 title: 'Órdenes',
                 value: (currentReport.total_orders || 0).toLocaleString(),
                 color: COLORS[1],
