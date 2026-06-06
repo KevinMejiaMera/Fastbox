@@ -611,6 +611,7 @@ def generar_comando_abrir_caja(printer):
 class PrintAPIView(APIView):
     """API principal para impresión directa"""
     permission_classes = [AllowAny]
+    authentication_classes = []
     
     @csrf_exempt  # ← AGREGADO
     def dispatch(self, *args, **kwargs):
@@ -661,6 +662,7 @@ class PrintAPIView(APIView):
 class PrintReceiptView(APIView):
     """API para imprimir tickets de venta preformateados"""
     permission_classes = [AllowAny]
+    authentication_classes = []
     
     @csrf_exempt  # ← AGREGADO
     def dispatch(self, *args, **kwargs):

@@ -26,6 +26,9 @@ class PrinterSerializer(serializers.ModelSerializer):
             'config', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'connection_string': {'allow_blank': True, 'required': False}
+        }
 
 
 class PrintJobSerializer(serializers.ModelSerializer):
