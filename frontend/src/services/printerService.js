@@ -57,6 +57,26 @@ class PrinterService {
     }
   }
 
+  async getSettings() {
+    try {
+      const response = await api.get(`${PRINTER_API_URL}/settings/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener configuración:', error);
+      throw error;
+    }
+  }
+
+  async updateSettings(settingsData) {
+    try {
+      const response = await api.put(`${PRINTER_API_URL}/settings/`, settingsData);
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar configuración:', error);
+      throw error;
+    }
+  }
+
   async getPrinters() {
     try {
       const response = await api.get(`${PRINTER_API_URL}/printers/`);

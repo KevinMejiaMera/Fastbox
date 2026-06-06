@@ -23,6 +23,16 @@ const Impresoras = () => {
 
     const [printerForm, setPrinterForm] = useState(initialPrinterState);
 
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [settingsForm, setSettingsForm] = useState({
+        company_name: '',
+        company_address: '',
+        company_phone: '',
+        tax_id: '',
+        receipt_header: '',
+        receipt_footer: ''
+    });
+
     const fetchPrinters = async () => {
         try {
             setLoading(true);
@@ -37,8 +47,27 @@ const Impresoras = () => {
         }
     };
 
+    const fetchSettings = async () => {
+        try {
+            const data = await printerService.getSettings();
+            if (data) {
+                setSettingsForm({
+                    company_name: data.company_name || '',
+                    company_address: data.company_address || '',
+                    company_phone: data.company_phone || '',
+                    tax_id: data.tax_id || '',
+                    receipt_header: data.receipt_header || '',
+                    receipt_footer: data.receipt_footer || ''
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching settings:', err);
+        }
+    };
+
     useEffect(() => {
         fetchPrinters();
+        fetchSettings();
     }, []);
 
     const handleInputChange = (e) => {
@@ -47,6 +76,31 @@ const Impresoras = () => {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+    };
+
+    const handleSettingsChange = (e) => {
+        const { name, value } = e.target;
+        setSettingsForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const openSettingsModal = () => {
+        fetchSettings();
+        setIsSettingsModalOpen(true);
+    };
+
+    const handleSettingsSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await printerService.updateSettings(settingsForm);
+            setIsSettingsModalOpen(false);
+            alert('Configuración del ticket guardada exitosamente');
+        } catch (err) {
+            console.error('Error saving settings:', err);
+            alert('Error al guardar la configuración');
+        }
     };
 
     const openNewModal = () => {
@@ -103,9 +157,14 @@ const Impresoras = () => {
         <div className="page-container">
             <div className="page-header">
                 <h2>Administración de Impresoras</h2>
-                <button className="btn btn-primary" onClick={openNewModal}>
-                    Nueva Impresora
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn btn-secondary" onClick={openSettingsModal}>
+                        Configurar Ticket
+                    </button>
+                    <button className="btn btn-primary" onClick={openNewModal}>
+                        Nueva Impresora
+                    </button>
+                </div>
             </div>
 
             {loading ? <div>Cargando impresoras...</div> : error ? <div className="alert alert-error">{error}</div> : (
@@ -256,6 +315,39 @@ const Impresoras = () => {
                     <div className="form-actions">
                         <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
                         <button type="submit" className="btn btn-primary">Guardar Impresora</button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} title="Configuración del Ticket">
+                <form onSubmit={handleSettingsSubmit}>
+                    <div className="form-group">
+                        <label>Nombre de la Empresa</label>
+                        <input type="text" name="company_name" value={settingsForm.company_name} onChange={handleSettingsChange} placeholder="Ej: Mi Restaurante S.A." />
+                    </div>
+                    <div className="form-group">
+                        <label>RUC / NIT</label>
+                        <input type="text" name="tax_id" value={settingsForm.tax_id} onChange={handleSettingsChange} placeholder="Ej: 0912345678001" />
+                    </div>
+                    <div className="form-group">
+                        <label>Dirección</label>
+                        <input type="text" name="company_address" value={settingsForm.company_address} onChange={handleSettingsChange} placeholder="Ej: Av. Principal y Calle 1" />
+                    </div>
+                    <div className="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" name="company_phone" value={settingsForm.company_phone} onChange={handleSettingsChange} placeholder="Ej: 0999999999" />
+                    </div>
+                    <div className="form-group">
+                        <label>Mensaje Cabecera (Opcional)</label>
+                        <input type="text" name="receipt_header" value={settingsForm.receipt_header} onChange={handleSettingsChange} placeholder="Texto adicional arriba del ticket" />
+                    </div>
+                    <div className="form-group">
+                        <label>Mensaje Pie de Ticket (Opcional)</label>
+                        <input type="text" name="receipt_footer" value={settingsForm.receipt_footer} onChange={handleSettingsChange} placeholder="Ej: ¡Gracias por su compra!" />
+                    </div>
+                    <div className="form-actions">
+                        <button type="button" className="btn btn-secondary" onClick={() => setIsSettingsModalOpen(false)}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary">Guardar Configuración</button>
                     </div>
                 </form>
             </Modal>
