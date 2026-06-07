@@ -12,15 +12,24 @@ class RoleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     role_details = RoleSerializer(source='role', read_only=True)
     full_name = serializers.CharField(source='get_full_name', read_only=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True, min_length=8)
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
             'phone', 'role', 'role_details', 'full_name',
-            'is_active', 'is_staff', 'is_superuser', 'created_at', 'updated_at'
+            'is_active', 'is_staff', 'is_superuser', 'created_at', 'updated_at',
+            'password'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
+
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

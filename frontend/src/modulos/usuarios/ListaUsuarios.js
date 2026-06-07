@@ -101,7 +101,11 @@ const ListaUsuarios = () => {
                                 <td>{user.username}</td>
                                 <td>{user.email}</td>
                                 <td>{`${user.first_name} ${user.last_name}`}</td>
-                                <td>{user.role_details ? user.role_details.description : `ID: ${user.role}`}</td>
+                                <td>
+                                    {user.is_superuser 
+                                        ? 'Super Administrador' 
+                                        : (user.role_details ? user.role_details.description : (user.role ? `ID: ${user.role}` : 'Sin Rol'))}
+                                </td>
                                 <td>
                                     <button
                                         onClick={() => handleEdit(user)}
