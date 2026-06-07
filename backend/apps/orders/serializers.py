@@ -278,6 +278,48 @@ class OrderCreateSerializer(serializers.Serializer):
         # Si es dine-in y no tiene mesa, asignar mesa genérica
         if data.get('order_type') == 'dine_in' and not data.get('table_number'):
             data['table_number'] = 'GENERICA'
+            
+        # Validar stock de suministros (bodega)
+        from apps.menu.models import Product, RecipeIngredient
+        supplies_needed = {}
+        for item_data in data.get('items', []):
+            try:
+                product = Product.objects.get(id=item_data['product_id'])
+            except Product.DoesNotExist:
+                continue
+                
+            qty = item_data['quantity']
+            size_id = item_data.get('size_id')
+            
+            recipes = RecipeIngredient.objects.filter(product=product)
+            if size_id:
+                size_recipes = recipes.filter(size_id=size_id)
+                if size_recipes.exists():
+                    recipes = size_recipes
+                else:
+                    recipes = recipes.filter(size__isnull=True)
+            else:
+                recipes = recipes.filter(size__isnull=True)
+                
+            for recipe in recipes:
+                total_qty = recipe.quantity * qty
+                if recipe.supply.id not in supplies_needed:
+                    supplies_needed[recipe.supply.id] = {
+                        'supply': recipe.supply,
+                        'needed': Decimal('0.0'),
+                        'products': set()
+                    }
+                supplies_needed[recipe.supply.id]['needed'] += Decimal(str(total_qty))
+                supplies_needed[recipe.supply.id]['products'].add(product.name)
+                
+        for supply_id, info in supplies_needed.items():
+            supply = info['supply']
+            if supply.current_stock < info['needed']:
+                product_names = ", ".join(info['products'])
+                raise serializers.ValidationError(
+                    f"No hay suficiente stock de '{supply.name}' (requerido para {product_names}). "
+                    f"Stock actual: {supply.current_stock}, Se necesita: {info['needed']}."
+                )
         
         return data
     
@@ -352,7 +394,18 @@ class OrderCreateSerializer(serializers.Serializer):
         # ========================================
         # ENVIAR A IMPRESIÓN AUTOMÁTICAMENTE
         # ========================================
-        self._send_to_printer(order)
+        request = self.context.get('request')
+        skip_print = request and request.data.get('skip_print')
+        
+        if not skip_print:
+            from apps.printer.models import PrinterSettings
+            try:
+                settings_obj = PrinterSettings.get_settings()
+                if settings_obj.auto_print_receipt:
+                    self._send_to_printer(order)
+            except Exception as e:
+                logger.error(f"Error checking printer settings: {e}")
+                self._send_to_printer(order)
         
         return order
     
@@ -372,15 +425,22 @@ class OrderCreateSerializer(serializers.Serializer):
             for item in order.items.all():
                 items.append({
                     'name': item.product.name,
+                    'description': item.product.description if hasattr(item.product, 'description') else '',
                     'quantity': item.quantity,
                     'price': float(item.unit_price),
                     'total': float(item.line_total)
                 })
             
+            request = self.context.get('request')
+            cashier_name = 'CAJA'
+            if request and request.user.is_authenticated:
+                cashier_name = request.user.get_full_name() or request.user.username
+
             # Preparar datos de la orden en el formato esperado
             order_data = {
                 'order_number': order.order_number,
                 'customer_name': order.customer.get_full_name() if order.customer else 'CONTADO',
+                'cashier_name': cashier_name,
                 'items': items,
                 'subtotal': float(order.subtotal),
                 'tax': float(order.tax_amount),

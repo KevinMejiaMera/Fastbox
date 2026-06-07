@@ -260,44 +260,59 @@ const BarraLateral = () => {
 
                 {/* Navegación */}
                 <ul style={styles.sidebarNav}>
-                    {menuItems.map((item) => {
-                        const active = isActive(item.path);
-                        return (
-                            <li key={item.path} style={styles.navItem}>
-                                <Link
-                                    to={item.path}
-                                    title={isCollapsed ? item.label : ''}
-                                    style={{
-                                        ...styles.navLink,
-                                        ...(active ? styles.navLinkActive : {})
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!active) {
-                                            e.currentTarget.style.background = 'var(--secondary-color)';
-                                            e.currentTarget.style.color = 'var(--primary-color)';
-                                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (!active) {
-                                            e.currentTarget.style.background = 'transparent';
-                                            e.currentTarget.style.color = 'var(--sidebar-text)';
-                                            e.currentTarget.style.boxShadow = 'none';
-                                        }
-                                    }}
-                                >
-                                    <i
-                                        className={`bi ${item.icon}`}
+                    {(() => {
+                        const roleName = user?.role_details?.name;
+                        const isSuperAdmin = roleName === 'SUPER_ADMIN' || user?.is_superuser;
+                        const isAdminFastFood = roleName === 'ADMIN_FAST_FOOD';
+                        
+                        const filteredMenuItems = menuItems.filter(item => {
+                            if (isSuperAdmin) return true;
+                            if (isAdminFastFood && item.path.startsWith('/fast-food')) return true;
+                            
+                            // Para empleados normales de Fast Food
+                            const employeePaths = ['/fast-food/pos', '/fast-food/orders', '/fast-food/shift', '/fast-food/bodega'];
+                            return employeePaths.includes(item.path);
+                        });
+
+                        return filteredMenuItems.map((item) => {
+                            const active = isActive(item.path);
+                            return (
+                                <li key={item.path} style={styles.navItem}>
+                                    <Link
+                                        to={item.path}
+                                        title={isCollapsed ? item.label : ''}
                                         style={{
-                                            ...styles.navIcon,
-                                            color: active ? 'var(--primary-color)' : 'var(--sidebar-text)'
+                                            ...styles.navLink,
+                                            ...(active ? styles.navLinkActive : {})
                                         }}
-                                    ></i>
-                                    <span style={styles.navText}>{item.label}</span>
-                                </Link>
-                            </li>
-                        );
-                    })}
+                                        onMouseEnter={(e) => {
+                                            if (!active) {
+                                                e.currentTarget.style.background = 'var(--secondary-color)';
+                                                e.currentTarget.style.color = 'var(--primary-color)';
+                                                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!active) {
+                                                e.currentTarget.style.background = 'transparent';
+                                                e.currentTarget.style.color = 'var(--sidebar-text)';
+                                                e.currentTarget.style.boxShadow = 'none';
+                                            }
+                                        }}
+                                    >
+                                        <i
+                                            className={`bi ${item.icon}`}
+                                            style={{
+                                                ...styles.navIcon,
+                                                color: active ? 'var(--primary-color)' : 'var(--sidebar-text)'
+                                            }}
+                                        ></i>
+                                        <span style={styles.navText}>{item.label}</span>
+                                    </Link>
+                                </li>
+                            );
+                        });
+                    })()}
                 </ul>
 
                 {/* Footer con Logout */}

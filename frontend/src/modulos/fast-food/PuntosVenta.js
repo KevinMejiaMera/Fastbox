@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import printerService from '../../services/printerService';
 
@@ -38,9 +39,13 @@ const formatDate = (dateString) => {
 const TOUCH_MIN_SIZE = '44px';
 
 const PuntosVenta = () => {
+    const navigate = useNavigate();
+
     // =====================================
     // 1. ESTADO DE DATOS Y CARGA
     // =====================================
+    const [currentShift, setCurrentShift] = useState(null);
+    const [checkingShift, setCheckingShift] = useState(true);
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [tables, setTables] = useState([]);
@@ -119,6 +124,24 @@ const PuntosVenta = () => {
         let isMounted = true;
 
         const fetchData = async () => {
+            try {
+                const shiftRes = await api.get('/api/pos/shifts/current/', {
+                    baseURL: process.env.REACT_APP_FAST_FOOD_SERVICE
+                });
+                if (isMounted) {
+                    setCurrentShift(shiftRes.data.shift || shiftRes.data);
+                }
+            } catch (err) {
+                console.warn('No hay caja abierta o error cargando caja:', err);
+                if (isMounted) {
+                    setCurrentShift(null);
+                }
+            } finally {
+                if (isMounted) {
+                    setCheckingShift(false);
+                }
+            }
+
             try {
                 const productsRes = await api.get('/api/menu/products/', {
                     baseURL: process.env.REACT_APP_FAST_FOOD_SERVICE
@@ -205,6 +228,7 @@ const PuntosVenta = () => {
                 return [...prevCart, {
                     product_id: product.id,
                     name: product.name,
+                    description: product.description || '',
                     price: parseFloat(product.price),
                     quantity: 1,
                     image: product.image,
@@ -464,7 +488,8 @@ const PuntosVenta = () => {
                 discount_percentage: parseFloat(item.discount_percentage) || 0
             })),
             discount_code: appliedDiscount ? appliedDiscount.code : null,
-            customer_id: selectedCustomer ? selectedCustomer.id : null
+            customer_id: selectedCustomer ? selectedCustomer.id : null,
+            skip_print: true // Evitar que el backend imprima doble
         };
 
         try {
@@ -481,9 +506,11 @@ const PuntosVenta = () => {
                 customer_name: selectedCustomer
                     ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}`
                     : 'CONSUMIDOR FINAL',
+                cashier_name: currentShift?.user_name || 'CAJA',
                 table_number: selectedTable === 'takeout' ? 'PARA LLEVAR' : (selectedTable || 'MESA GENÉRICA'),
                 items: cart.map(item => ({
                     name: item.name,
+                    description: item.description || '',
                     quantity: item.quantity,
                     price: parseFloat(item.price),
                     discount_percentage: parseFloat(item.discount_percentage) || 0,
@@ -898,32 +925,47 @@ const PuntosVenta = () => {
                     color: 'var(--primary-color)',
                     fontSize: screenWidth <= 1366 ? '0.9rem' : '1rem'
                 }}>
-                    💳 Método de Pago
+                    Método de Pago
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {[
-                            { id: 'efectivo', label: 'Efectivo' },
-                            { id: 'tarjeta', label: 'Tarjeta' },
-                            { id: 'transferencia', label: 'Transferencia' }
+                            { 
+                                id: 'efectivo', 
+                                icon: (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M240,88V184a16,16,0,0,1-16,16H32a16,16,0,0,1-16-16V88A16,16,0,0,1,32,72H224A16,16,0,0,1,240,88Zm-16,0H32V184H224ZM128,104a24,24,0,1,0,24,24A24,24,0,0,0,128,104Zm0,32a8,8,0,1,1,8-8A8,8,0,0,1,128,136Zm88-32a8,8,0,0,0-8-8H192a8,8,0,0,0,0,16h16A8,8,0,0,0,216,104Zm-16,64H192a8,8,0,0,0,0,16h8a8,8,0,0,0,0-16ZM64,104a8,8,0,0,0,8-8H56a8,8,0,0,0,0,16h8A8,8,0,0,0,64,104Zm0,64a8,8,0,0,0-8,8h16a8,8,0,0,0,0-16H56A8,8,0,0,0,64,168Z"></path>
+                                    </svg>
+                                )
+                            },
+                            { 
+                                id: 'transferencia', 
+                                icon: (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M240,208H224V104a8,8,0,0,0-4-6.93l-88-51a8,8,0,0,0-8,0l-88,51A8,8,0,0,0,32,104V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM48,108.62l80-46.4,80,46.4V208H176V120a8,8,0,0,0-16,0v88H96V120a8,8,0,0,0-16,0v88H48ZM128,144a16,16,0,1,0-16-16A16,16,0,0,0,128,144Z"></path>
+                                    </svg>
+                                )
+                            }
                         ].map(method => (
                             <button
                                 key={method.id}
                                 style={{
                                     flex: 1,
-                                    padding: '0.75rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '1rem',
                                     backgroundColor: paymentMethod === method.id ? 'var(--primary-color)' : '#ffffff',
-                                    border: `1px solid ${paymentMethod === method.id ? 'var(--primary-color)' : '#d1d5db'}`,
-                                    borderRadius: '8px',
-                                    color: paymentMethod === method.id ? '#ffffff' : '#374151',
-                                    fontWeight: '600',
-                                    fontSize: '0.875rem',
+                                    border: `2px solid ${paymentMethod === method.id ? 'var(--primary-color)' : '#d1d5db'}`,
+                                    borderRadius: '12px',
+                                    color: paymentMethod === method.id ? '#ffffff' : '#4b5563',
                                     cursor: 'pointer',
-                                    minHeight: TOUCH_MIN_SIZE
+                                    minHeight: '70px',
+                                    transition: 'all 0.2s ease-in-out'
                                 }}
                                 onClick={() => setPaymentMethod(method.id)}
                             >
-                                {method.label}
+                                {method.icon}
                             </button>
                         ))}
                     </div>
@@ -966,7 +1008,7 @@ const PuntosVenta = () => {
                     color: 'var(--primary-color)',
                     fontSize: screenWidth <= 1366 ? '0.9rem' : '1rem'
                 }}>
-                    🧮 Calculadora de Vuelto
+                    Calculadora de Vuelto
                 </h4>
 
                 <div style={{ marginBottom: '1rem' }}>
@@ -2455,7 +2497,7 @@ const PuntosVenta = () => {
         </div>
     );
 
-    if (loading) return (
+    if (loading || checkingShift) return (
         <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -2467,6 +2509,46 @@ const PuntosVenta = () => {
             Cargando sistema de punto de venta...
         </div>
     );
+
+    if (!currentShift || !currentShift.id || currentShift.status !== 'open') {
+        return (
+            <div style={{
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'var(--sidebar-bg)',
+                padding: '2rem',
+                textAlign: 'center'
+            }}>
+                <i className="bi bi-lock-fill" style={{ fontSize: '5rem', color: '#dc2626', marginBottom: '1rem' }}></i>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>Caja Cerrada</h2>
+                <p style={{ fontSize: '1.25rem', color: '#4b5563', marginBottom: '2.5rem', maxWidth: '600px', lineHeight: '1.5' }}>
+                    Debes abrir la caja registradora antes de poder acceder al Punto de Venta y realizar ventas.
+                </p>
+                <button
+                    onClick={() => navigate('/fast-food/shift')}
+                    style={{
+                        padding: '1rem 2.5rem',
+                        backgroundColor: 'var(--primary-color)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1.25rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        transition: 'transform 0.2s',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    Ir a Abrir Caja
+                </button>
+            </div>
+        );
+    }
 
     // =====================================
     // 11. ESTRUCTURA PRINCIPAL CON RESPONSIVIDAD

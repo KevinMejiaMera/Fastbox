@@ -262,6 +262,54 @@ class OrderCreateSerializer(serializers.Serializer):
         # Si es dine-in y no tiene mesa, asignar mesa genérica
         if data.get('order_type') == 'dine_in' and not data.get('table_number'):
             data['table_number'] = 'GENERICA'
+            
+        # Validar stock de suministros (bodega)
+        from apps.menu.models import Product, RecipeIngredient
+        supplies_needed = {}
+        for item_data in data.get('items', []):
+            try:
+                product = Product.objects.get(id=item_data['product_id'])
+            except Product.DoesNotExist:
+                continue
+                
+            qty = item_data['quantity']
+            size_id = item_data.get('size_id')
+            
+            recipes = RecipeIngredient.objects.filter(product=product)
+            if size_id:
+                size_recipes = recipes.filter(size_id=size_id)
+                if size_recipes.exists():
+                    recipes = size_recipes
+                else:
+                    recipes = recipes.filter(size__isnull=True)
+            else:
+                recipes = recipes.filter(size__isnull=True)
+                
+            for recipe in recipes:
+                total_qty = recipe.quantity * qty
+                if recipe.supply.id not in supplies_needed:
+                    supplies_needed[recipe.supply.id] = {
+                        'supply': recipe.supply,
+                        'needed': Decimal('0.0'),
+                        'products': set()
+                    }
+                supplies_needed[recipe.supply.id]['needed'] += Decimal(str(total_qty))
+                supplies_needed[recipe.supply.id]['products'].add(product.name)
+                
+        for supply_id, info in supplies_needed.items():
+            supply = info['supply']
+            if supply.current_stock <= 0:
+                product_names = ", ".join(info['products'])
+                raise serializers.ValidationError(
+                    f"No puedes vender '{product_names}' porque el stock de '{supply.name}' es menor o igual a 0. "
+                    f"Debes rellenar el stock (Stock actual: {supply.current_stock})."
+                )
+            elif supply.current_stock < info['needed']:
+                product_names = ", ".join(info['products'])
+                raise serializers.ValidationError(
+                    f"No hay suficiente stock de '{supply.name}' (requerido para {product_names}). "
+                    f"Stock actual: {supply.current_stock}, Se necesita: {info['needed']}."
+                )
         
         return data
     

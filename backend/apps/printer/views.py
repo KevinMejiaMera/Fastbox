@@ -648,7 +648,9 @@ class PrintAPIView(APIView):
                 'status': 'success',
                 'message': 'Trabajo de impresión creado',
                 'job_id': str(print_job.id),
-                'job_number': print_job.job_number
+                'job_number': print_job.job_number,
+                'receipt_text': content,
+                'connection_type': printer.connection_type
             })
                 
         except Exception as e:
@@ -698,25 +700,54 @@ class PrintReceiptView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            content = self.generate_receipt_content(printer, order_data)
+            config = printer.config if printer.config else {}
+            prints_receipt = config.get('prints_receipt', True)
+            prints_command = config.get('prints_command', False)
             
+            if not prints_receipt and not prints_command:
+                prints_receipt = True
+                
+            jobs_created = []
             username = request.user.username if request.user.is_authenticated else 'system'
-            print_job = PrintJob.objects.create(
-                printer=printer,
-                document_type='receipt',
-                content=content,
-                data=order_data,
-                open_cash_drawer=True,
-                created_by=username,
-                status='pending'
-            )
+            last_job_id = None
+            last_content = ""
+            
+            if prints_receipt:
+                content = self.generate_receipt_content(printer, order_data)
+                print_job = PrintJob.objects.create(
+                    printer=printer,
+                    document_type='receipt',
+                    content=content,
+                    data=order_data,
+                    open_cash_drawer=True,
+                    created_by=username,
+                    status='pending'
+                )
+                jobs_created.append(print_job)
+                last_job_id = print_job.id
+                last_content = content
+                
+            if prints_command:
+                content_cmd = self.generate_command_content(printer, order_data)
+                print_job_cmd = PrintJob.objects.create(
+                    printer=printer,
+                    document_type='order_kitchen',
+                    content=content_cmd,
+                    data=order_data,
+                    open_cash_drawer=False,
+                    created_by=username,
+                    status='pending'
+                )
+                jobs_created.append(print_job_cmd)
+                last_job_id = print_job_cmd.id
+                last_content = content_cmd
             
             return Response({
                 'status': 'success',
-                'message': 'Ticket creado',
-                'job_id': str(print_job.id),
-                'job_number': print_job.job_number,
-                'receipt_text': content,
+                'message': f'Se generaron {len(jobs_created)} ticket(s)',
+                'job_id': str(last_job_id),
+                'job_number': jobs_created[0].job_number if jobs_created else '',
+                'receipt_text': last_content,
                 'connection_type': printer.connection_type
             })
                 
@@ -735,9 +766,16 @@ class PrintReceiptView(APIView):
         lines = []
     
     # Encabezado de la empresa
-        lines.append(settings.get_company_name().center(chars_per_line))
-        lines.append(settings.get_company_address().center(chars_per_line))
-        lines.append(f"RUC: {settings.get_tax_id()}".center(chars_per_line))
+        header_text = settings.get_receipt_header()
+        if header_text:
+            for line in header_text.split('\n'):
+                if line.strip():
+                    lines.append(line.strip().center(chars_per_line))
+        else:
+            lines.append(settings.get_company_name().center(chars_per_line))
+            lines.append(settings.get_company_address().center(chars_per_line))
+            lines.append(f"RUC: {settings.get_tax_id()}".center(chars_per_line))
+            
         lines.append("=" * chars_per_line)
     
     # Información del ticket
@@ -843,12 +881,108 @@ class PrintReceiptView(APIView):
                 lines.append(f"Ref: {payment_ref}".center(chars_per_line))
             lines.append("-" * chars_per_line)
 
-        lines.append("¡GRACIAS POR SU COMPRA!".center(chars_per_line))
-        lines.append("*** VUELVA PRONTO ***".center(chars_per_line))
+        footer_text = settings.get_receipt_footer()
+        if footer_text:
+            for line in footer_text.split('\n'):
+                if line.strip():
+                    lines.append(line.strip().center(chars_per_line))
+        else:
+            lines.append("¡GRACIAS POR SU COMPRA!".center(chars_per_line))
+            lines.append("*** VUELVA PRONTO ***".center(chars_per_line))
     
         lines.append("\n" * 3)
     
         return "\n".join(lines)
+
+    def generate_command_content(self, printer, order_data):
+        """Genera el contenido para comanda de cocina/bar sin precios"""
+        from django.utils import timezone
+        chars_per_line = printer.characters_per_line or 42
+        lines = []
+        
+        lines.append("=" * chars_per_line)
+        lines.append("COMANDA DE PREPARACION".center(chars_per_line))
+        lines.append("=" * chars_per_line)
+        
+        # Usar hora del cliente si existe, sino hora local del servidor
+        printed_at_str = order_data.get('printed_at')
+        current_time = None
+        if printed_at_str:
+            from django.utils.dateparse import parse_datetime
+            dt = parse_datetime(printed_at_str)
+            if dt:
+                current_time = timezone.localtime(dt)
+        if not current_time:
+            current_time = timezone.localtime(timezone.now())
+            
+        lines.append(f"Fecha: {current_time.strftime('%d/%m/%Y')}  Hora: {current_time.strftime('%H:%M')}")
+        lines.append(f"Ticket #: {order_data.get('order_number', 'N/A')}")
+        
+        cashier = order_data.get('cashier_name') or 'CAJA'
+        lines.append(f"Atendido por: {cashier}")
+        lines.append("-" * chars_per_line)
+        
+        # Definir anchos de columnas (total = chars_per_line, usualmente 42)
+        qty_width = 5
+        prod_width = 15
+        det_width = chars_per_line - qty_width - prod_width
+        
+        lines.append(f"{'CANT':<{qty_width}}{'PRODUCTO':<{prod_width}}{'DETALLE':<{det_width}}")
+        lines.append("-" * chars_per_line)
+        
+        items = order_data.get('items', [])
+        for item in items:
+            name = str(item.get('name', 'Sin nombre')).strip()
+            description = str(item.get('description', '')).strip()
+            note = str(item.get('note', '')).strip()
+            qty = str(item.get('quantity', 0))
+            
+            # Formatear celdas en líneas múltiples si exceden el ancho
+            import textwrap
+            name_lines = textwrap.wrap(name, prod_width - 1) if name else []
+            desc_lines = textwrap.wrap(description, det_width) if description else []
+            
+            # Añadir la nota como parte del detalle si existe
+            if note:
+                note_lines = textwrap.wrap(f"NOTA: {note}", det_width)
+                desc_lines.extend(note_lines)
+            
+            # Asegurar al menos una línea para el loop
+            if not name_lines: name_lines = [""]
+            
+            max_lines = max(len(name_lines), len(desc_lines))
+            
+            for i in range(max_lines):
+                q_str = qty if i == 0 else ""
+                n_str = name_lines[i] if i < len(name_lines) else ""
+                d_str = desc_lines[i] if i < len(desc_lines) else ""
+                
+                line_str = f"{q_str:<{qty_width}}{n_str:<{prod_width}}{d_str:<{det_width}}"
+                lines.append(f"{line_str:<{chars_per_line}}")
+                
+        lines.append("-" * chars_per_line)
+        
+        payment_method = order_data.get('payment_method')
+        if payment_method:
+            pm_str = f"Tipo de pago: {str(payment_method).capitalize()}"
+            lines.append(f"{pm_str:<{chars_per_line}}")
+            
+        total = order_data.get('total', 0)
+        tot_str = f"Total pagado: ${total:>10.2f}"
+        lines.append(f"{tot_str:<{chars_per_line}}")
+            
+        lines.append("=" * chars_per_line)
+        
+        result_text = "\n".join(lines)
+        
+        # Log the content for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("\n--- PREVIEW COMANDA ---")
+        logger.info("\n" + result_text)
+        logger.info("-----------------------")
+        
+        return result_text
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

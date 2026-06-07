@@ -35,6 +35,47 @@ class PrinterService {
     }
   }
 
+  async printCustomTicket(content, documentType = 'other', printerId = null) {
+    try {
+      const payload = {
+        content: content,
+        document_type: documentType,
+        open_cash_drawer: false,
+        copies: 1
+      };
+      
+      if (printerId) {
+        payload.printer = printerId;
+      } else {
+        const printersRes = await this.getPrinters();
+        const printers = printersRes.results || printersRes;
+        const defaultPrinter = printers.find(p => p.is_default) || printers[0];
+        if (defaultPrinter) payload.printer = defaultPrinter.id;
+      }
+
+      if (!payload.printer) {
+        throw new Error("No hay impresora configurada para imprimir.");
+      }
+      
+      const response = await api.post(`${PRINTER_API_URL}/print/`, payload);
+      
+      if (response.data && response.data.receipt_text) {
+        const isRawbt = localStorage.getItem('defaultPrinterType') === 'rawbt' || 
+                        response.data.connection_type === 'rawbt'; 
+        
+        if (isRawbt) {
+          const rawText = encodeURIComponent(response.data.receipt_text);
+          window.location.href = `intent:${rawText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+        }
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error al imprimir ticket custom:', error);
+      throw error;
+    }
+  }
+
   async openCashDrawer(printerId = null) {
     try {
       const response = await api.post(`${PRINTER_API_URL}/open-drawer/`, {

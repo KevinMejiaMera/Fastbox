@@ -33,24 +33,26 @@ const PrivateRoute = ({ children }) => {
   return <Diseno>{children}</Diseno>;
 };
 
-// Componente para proteger rutas de Comida Rápida con su propio diseño
 const FastFoodRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) return <div>Cargando...</div>;
   if (!user) return <Navigate to="/login" />;
 
-  // Si es Super Admin (por rol o por flag de superusuario), mantener el diseño general
-  if (user.role_details?.name === 'SUPER_ADMIN' || user.is_superuser) {
-    return <Diseno>{children}</Diseno>;
-  }
-
-  // Si es otro rol (ej. Admin Fast Food), usar el diseño específico
-  return <DisenoFastFood>{children}</DisenoFastFood>;
+  // Usamos el diseño general para todos, la barra lateral filtrará los items
+  return <Diseno>{children}</Diseno>;
 };
 
 // Dashboard simple
-const Dashboard = () => (
+const Dashboard = () => {
+  const { user } = useContext(AuthContext);
+  const roleName = user?.role_details?.name;
+  
+  if (roleName !== 'SUPER_ADMIN' && !user?.is_superuser) {
+      return <Navigate to="/fast-food/pos" />;
+  }
+
+  return (
   <div style={{
     display: 'flex',
     flexDirection: 'column',
@@ -69,7 +71,8 @@ const Dashboard = () => (
     <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bienvenido a Choco Lab</h2>
     <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>Seleccione una opción del menú lateral para comenzar a administrar su negocio.</p>
   </div>
-);
+  );
+};
 
 function App() {
   return (

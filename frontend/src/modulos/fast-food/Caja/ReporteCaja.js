@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import jsPDF from 'jspdf';
 import { formatCurrency, generateDetailedPDF } from '../../../utils/reportUtils';
+import printerService from '../../../services/printerService';
 
 const ReporteCaja = ({ shiftId }) => {
     const [reportData, setReportData] = useState(null);
@@ -49,13 +50,12 @@ const ReporteCaja = ({ shiftId }) => {
     const { shift_info } = reportData;
     
     const openingCash = parseFloat(shift_info.opening_cash || 0);
-    const totalCashSales = parseFloat(reportData.total_cash_sales || 0);
-    const closingCash = parseFloat(shift_info.closing_cash || 0);
+    const closingCash = parseFloat(shift_info.closing_cash || 0); // Este closingCash puede incluir transferencias si fue caja ciega
     const totalSales = parseFloat(reportData.total_sales || 0);
     const totalExpenses = parseFloat(reportData.total_expenses || 0);
     const expensesList = reportData.expenses || [];
 
-    // Desglose de métodos de pago
+    // Desglose de métodos de pago (Sistema)
     let paymentStats = {
         efectivo: 0,
         transferencia: 0,
@@ -90,82 +90,216 @@ const ReporteCaja = ({ shiftId }) => {
         });
     }
 
-    const handlePrintCaja = () => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        let y = 20;
-        const MARGIN = 15;
+    // EXTRAER TRANSFERENCIAS Y TARJETAS FÍSICAS DE LAS NOTAS (Caja Ciega)
+    let transferenciasFisico = 0;
+    if (shift_info.closing_notes) {
+        if (shift_info.closing_notes.includes('Transferencias: $')) {
+            const matchT = shift_info.closing_notes.match(/Transferencias:\s*\$?([\d.]+)/);
+            if (matchT) {
+                transferenciasFisico = parseFloat(matchT[1]);
+            }
+        }
+    }
 
-        doc.setFontSize(18);
-        doc.setFont(undefined, 'bold');
-        doc.text('Cuadre de Caja', pageWidth / 2, y, { align: 'center' });
-        
-        y += 15;
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'normal');
-        doc.text(`Turno: ${shift_info.number}`, MARGIN, y);
-        y += 8;
-        doc.text(`Encargado: ${shift_info.user}`, MARGIN, y);
-        y += 8;
-        doc.text(`Apertura: ${new Date(shift_info.opened_at).toLocaleString()}`, MARGIN, y);
-        y += 8;
-        doc.text(`Cierre: ${shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}`, MARGIN, y);
-        
-        y += 15;
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text('Detalle de Cuadre', MARGIN, y);
-        y += 10;
-        
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'normal');
-        doc.text('Efectivo Inicial:', MARGIN, y);
-        doc.text(formatCurrency(openingCash), pageWidth - MARGIN, y, { align: 'right' });
-        y += 8;
-        
-        doc.text('Ventas del Turno (Efectivo):', MARGIN, y);
-        doc.text(formatCurrency(paymentStats.efectivo), pageWidth - MARGIN, y, { align: 'right' });
-        y += 8;
-        
-        doc.text('Ventas del Turno (Transferencia):', MARGIN, y);
-        doc.text(formatCurrency(paymentStats.transferencia), pageWidth - MARGIN, y, { align: 'right' });
-        y += 8;
+    // CÁLCULOS COMPARATIVOS
+    const efectivoFisico = closingCash - transferenciasFisico; 
+    const efectivoSistema = openingCash + paymentStats.efectivo - totalExpenses;
+    const sobranteEfectivo = efectivoFisico - efectivoSistema;
+    
+    const transferenciasSistema = paymentStats.transferencia;
+    const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
 
-        doc.text('Ventas del Turno (Tarjeta):', MARGIN, y);
-        doc.text(formatCurrency(paymentStats.tarjeta), pageWidth - MARGIN, y, { align: 'right' });
-        y += 8;
+    const handlePrintCaja = async () => {
+        const chars_per_line = 42;
+        let lines = [];
         
-        doc.text('Gastos (Egresos):', MARGIN, y);
-        doc.setTextColor(220, 53, 69); // Rojo
-        doc.text(`-${formatCurrency(totalExpenses)}`, pageWidth - MARGIN, y, { align: 'right' });
-        doc.setTextColor(0, 0, 0); // Reset color
-        y += 8;
+        const center = (text) => {
+            const padding = Math.max(0, Math.floor((chars_per_line - text.length) / 2));
+            return ' '.repeat(padding) + text;
+        };
+        const rightAlign = (label, value) => {
+            const valueStr = String(value);
+            const padding = Math.max(0, chars_per_line - label.length - valueStr.length);
+            return label + ' '.repeat(padding) + valueStr;
+        };
+
+        lines.push(center("REPORTE DE CAJA"));
+        lines.push("=".repeat(chars_per_line));
         
-        doc.setFont(undefined, 'bold');
-        doc.text('Efectivo Físico Final:', MARGIN, y);
-        doc.text(formatCurrency(closingCash), pageWidth - MARGIN, y, { align: 'right' });
+        const current_time = new Date();
+        lines.push(`Fecha: ${current_time.toLocaleDateString()}  Hora: ${current_time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+        lines.push(`Turno: ${shift_info.number}`);
+        lines.push(`Encargado: ${shift_info.user || shift_info.manager_name}`);
+        lines.push(`Apertura: ${new Date(shift_info.opened_at).toLocaleString()}`);
+        lines.push(`Cierre: ${shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}`);
+        lines.push("-".repeat(chars_per_line));
         
-        y += 15;
-        doc.setFontSize(14);
-        doc.text('Total General de Ventas (Todos los métodos)', MARGIN, y);
-        y += 10;
-        doc.setFontSize(16);
-        doc.text(formatCurrency(totalSales), MARGIN, y);
+        lines.push(center("EFECTIVO"));
+        lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCash.toFixed(2)}`));
+        lines.push(rightAlign("Dinero en efec. sistema:", `$${paymentStats.efectivo.toFixed(2)}`));
+        lines.push(rightAlign("Dinero en efec. caja:", `$${efectivoFisico.toFixed(2)}`));
+        lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", `$${sobranteEfectivo.toFixed(2)}`));
+        lines.push("-".repeat(chars_per_line));
+
+        lines.push(center("TRANSFERENCIAS"));
+        lines.push(rightAlign("Dinero en transf. sist.:", `$${transferenciasSistema.toFixed(2)}`));
+        lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
+        lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", `$${sobranteTransferencia.toFixed(2)}`));
+        lines.push("-".repeat(chars_per_line));
+
+        lines.push(center("GASTOS Y TOTALES"));
+        lines.push(rightAlign("Gastos sistema:", `-$${totalExpenses.toFixed(2)}`));
+        lines.push(rightAlign("Efectivo calculado:", `$${efectivoSistema.toFixed(2)}`));
+        lines.push(rightAlign("Efectivo total:", `$${efectivoFisico.toFixed(2)}`));
+        lines.push("-".repeat(chars_per_line));
+
+        if (expensesList.length > 0) {
+            lines.push(center("DETALLE DE GASTOS"));
+            expensesList.forEach(exp => {
+                const desc = exp.description.length > 28 ? exp.description.substring(0, 28) + ".." : exp.description;
+                lines.push(rightAlign(desc, `$${parseFloat(exp.amount).toFixed(2)}`));
+            });
+            lines.push("-".repeat(chars_per_line));
+        }
+
+        if (shift_info.closing_notes) {
+            lines.push("NOTAS DE CIERRE:");
+            const notesText = shift_info.closing_notes;
+            for(let i=0; i<notesText.length; i+=chars_per_line) {
+                lines.push(notesText.substring(i, i+chars_per_line));
+            }
+            lines.push("-".repeat(chars_per_line));
+        }
+
+        lines.push("\n\n\n");
+        const ticketContent = lines.join("\n");
+
+        try {
+            await printerService.printCustomTicket(ticketContent, 'report');
+        } catch (error) {
+            alert('Error al enviar impresión. Revisa la consola para más detalles.');
+        }
+    };
+
+    const handleDownloadPDFCaja = () => {
+        const tempDoc = new jsPDF();
+        tempDoc.setFontSize(9);
+        const closingLines = shift_info.closing_notes ? tempDoc.splitTextToSize(`Cierre: ${shift_info.closing_notes}`, 70) : [];
+        const openingLines = shift_info.opening_notes ? tempDoc.splitTextToSize(`Apertura: ${shift_info.opening_notes}`, 70) : [];
         
-        if (shift_info.opening_notes || shift_info.closing_notes) {
-            y += 15;
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(14);
-            doc.text('Notas', MARGIN, y);
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
+        let estHeight = 140; 
+        if (shift_info.opening_notes || shift_info.closing_notes || expensesList.length > 0) {
+            estHeight += 10;
+            if (expensesList.length > 0) {
+                estHeight += 6 + (expensesList.length * 4) + 2;
+            }
             if (shift_info.opening_notes) {
-                y += 8;
-                doc.text(`Apertura: ${shift_info.opening_notes}`, MARGIN, y);
+                estHeight += 6 + (openingLines.length * 4);
             }
             if (shift_info.closing_notes) {
-                y += 8;
-                doc.text(`Cierre: ${shift_info.closing_notes}`, MARGIN, y);
+                estHeight += 6 + (closingLines.length * 4);
+            }
+        }
+
+        const doc = new jsPDF({ format: [80, estHeight + 10] });
+        const pageWidth = 80;
+        let y = 10;
+        const MARGIN = 5;
+
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('REPORTE DE CAJA', pageWidth / 2, y, { align: 'center' });
+        
+        y += 8;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Turno: ${shift_info.number}`, MARGIN, y);
+        y += 5;
+        doc.text(`Encargado: ${shift_info.user || shift_info.manager_name}`, MARGIN, y);
+        y += 5;
+        doc.text(`Apertura: ${new Date(shift_info.opened_at).toLocaleString()}`, MARGIN, y);
+        y += 5;
+        doc.text(`Cierre: ${shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}`, MARGIN, y);
+        
+        y += 8;
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('Detalle de Cuadre', MARGIN, y);
+        y += 6;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        
+        const addRow = (label, value, bold = false) => {
+            if(bold) doc.setFont(undefined, 'bold');
+            else doc.setFont(undefined, 'normal');
+            doc.text(label, MARGIN, y);
+            doc.text(value, pageWidth - MARGIN, y, { align: 'right' });
+            y += 5;
+        };
+
+        addRow('Efectivo Inicial Base:', formatCurrency(openingCash));
+        y += 2;
+        addRow('Dinero en efec. sistema:', formatCurrency(paymentStats.efectivo));
+        addRow('Dinero en efec. caja:', formatCurrency(efectivoFisico));
+        
+        doc.setTextColor(sobranteEfectivo >= 0 ? 40 : 220, sobranteEfectivo >= 0 ? 167 : 53, sobranteEfectivo >= 0 ? 69 : 69);
+        addRow('Sobrante/Faltante Efec.:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`);
+        doc.setTextColor(0, 0, 0);
+        y += 2;
+
+        addRow('Dinero en transf. sistema:', formatCurrency(transferenciasSistema));
+        addRow('Dinero en transf. caja:', formatCurrency(transferenciasFisico));
+        doc.setTextColor(sobranteTransferencia >= 0 ? 40 : 220, sobranteTransferencia >= 0 ? 167 : 53, sobranteTransferencia >= 0 ? 69 : 69);
+        addRow('Sobrante/Faltante Trans.:', `${sobranteTransferencia >= 0 ? '+' : ''}${formatCurrency(sobranteTransferencia)}`);
+        doc.setTextColor(0, 0, 0);
+        y += 4;
+        
+        doc.setTextColor(220, 53, 69);
+        addRow('Gastos sistema:', `-${formatCurrency(totalExpenses)}`);
+        doc.setTextColor(0, 0, 0);
+        y += 4;
+        
+        addRow('Efectivo calculado:', formatCurrency(efectivoSistema), true);
+        addRow('Efectivo total:', formatCurrency(efectivoFisico), true);
+        
+        y += 8;
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('Total Gral. de Ventas (Sistema)', MARGIN, y);
+        y += 6;
+        doc.setFontSize(14);
+        doc.text(formatCurrency(totalSales), MARGIN, y);
+        
+        if (shift_info.opening_notes || shift_info.closing_notes || expensesList.length > 0) {
+            y += 10;
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.text('Detalles Adicionales', MARGIN, y);
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            
+            if (expensesList.length > 0) {
+                y += 6;
+                doc.setFont(undefined, 'bold');
+                doc.text('Desglose de Gastos:', MARGIN, y);
+                doc.setFont(undefined, 'normal');
+                expensesList.forEach(exp => {
+                    y += 4;
+                    doc.text(`- ${exp.description.substring(0,25)}: ${formatCurrency(exp.amount)}`, MARGIN + 2, y);
+                });
+                y += 2;
+            }
+
+            if (shift_info.opening_notes) {
+                y += 6;
+                doc.text(openingLines, MARGIN, y);
+                y += openingLines.length * 4;
+            }
+            if (shift_info.closing_notes) {
+                y += 6;
+                doc.text(closingLines, MARGIN, y);
+                y += closingLines.length * 4;
             }
         }
         
@@ -189,6 +323,10 @@ const ReporteCaja = ({ shiftId }) => {
             backgroundColor: 'var(--primary-color)', color: '#fff', border: 'none', padding: '0.6rem 1rem', 
             borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1'
         },
+        btnDownloadPDFCaja: { 
+            backgroundColor: '#0d6efd', color: '#fff', border: 'none', padding: '0.6rem 1rem', 
+            borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1'
+        },
         btnPDFVentas: { 
             backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)', border: 'none', padding: '0.6rem 1rem', 
             borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1'
@@ -202,48 +340,68 @@ const ReporteCaja = ({ shiftId }) => {
                     <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1a1a2e' }}>Turno: {shift_info.number}</h2>
                 </div>
                 <div style={styles.buttonGroup}>
-                    <button onClick={handlePrintCaja} style={styles.btnPDFCaja}>
-                        <i className="bi bi-printer"></i> Reporte de Caja
+                    <button onClick={handleDownloadPDFCaja} style={styles.btnDownloadPDFCaja}>
+                        <i className="bi bi-file-pdf"></i> PDF de Caja
                     </button>
                     <button onClick={handlePrintVentas} style={styles.btnPDFVentas}>
-                        <i className="bi bi-receipt"></i> Reporte de Ventas
+                        <i className="bi bi-file-pdf"></i> PDF de Ventas
+                    </button>
+                    <button onClick={handlePrintCaja} style={styles.btnPDFCaja}>
+                        <i className="bi bi-printer"></i> Imprimir Ticket
                     </button>
                 </div>
             </div>
 
             <div style={styles.section}>
                 <h3 style={styles.titleInfo}>Información General</h3>
-                <div style={styles.textRow}><span>Encargado:</span> <strong>{shift_info.user}</strong></div>
+                <div style={styles.textRow}><span>Encargado:</span> <strong>{shift_info.user || shift_info.manager_name}</strong></div>
                 <div style={styles.textRow}><span>Apertura:</span> <span>{new Date(shift_info.opened_at).toLocaleString()}</span></div>
                 <div style={styles.textRow}><span>Cierre:</span> <span>{shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}</span></div>
             </div>
 
-            <div style={{ backgroundColor: 'var(--secondary-color)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                <h3 style={{ ...styles.titleInfo, color: 'var(--primary-color)' }}>Cuadre de Caja</h3>
+            {/* SECCIÓN DE EFECTIVO */}
+            <div style={{ backgroundColor: '#e3f2fd', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                <h3 style={{ ...styles.titleInfo, color: '#0d47a1' }}>Efectivo</h3>
                 <div style={styles.textRow}>
-                    <span style={{ color: 'var(--primary-color)' }}>Efectivo Inicial:</span> 
-                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${openingCash.toFixed(2)}</span>
+                    <span>Efectivo Inicial:</span> 
+                    <span>${openingCash.toFixed(2)}</span>
                 </div>
                 <div style={styles.textRow}>
-                    <span style={{ color: 'var(--primary-color)' }}>Ventas del Turno (Efectivo):</span> 
-                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${paymentStats.efectivo.toFixed(2)}</span>
+                    <span>Ventas del Turno:</span> 
+                    <span>${paymentStats.efectivo.toFixed(2)}</span>
                 </div>
                 <div style={styles.textRow}>
-                    <span style={{ color: 'var(--primary-color)' }}>Ventas del Turno (Transferencia):</span> 
-                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${paymentStats.transferencia.toFixed(2)}</span>
+                    <span>Gastos (Egresos):</span> 
+                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
                 </div>
-                <div style={styles.textRow}>
-                    <span style={{ color: 'var(--primary-color)' }}>Ventas del Turno (Tarjeta):</span> 
-                    <span style={{ fontWeight: '500', color: 'var(--primary-color)' }}>${paymentStats.tarjeta.toFixed(2)}</span>
+                <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem' }}>
+                    <span>Efectivo en Sistema:</span> 
+                    <span>${efectivoSistema.toFixed(2)}</span>
                 </div>
-                <div style={styles.textRow}>
-                    <span style={{ color: 'var(--primary-color)' }}>Gastos (Egresos):</span> 
-                    <span style={{ fontWeight: '500', color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
+                <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+                    <span>Efectivo Físico (Contado):</span> 
+                    <span>${efectivoFisico.toFixed(2)}</span>
                 </div>
-                
-                <div style={{ ...styles.textTotal, borderColor: 'var(--primary-color)', color: 'var(--primary-color)' }}>
-                    <span>Efectivo Físico Final:</span> 
-                    <span style={{ fontSize: '1.1rem' }}>${closingCash.toFixed(2)}</span>
+                <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+                    <span>Sobrante / Faltante Efectivo:</span> 
+                    <span>{sobranteEfectivo >= 0 ? '+' : ''}${sobranteEfectivo.toFixed(2)}</span>
+                </div>
+            </div>
+
+            {/* SECCIÓN DE TRANSFERENCIAS */}
+            <div style={{ backgroundColor: '#e8f5e9', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                <h3 style={{ ...styles.titleInfo, color: '#1b5e20' }}>Transferencias</h3>
+                <div style={{ ...styles.textRow, fontWeight: 'bold' }}>
+                    <span>Transferencias en Sistema:</span> 
+                    <span>${transferenciasSistema.toFixed(2)}</span>
+                </div>
+                <div style={{ ...styles.textRow, fontWeight: 'bold' }}>
+                    <span>Transferencias en Físico (Contado):</span> 
+                    <span>${transferenciasFisico.toFixed(2)}</span>
+                </div>
+                <div style={{ ...styles.textRow, fontWeight: 'bold', color: sobranteTransferencia >= 0 ? '#1b5e20' : 'var(--danger-color)' }}>
+                    <span>Sobrante / Faltante Transferencias:</span> 
+                    <span>{sobranteTransferencia >= 0 ? '+' : ''}${sobranteTransferencia.toFixed(2)}</span>
                 </div>
             </div>
 
@@ -253,12 +411,30 @@ const ReporteCaja = ({ shiftId }) => {
                     ${totalSales.toFixed(2)}
                 </div>
             </div>
+
+            {/* GASTOS */}
+            {expensesList.length > 0 && (
+                <div style={styles.section}>
+                    <h3 style={styles.titleInfo}>Detalle de Gastos</h3>
+                    {expensesList.map(exp => (
+                        <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #dee2e6' }}>
+                            <span style={{ color: '#495057' }}>{exp.description} <br/><small style={{color: '#6c757d'}}>{new Date(exp.created_at).toLocaleTimeString()}</small></span>
+                            <span style={{ fontWeight: '600', color: 'var(--danger-color)' }}>${parseFloat(exp.amount).toFixed(2)}</span>
+                        </div>
+                    ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontWeight: 'bold' }}>
+                        <span>TOTAL GASTOS</span>
+                        <span style={{ color: 'var(--danger-color)' }}>${totalExpenses.toFixed(2)}</span>
+                    </div>
+                </div>
+            )}
             
+            {/* NOTAS */}
             {(shift_info.opening_notes || shift_info.closing_notes) && (
                 <div style={{ ...styles.section, backgroundColor: '#fff3cd' }}>
                     <h3 style={{ ...styles.titleInfo, color: '#664d03' }}>Notas</h3>
                     {shift_info.opening_notes && <div style={{ marginBottom: '0.5rem', color: '#664d03' }}><strong>Apertura:</strong> {shift_info.opening_notes}</div>}
-                    {shift_info.closing_notes && <div style={{ color: '#664d03' }}><strong>Cierre:</strong> {shift_info.closing_notes}</div>}
+                    {shift_info.closing_notes && <div style={{ color: '#664d03', whiteSpace: 'pre-wrap' }}><strong>Cierre:</strong><br/>{shift_info.closing_notes}</div>}
                 </div>
             )}
         </div>

@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import inventoryService from '../../services/inventoryService';
 import api from '../../services/api';
 import Modal from '../../comun/Modal';
+import { AuthContext } from '../../context/AuthContext';
 
 const Bodega = () => {
+    const { user } = useContext(AuthContext);
+    const roleName = user?.role_details?.name;
+    const isAdmin = roleName === 'SUPER_ADMIN' || roleName === 'ADMIN_FAST_FOOD' || user?.is_superuser;
+
     const [activeTab, setActiveTab] = useState('insumos'); // insumos, movimientos, recetas
     
     // Estados generales
@@ -213,15 +218,22 @@ const Bodega = () => {
                                                 setSupplyForm({ name: s.name, description: s.description, unit: s.unit, current_stock: s.current_stock, is_active: s.is_active });
                                                 setIsSupplyModalOpen(true);
                                             }}>Editar</button>
-                                            <button className="btn btn-danger" style={{ marginRight: '5px', padding: '0.25rem' }} onClick={() => handleDeleteSupply(s.id)}>Eliminar</button>
+                                            
+                                            {isAdmin && (
+                                                <button className="btn btn-danger" style={{ marginRight: '5px', padding: '0.25rem' }} onClick={() => handleDeleteSupply(s.id)}>Eliminar</button>
+                                            )}
+                                            
                                             <button className="btn btn-success" style={{ marginRight: '5px', padding: '0.25rem' }} title="Agregar Stock" onClick={() => {
                                                 setMovementForm({ supply: s.id, movement_type: 'in', quantity: 0, reason: '' });
                                                 setIsMovementModalOpen(true);
                                             }}><i className="bi bi-arrow-up"></i></button>
-                                            <button className="btn btn-warning" style={{ padding: '0.25rem' }} title="Reducir Stock" onClick={() => {
-                                                setMovementForm({ supply: s.id, movement_type: 'out', quantity: 0, reason: '' });
-                                                setIsMovementModalOpen(true);
-                                            }}><i className="bi bi-arrow-down"></i></button>
+                                            
+                                            {isAdmin && (
+                                                <button className="btn btn-warning" style={{ padding: '0.25rem' }} title="Reducir Stock" onClick={() => {
+                                                    setMovementForm({ supply: s.id, movement_type: 'out', quantity: 0, reason: '' });
+                                                    setIsMovementModalOpen(true);
+                                                }}><i className="bi bi-arrow-down"></i></button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -314,7 +326,9 @@ const Bodega = () => {
                                                 <td>{r.supply_name}</td>
                                                 <td>{Math.round(r.quantity)} {r.supply_unit}</td>
                                                 <td>
-                                                    <button className="btn btn-danger" style={{ padding: '0.25rem' }} onClick={() => handleDeleteRecipe(r.id)}>Eliminar</button>
+                                                    {isAdmin && (
+                                                        <button className="btn btn-danger" style={{ padding: '0.25rem' }} onClick={() => handleDeleteRecipe(r.id)}>Eliminar</button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -367,8 +381,12 @@ const Bodega = () => {
                         <label>Tipo de Movimiento</label>
                         <select className="form-control" value={movementForm.movement_type} onChange={e => setMovementForm({...movementForm, movement_type: e.target.value})}>
                             <option value="in">Ingreso (Sumar al stock)</option>
-                            <option value="out">Egreso (Restar al stock)</option>
-                            <option value="adjustment">Ajuste (Reemplazar stock exacto)</option>
+                            {isAdmin && (
+                                <>
+                                    <option value="out">Egreso (Restar al stock)</option>
+                                    <option value="adjustment">Ajuste (Reemplazar stock exacto)</option>
+                                </>
+                            )}
                         </select>
                     </div>
                     <div className="form-group">

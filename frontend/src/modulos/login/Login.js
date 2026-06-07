@@ -18,10 +18,10 @@ const Login = () => {
 
         if (result.success) {
             const roleName = result.user.role_details?.name;
-            if (roleName === 'ADMIN_FAST_FOOD') {
-                navigate('/fast-food');
-            } else {
+            if (roleName === 'SUPER_ADMIN' || result.user.is_superuser) {
                 navigate('/');
+            } else {
+                navigate('/fast-food/pos');
             }
         } else {
             setError(result.error);

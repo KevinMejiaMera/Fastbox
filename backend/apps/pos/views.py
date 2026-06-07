@@ -264,6 +264,8 @@ class ShiftViewSet(viewsets.ModelViewSet):
                 'status': shift.status,
                 'opening_cash': float(shift.opening_cash) if shift.opening_cash is not None else 0.0,
                 'closing_cash': float(shift.closing_cash) if shift.closing_cash is not None else 0.0,
+                'opening_notes': shift.opening_notes,
+                'closing_notes': shift.closing_notes,
                 'cash_register': shift.cash_register.register_number if shift.cash_register else 'N/A'
             },
             'summary': {

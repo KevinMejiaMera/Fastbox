@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import api from '../../../services/api';
 import Modal from '../../../comun/Modal';
 import ReporteCaja from './ReporteCaja'; 
+import { AuthContext } from '../../../context/AuthContext';
+import printerService from '../../../services/printerService';
 
 const PanelCaja = () => {
+    const { user } = useContext(AuthContext);
+    const roleName = user?.role_details?.name;
+    const isAdmin = roleName === 'SUPER_ADMIN' || roleName === 'ADMIN_FAST_FOOD' || user?.is_superuser;
     const [currentShift, setCurrentShift] = useState(null);
     const [shiftsHistory, setShiftsHistory] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,6 +23,13 @@ const PanelCaja = () => {
     const [expenseDescription, setExpenseDescription] = useState('');
 
     const [selectedShiftId, setSelectedShiftId] = useState(null);
+
+    const [blindCashCounts, setBlindCashCounts] = useState({
+        c1: '', c5: '', c10: '', c25: '', c50: '', d1: '',
+        b5: '', b10: '', b20: '', b50: '', b100: '',
+        transfer: ''
+    });
+    const [isBlindModalOpen, setIsBlindModalOpen] = useState(false);
 
     const getFastFoodBaseURL = () => process.env.REACT_APP_FAST_FOOD_SERVICE || 'http://localhost:8002';
 
@@ -47,6 +59,128 @@ const PanelCaja = () => {
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    const printCashReportAutomatically = async (shiftId) => {
+        try {
+            const response = await api.get(`/api/pos/shifts/${shiftId}/report/`, {
+                baseURL: getFastFoodBaseURL()
+            });
+            const shiftData = response.data;
+            const reportData = {
+                ...shiftData.summary,
+                shift_info: shiftData.shift_info,
+                orders_detail: shiftData.orders_detail,
+                payment_methods: shiftData.payment_methods,
+                expenses: shiftData.expenses || []
+            };
+
+            const { shift_info } = reportData;
+            const openingCashVal = parseFloat(shift_info.opening_cash || 0);
+            const closingCashVal = parseFloat(shift_info.closing_cash || 0);
+            const totalExpensesVal = parseFloat(reportData.total_expenses || 0);
+            const expensesList = reportData.expenses || [];
+
+            let paymentStats = { efectivo: 0, transferencia: 0, tarjeta: 0 };
+            if (reportData.payment_methods && Array.isArray(reportData.payment_methods) && reportData.payment_methods.length > 0) {
+                reportData.payment_methods.forEach(pm => {
+                    const method = String(pm.payment_method__name || pm.method || pm.name || '').toLowerCase();
+                    const amount = parseFloat(pm.total || pm.amount || 0);
+                    if (method.includes('efectivo') || method === 'cash') paymentStats.efectivo += amount;
+                    else if (method.includes('transferencia') || method.includes('transfer')) paymentStats.transferencia += amount;
+                    else if (method.includes('tarjeta') || method.includes('card')) paymentStats.tarjeta += amount;
+                });
+            } else if (reportData.orders_detail && Array.isArray(reportData.orders_detail)) {
+                reportData.orders_detail.forEach(order => {
+                    if (['delivered', 'completed'].includes(order.status) || order.payment_status === 'paid') {
+                        const method = String(order.payment_method_display || order.payment_method || '').toLowerCase();
+                        const total = parseFloat(order.total_amount || order.total || 0);
+                        if (method.includes('efectivo') || method === 'cash') paymentStats.efectivo += total;
+                        else if (method.includes('transferencia') || method.includes('transfer')) paymentStats.transferencia += total;
+                        else if (method.includes('tarjeta') || method.includes('card')) paymentStats.tarjeta += total;
+                    }
+                });
+            }
+
+            let transferenciasFisico = 0;
+            if (shift_info.closing_notes) {
+                if (shift_info.closing_notes.includes('Transferencias: $')) {
+                    const matchT = shift_info.closing_notes.match(/Transferencias:\s*\$?([\d.]+)/);
+                    if (matchT) transferenciasFisico = parseFloat(matchT[1]);
+                }
+            }
+
+            const efectivoSistema = openingCashVal + paymentStats.efectivo - totalExpensesVal;
+            const efectivoFisico = closingCashVal - transferenciasFisico;
+            const sobranteEfectivo = efectivoFisico - efectivoSistema;
+            const transferenciasSistema = paymentStats.transferencia;
+            const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
+
+            const chars_per_line = 42;
+            let lines = [];
+            const center = (text) => ' '.repeat(Math.max(0, Math.floor((chars_per_line - text.length) / 2))) + text;
+            const rightAlign = (label, value) => {
+                const valueStr = String(value);
+                const padding = Math.max(0, chars_per_line - label.length - valueStr.length);
+                return label + ' '.repeat(padding) + valueStr;
+            };
+
+            lines.push(center("REPORTE DE CAJA"));
+            lines.push("=".repeat(chars_per_line));
+            const current_time = new Date();
+            lines.push(`Fecha: ${current_time.toLocaleDateString()}  Hora: ${current_time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+            lines.push(`Turno: ${shift_info.number}`);
+            lines.push(`Encargado: ${shift_info.user || shift_info.manager_name}`);
+            lines.push(`Apertura: ${new Date(shift_info.opened_at).toLocaleString()}`);
+            lines.push(`Cierre: ${shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}`);
+            lines.push("-".repeat(chars_per_line));
+            
+            lines.push(center("EFECTIVO"));
+            lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCashVal.toFixed(2)}`));
+            lines.push(rightAlign("Dinero en efec. sistema:", `$${paymentStats.efectivo.toFixed(2)}`));
+            lines.push(rightAlign("Dinero en efec. caja:", `$${efectivoFisico.toFixed(2)}`));
+            lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", `$${sobranteEfectivo.toFixed(2)}`));
+            lines.push("-".repeat(chars_per_line));
+
+            lines.push(center("TRANSFERENCIAS"));
+            lines.push(rightAlign("Dinero en transf. sist.:", `$${transferenciasSistema.toFixed(2)}`));
+            lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
+            lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", `$${sobranteTransferencia.toFixed(2)}`));
+            lines.push("-".repeat(chars_per_line));
+
+            lines.push(center("GASTOS Y TOTALES"));
+            lines.push(rightAlign("Gastos sistema:", `-$${totalExpensesVal.toFixed(2)}`));
+            lines.push(rightAlign("Efectivo calculado:", `$${efectivoSistema.toFixed(2)}`));
+            lines.push(rightAlign("Efectivo total:", `$${efectivoFisico.toFixed(2)}`));
+            lines.push("-".repeat(chars_per_line));
+
+            if (expensesList.length > 0) {
+                lines.push(center("DETALLE DE GASTOS"));
+                expensesList.forEach(exp => {
+                    const desc = exp.description.length > 28 ? exp.description.substring(0, 28) + ".." : exp.description;
+                    lines.push(rightAlign(desc, `$${parseFloat(exp.amount).toFixed(2)}`));
+                });
+                lines.push("-".repeat(chars_per_line));
+            }
+
+            if (shift_info.closing_notes) {
+                lines.push("NOTAS DE CIERRE:");
+                const notesText = shift_info.closing_notes;
+                for(let i=0; i<notesText.length; i+=chars_per_line) {
+                    lines.push(notesText.substring(i, i+chars_per_line));
+                }
+                lines.push("-".repeat(chars_per_line));
+            }
+
+            lines.push("\n\n\n");
+            const ticketContent = lines.join("\n");
+
+            await printerService.printCustomTicket(ticketContent, 'report');
+            alert('✅ Comprobante de cierre de caja enviado a la impresora automáticamente.');
+        } catch (error) {
+            console.error('Error auto-printing shift report:', error);
+            alert('⚠️ La caja se cerró, pero hubo un error al imprimir el comprobante automáticamente. Por favor verifica si el agente de Windows está activo.');
+        }
+    };
 
     const handleOpenShift = async (e) => {
         e.preventDefault();
@@ -98,12 +232,64 @@ const PanelCaja = () => {
                 closing_notes: notes || 'Cierre de Caja'
             }, { baseURL: getFastFoodBaseURL() });
 
+            // AUTO-PRINT
+            printCashReportAutomatically(currentShift.id);
+
             setClosingCash('');
             setNotes('');
             loadData();
             alert('Caja cerrada correctamente.');
         } catch (err) {
             console.error('Error closing shift:', err);
+            setError('Error al cerrar la caja.');
+        }
+    };
+
+    const handleBlindCloseShift = async (e) => {
+        e.preventDefault();
+        if (!currentShift) return;
+        if (!window.confirm('¿Está seguro de cerrar la caja con estos valores?')) return;
+
+        const totalCoinsBills = 
+            (parseFloat(blindCashCounts.c1 || 0) * 0.01) +
+            (parseFloat(blindCashCounts.c5 || 0) * 0.05) +
+            (parseFloat(blindCashCounts.c10 || 0) * 0.10) +
+            (parseFloat(blindCashCounts.c25 || 0) * 0.25) +
+            (parseFloat(blindCashCounts.c50 || 0) * 0.50) +
+            (parseFloat(blindCashCounts.d1 || 0) * 1.00) +
+            (parseFloat(blindCashCounts.b5 || 0) * 5.00) +
+            (parseFloat(blindCashCounts.b10 || 0) * 10.00) +
+            (parseFloat(blindCashCounts.b20 || 0) * 20.00) +
+            (parseFloat(blindCashCounts.b50 || 0) * 50.00) +
+            (parseFloat(blindCashCounts.b100 || 0) * 100.00);
+        
+        const totalTransfer = parseFloat(blindCashCounts.transfer || 0);
+        const total = totalCoinsBills + totalTransfer;
+
+        const notesStr = `Cierre Ciego. Desglose:\n` +
+            `Monedas: 1c(${blindCashCounts.c1 || 0}), 5c(${blindCashCounts.c5 || 0}), 10c(${blindCashCounts.c10 || 0}), 25c(${blindCashCounts.c25 || 0}), 50c(${blindCashCounts.c50 || 0}), $1(${blindCashCounts.d1 || 0})\n` +
+            `Billetes: $5(${blindCashCounts.b5 || 0}), $10(${blindCashCounts.b10 || 0}), $20(${blindCashCounts.b20 || 0}), $50(${blindCashCounts.b50 || 0}), $100(${blindCashCounts.b100 || 0})\n` +
+            `Transferencias: $${totalTransfer.toFixed(2)}`;
+
+        try {
+            await api.post(`/api/pos/shifts/${currentShift.id}/close/`, {
+                closing_cash: total,
+                closing_notes: notesStr
+            }, { baseURL: getFastFoodBaseURL() });
+
+            // AUTO-PRINT
+            await printCashReportAutomatically(currentShift.id);
+
+            setIsBlindModalOpen(false);
+            setBlindCashCounts({
+                c1: '', c5: '', c10: '', c25: '', c50: '', d1: '',
+                b5: '', b10: '', b20: '', b50: '', b100: '',
+                transfer: ''
+            });
+            loadData();
+            alert('Caja cerrada correctamente.');
+        } catch (err) {
+            console.error('Error closing blind shift:', err);
             setError('Error al cerrar la caja.');
         }
     };
@@ -140,10 +326,12 @@ const PanelCaja = () => {
             borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '2rem', color: 'var(--primary-color)'
         },
-        grid: { display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem' },
+        grid: { display: 'grid', gridTemplateColumns: isAdmin ? '350px 1fr' : '1fr', gap: '2rem' },
         card: {
             backgroundColor: '#ffffff', borderRadius: '16px', padding: '2rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            maxWidth: isAdmin ? '100%' : '500px',
+            margin: isAdmin ? '0' : '0 auto'
         },
         input: {
             width: '100%', padding: '0.75rem', borderRadius: '8px',
@@ -204,44 +392,39 @@ const PanelCaja = () => {
                                 <div style={{ marginBottom: '1.5rem', color: '#495057' }}>
                                     <p style={{ margin: '0 0 0.5rem 0' }}><strong>Turno:</strong> {currentShift.shift_number}</p>
                                     <p style={{ margin: '0 0 0.5rem 0' }}><strong>Apertura:</strong> {new Date(currentShift.opened_at).toLocaleString()}</p>
-                                    <p style={{ margin: '0' }}><strong>Base Inicial:</strong> ${parseFloat(currentShift.opening_cash || 0).toFixed(2)}</p>
+                                    {isAdmin && (
+                                        <p style={{ margin: '0' }}><strong>Base Inicial:</strong> ${parseFloat(currentShift.opening_cash || 0).toFixed(2)}</p>
+                                    )}
                                 </div>
 
-                                <form onSubmit={handleCloseShift} style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                                <div style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
                                     <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Cerrar Caja</h3>
-                                    
-                                    <label style={styles.label}>Efectivo Final Físico</label>
-                                    <input type="number" step="0.01" required style={styles.input}
-                                        value={closingCash} onChange={(e) => setClosingCash(e.target.value)} />
-
-                                    <label style={styles.label}>Notas de Cierre</label>
-                                    <textarea style={{ ...styles.input, resize: 'vertical' }} rows="2"
-                                        value={notes} onChange={(e) => setNotes(e.target.value)} />
-
-                                    <button type="submit" style={styles.buttonDanger}
+                                    <button onClick={() => setIsBlindModalOpen(true)} style={styles.buttonDanger}
                                         onMouseEnter={(e) => e.target.style.opacity = '0.8'}
                                         onMouseLeave={(e) => e.target.style.opacity = '1'}>
-                                        Cerrar Caja
+                                        Cerrar Caja (Conteo de Efectivo)
                                     </button>
-                                </form>
+                                </div>
 
-                                <form onSubmit={handleAddExpense} style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Registrar Gasto (Egreso)</h3>
-                                    
-                                    <label style={styles.label}>Monto del Gasto</label>
-                                    <input type="number" step="0.01" required style={styles.input} placeholder="Ej: 15.50"
-                                        value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} />
+                                {isAdmin && (
+                                    <form onSubmit={handleAddExpense} style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Registrar Gasto (Egreso)</h3>
+                                        
+                                        <label style={styles.label}>Monto del Gasto</label>
+                                        <input type="number" step="0.01" required style={styles.input} placeholder="Ej: 15.50"
+                                            value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} />
 
-                                    <label style={styles.label}>Descripción / Motivo</label>
-                                    <textarea style={{ ...styles.input, resize: 'vertical' }} rows="2" required placeholder="Ej: Pago de agua"
-                                        value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} />
+                                        <label style={styles.label}>Descripción / Motivo</label>
+                                        <textarea style={{ ...styles.input, resize: 'vertical' }} rows="2" required placeholder="Ej: Pago de agua"
+                                            value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} />
 
-                                    <button type="submit" style={{...styles.buttonPrimary, backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)'}}
-                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
-                                        Registrar Gasto
-                                    </button>
-                                </form>
+                                        <button type="submit" style={{...styles.buttonPrimary, backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)'}}
+                                            onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                            onMouseLeave={(e) => e.target.style.opacity = '1'}>
+                                            Registrar Gasto
+                                        </button>
+                                    </form>
+                                )}
                             </div>
                         ) : (
                             <div>
@@ -273,80 +456,162 @@ const PanelCaja = () => {
                     </div>
 
                     {/* Historial de Cajas */}
-                    <div style={styles.card}>
-                        <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', color: '#1a1a2e' }}>Historial de Cajas</h2>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={styles.table}>
-                                <thead>
-                                    <tr>
-                                        <th style={styles.th}>Turno / Encargado</th>
-                                        <th style={styles.th}>Apertura</th>
-                                        <th style={styles.th}>Cierre</th>
-                                        <th style={styles.th}>Estado</th>
-                                        <th style={{ ...styles.th, textAlign: 'center' }}>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {shiftsHistory.map(shift => (
-                                        <tr key={shift.id} style={{ transition: 'background-color 0.2s' }} 
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                                            <td style={styles.td}>
-                                                <div style={{ fontWeight: '600', color: '#212529' }}>{shift.shift_number}</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{shift.user_name || shift.manager_name}</div>
-                                            </td>
-                                            <td style={styles.td}>
-                                                <div style={{ color: '#212529' }}>{new Date(shift.opened_at).toLocaleDateString()}</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.opened_at).toLocaleTimeString()}</div>
-                                                <div style={{ color: 'var(--success-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.opening_cash || 0).toFixed(2)}</div>
-                                            </td>
-                                            <td style={styles.td}>
-                                                {shift.closed_at ? (
-                                                    <>
-                                                        <div style={{ color: '#212529' }}>{new Date(shift.closed_at).toLocaleDateString()}</div>
-                                                        <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.closed_at).toLocaleTimeString()}</div>
-                                                        <div style={{ color: 'var(--primary-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.closing_cash || 0).toFixed(2)}</div>
-                                                    </>
-                                                ) : <span style={{ color: '#adb5bd', fontStyle: 'italic' }}>En curso</span>}
-                                            </td>
-                                            <td style={styles.td}>
-                                                <span style={styles.statusBadge(shift.status === 'open')}>
-                                                    {shift.status === 'open' ? 'Abierta' : 'Cerrada'}
-                                                </span>
-                                            </td>
-                                            <td style={{ ...styles.td, textAlign: 'center' }}>
-                                                {shift.status === 'closed' && (
-                                                    <button 
-                                                        onClick={() => setSelectedShiftId(shift.id)}
-                                                        style={{ 
-                                                            background: 'none', border: 'none', color: 'var(--primary-color)',
-                                                            cursor: 'pointer', padding: '0.5rem', borderRadius: '8px'
-                                                        }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-color)'}
-                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                        title="Ver Reporte"
-                                                    >
-                                                        <i className="bi bi-file-earmark-text" style={{ fontSize: '1.25rem' }}></i>
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {shiftsHistory.length === 0 && (
+                    {isAdmin && (
+                        <div style={styles.card}>
+                            <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', color: '#1a1a2e' }}>Historial de Cajas</h2>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={styles.table}>
+                                    <thead>
                                         <tr>
-                                            <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#6c757d' }}>No hay historial de cajas disponible.</td>
+                                            <th style={styles.th}>Turno / Encargado</th>
+                                            <th style={styles.th}>Apertura</th>
+                                            <th style={styles.th}>Cierre</th>
+                                            <th style={styles.th}>Estado</th>
+                                            <th style={{ ...styles.th, textAlign: 'center' }}>Acciones</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {shiftsHistory.map(shift => (
+                                            <tr key={shift.id} style={{ transition: 'background-color 0.2s' }} 
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                                <td style={styles.td}>
+                                                    <div style={{ fontWeight: '600', color: '#212529' }}>{shift.shift_number}</div>
+                                                    <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{shift.user_name || shift.manager_name}</div>
+                                                </td>
+                                                <td style={styles.td}>
+                                                    <div style={{ color: '#212529' }}>{new Date(shift.opened_at).toLocaleDateString()}</div>
+                                                    <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.opened_at).toLocaleTimeString()}</div>
+                                                    <div style={{ color: 'var(--success-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.opening_cash || 0).toFixed(2)}</div>
+                                                </td>
+                                                <td style={styles.td}>
+                                                    {shift.closed_at ? (
+                                                        <>
+                                                            <div style={{ color: '#212529' }}>{new Date(shift.closed_at).toLocaleDateString()}</div>
+                                                            <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.closed_at).toLocaleTimeString()}</div>
+                                                            <div style={{ color: 'var(--primary-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.closing_cash || 0).toFixed(2)}</div>
+                                                        </>
+                                                    ) : <span style={{ color: '#adb5bd', fontStyle: 'italic' }}>En curso</span>}
+                                                </td>
+                                                <td style={styles.td}>
+                                                    <span style={styles.statusBadge(shift.status === 'open')}>
+                                                        {shift.status === 'open' ? 'Abierta' : 'Cerrada'}
+                                                    </span>
+                                                </td>
+                                                <td style={{ ...styles.td, textAlign: 'center' }}>
+                                                    {shift.status === 'closed' && (
+                                                        <button 
+                                                            onClick={() => setSelectedShiftId(shift.id)}
+                                                            style={{ 
+                                                                background: 'none', border: 'none', color: 'var(--primary-color)',
+                                                                cursor: 'pointer', padding: '0.5rem', borderRadius: '8px'
+                                                            }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--secondary-color)'}
+                                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                            title="Ver Reporte"
+                                                        >
+                                                            <i className="bi bi-file-earmark-text" style={{ fontSize: '1.25rem' }}></i>
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {shiftsHistory.length === 0 && (
+                                            <tr>
+                                                <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#6c757d' }}>No hay historial de cajas disponible.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
             {/* MODAL PARA REPORTE */}
             <Modal isOpen={!!selectedShiftId} onClose={() => setSelectedShiftId(null)} title="Detalle de Caja">
                 {selectedShiftId && <ReporteCaja shiftId={selectedShiftId} />}
+            </Modal>
+
+            {/* MODAL PARA CAJA CIEGA */}
+            <Modal isOpen={isBlindModalOpen} onClose={() => setIsBlindModalOpen(false)} title="Conteo Físico de Caja">
+                <form onSubmit={handleBlindCloseShift}>
+                    <p style={{ marginBottom: '1rem', color: '#6c757d' }}>Ingrese la <strong>cantidad</strong> (número de unidades) que tiene de cada denominación, y el monto total en transferencias.</p>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                        <div>
+                            <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Monedas</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>1 centavo</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.c1} onChange={e => setBlindCashCounts({...blindCashCounts, c1: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>5 centavos</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.c5} onChange={e => setBlindCashCounts({...blindCashCounts, c5: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>10 centavos</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.c10} onChange={e => setBlindCashCounts({...blindCashCounts, c10: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>25 centavos</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.c25} onChange={e => setBlindCashCounts({...blindCashCounts, c25: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>50 centavos</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.c50} onChange={e => setBlindCashCounts({...blindCashCounts, c50: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>$1</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.d1} onChange={e => setBlindCashCounts({...blindCashCounts, d1: e.target.value})} placeholder="0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Billetes</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>$5</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.b5} onChange={e => setBlindCashCounts({...blindCashCounts, b5: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>$10</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.b10} onChange={e => setBlindCashCounts({...blindCashCounts, b10: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>$20</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.b20} onChange={e => setBlindCashCounts({...blindCashCounts, b20: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>$50</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.b50} onChange={e => setBlindCashCounts({...blindCashCounts, b50: e.target.value})} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.85rem' }}>$100</label>
+                                    <input type="number" min="0" style={styles.input} value={blindCashCounts.b100} onChange={e => setBlindCashCounts({...blindCashCounts, b100: e.target.value})} placeholder="0" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #e9ecef', paddingTop: '1rem' }}>
+                        <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Otros Pagos</h4>
+                        <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Monto total en transferencias ($)</label>
+                        <input type="number" step="0.01" min="0" style={{...styles.input, maxWidth: '200px'}} value={blindCashCounts.transfer} onChange={e => setBlindCashCounts({...blindCashCounts, transfer: e.target.value})} placeholder="Ej: 45.50" />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                        <button type="button" onClick={() => setIsBlindModalOpen(false)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #dee2e6', background: 'transparent', cursor: 'pointer' }}>
+                            Cancelar
+                        </button>
+                        <button type="submit" style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: 'var(--primary-color)', color: '#fff', cursor: 'pointer' }}>
+                            Confirmar Cierre
+                        </button>
+                    </div>
+                </form>
             </Modal>
         </div>
     );

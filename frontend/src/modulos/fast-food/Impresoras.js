@@ -18,7 +18,8 @@ const Impresoras = () => {
         characters_per_line: 42,
         has_cash_drawer: true,
         is_active: true,
-        is_default: false
+        is_default: false,
+        config: { prints_receipt: true, prints_command: false }
     };
 
     const [printerForm, setPrinterForm] = useState(initialPrinterState);
@@ -78,6 +79,17 @@ const Impresoras = () => {
         }));
     };
 
+    const handleConfigChange = (e) => {
+        const { name, checked } = e.target;
+        setPrinterForm(prev => ({
+            ...prev,
+            config: {
+                ...prev.config,
+                [name]: checked
+            }
+        }));
+    };
+
     const handleSettingsChange = (e) => {
         const { name, value } = e.target;
         setSettingsForm(prev => ({
@@ -120,7 +132,11 @@ const Impresoras = () => {
             characters_per_line: printer.characters_per_line || 42,
             has_cash_drawer: printer.has_cash_drawer !== undefined ? printer.has_cash_drawer : true,
             is_active: printer.is_active !== undefined ? printer.is_active : true,
-            is_default: printer.is_default !== undefined ? printer.is_default : false
+            is_default: printer.is_default !== undefined ? printer.is_default : false,
+            config: {
+                prints_receipt: printer.config?.prints_receipt !== undefined ? printer.config.prints_receipt : true,
+                prints_command: printer.config?.prints_command !== undefined ? printer.config.prints_command : false
+            }
         });
         setIsModalOpen(true);
     };
@@ -309,6 +325,35 @@ const Impresoras = () => {
                                 style={{ marginRight: '8px' }}
                             />
                             Activa
+                        </label>
+                    </div>
+
+                    <h4 style={{ margin: '1.5rem 0 0.5rem 0', color: 'var(--primary-color)' }}>Documentos a Imprimir</h4>
+                    <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '1rem' }}>Seleccione qué documentos debe imprimir esta impresora</p>
+                    
+                    <div className="form-group">
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="prints_receipt"
+                                checked={printerForm.config?.prints_receipt ?? true}
+                                onChange={handleConfigChange}
+                                style={{ marginRight: '8px' }}
+                            />
+                            Imprimir Factura/Ticket (Con detalles y precios para el cliente)
+                        </label>
+                    </div>
+
+                    <div className="form-group">
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="prints_command"
+                                checked={printerForm.config?.prints_command ?? false}
+                                onChange={handleConfigChange}
+                                style={{ marginRight: '8px' }}
+                            />
+                            Imprimir Comanda (Sin precios, para cocina o preparación)
                         </label>
                     </div>
 
