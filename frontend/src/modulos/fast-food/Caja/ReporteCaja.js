@@ -102,10 +102,12 @@ const ReporteCaja = ({ shiftId }) => {
     }
 
     const efectivoTotalBruto = openingCash + paymentStats.efectivo;
-    const efectivoFisico = closingCash - transferenciasFisico; 
-    const sobranteBruto = efectivoFisico - efectivoTotalBruto;
     const efectivoEsperadoFinal = efectivoTotalBruto;
-    const sobranteEfectivo = efectivoFisico - efectivoEsperadoFinal;
+    
+    const efectivoFisicoDeclarado = closingCash - transferenciasFisico; 
+    const efectivoFisicoReal = efectivoFisicoDeclarado - totalExpenses;
+    
+    const sobranteEfectivo = efectivoFisicoReal - efectivoEsperadoFinal;
     
     const transferenciasSistema = paymentStats.transferencia;
     const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
@@ -140,7 +142,9 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
         lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoEsperadoFinal.toFixed(2)}`));
         lines.push("-".repeat(chars_per_line));
-        lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
+        lines.push(rightAlign("Efec. Declarado (Cajero):", `$${efectivoFisicoDeclarado.toFixed(2)}`));
+        lines.push(rightAlign("Menos Gastos (Egresos):", `-$${totalExpenses.toFixed(2)}`));
+        lines.push(rightAlign("Efectivo Físico Real:", `$${efectivoFisicoReal.toFixed(2)}`));
         const sobEfStr = sobranteEfectivo >= 0 ? `+$${sobranteEfectivo.toFixed(2)}` : `-$${Math.abs(sobranteEfectivo).toFixed(2)}`;
         lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", sobEfStr));
         lines.push("-".repeat(chars_per_line));
@@ -243,7 +247,11 @@ const ReporteCaja = ({ shiftId }) => {
         y += 2;
         addRow('Total Efectivo Esperado:', formatCurrency(efectivoEsperadoFinal), true);
         y += 2;
-        addRow('Efectivo Físico Caja:', formatCurrency(efectivoFisico));
+        addRow('Efec. Declarado (Cajero):', formatCurrency(efectivoFisicoDeclarado));
+        doc.setTextColor(220, 53, 69);
+        addRow('Menos Gastos (Egresos):', `-${formatCurrency(totalExpenses)}`);
+        doc.setTextColor(0, 0, 0);
+        addRow('Efectivo Físico Real:', formatCurrency(efectivoFisicoReal));
         doc.setTextColor(sobranteEfectivo >= 0 ? 40 : 220, sobranteEfectivo >= 0 ? 167 : 53, sobranteEfectivo >= 0 ? 69 : 69);
         addRow('SOBRANTE/FALTANTE EFEC.:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`);
         doc.setTextColor(0, 0, 0);
@@ -368,9 +376,18 @@ const ReporteCaja = ({ shiftId }) => {
                     <span>Total Efectivo Esperado:</span> 
                     <span>${efectivoEsperadoFinal.toFixed(2)}</span>
                 </div>
+                
+                <div style={{ ...styles.textRow, marginTop: '1rem' }}>
+                    <span>Efec. Declarado (Cajero):</span> 
+                    <span>${efectivoFisicoDeclarado.toFixed(2)}</span>
+                </div>
+                <div style={styles.textRow}>
+                    <span>Menos Gastos (Egresos):</span> 
+                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
+                </div>
                 <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-                    <span>Efectivo Físico (Contado):</span> 
-                    <span>${efectivoFisico.toFixed(2)}</span>
+                    <span>Efectivo Físico Real:</span> 
+                    <span>${efectivoFisicoReal.toFixed(2)}</span>
                 </div>
                 <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                     <span>SOBRANTE / FALTANTE EFEC.:</span> 

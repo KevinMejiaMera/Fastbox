@@ -110,10 +110,13 @@ const PanelCaja = () => {
             }
 
             const efectivoTotalBruto = openingCashVal + paymentStats.efectivo;
-            const efectivoFisico = closingCashVal - transferenciasFisico;
-            const sobranteBruto = efectivoFisico - efectivoTotalBruto;
             const efectivoEsperadoFinal = efectivoTotalBruto;
-            const sobranteReal = efectivoFisico - efectivoEsperadoFinal;
+
+            const efectivoFisicoDeclarado = closingCashVal - transferenciasFisico;
+            const efectivoFisicoReal = efectivoFisicoDeclarado - totalExpensesVal;
+            
+            const sobranteReal = efectivoFisicoReal - efectivoEsperadoFinal;
+            
             const transferenciasSistema = paymentStats.transferencia;
             const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
 
@@ -141,7 +144,9 @@ const PanelCaja = () => {
             lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
             lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoEsperadoFinal.toFixed(2)}`));
             lines.push("-".repeat(chars_per_line));
-            lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
+            lines.push(rightAlign("Efec. Declarado (Cajero):", `$${efectivoFisicoDeclarado.toFixed(2)}`));
+            lines.push(rightAlign("Menos Gastos (Egresos):", `-$${totalExpensesVal.toFixed(2)}`));
+            lines.push(rightAlign("Efectivo Físico Real:", `$${efectivoFisicoReal.toFixed(2)}`));
             const sobEfStr = sobranteReal >= 0 ? `+$${sobranteReal.toFixed(2)}` : `-$${Math.abs(sobranteReal).toFixed(2)}`;
             lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", sobEfStr));
             lines.push("-".repeat(chars_per_line));
