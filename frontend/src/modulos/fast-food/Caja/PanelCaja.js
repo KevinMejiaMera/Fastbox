@@ -139,15 +139,12 @@ const PanelCaja = () => {
             lines.push(center("EFECTIVO"));
             lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCashVal.toFixed(2)}`));
             lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
-            lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoTotalBruto.toFixed(2)}`));
+            lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpensesVal.toFixed(2)}`));
+            lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoEsperadoFinal.toFixed(2)}`));
             lines.push("-".repeat(chars_per_line));
             lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
-            const sobBrutoStr = sobranteBruto >= 0 ? `+$${sobranteBruto.toFixed(2)}` : `-$${Math.abs(sobranteBruto).toFixed(2)}`;
-            lines.push(rightAlign("Sobrante/Faltante Bruto:", sobBrutoStr));
-            lines.push("-".repeat(chars_per_line));
-            lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpensesVal.toFixed(2)}`));
-            const sobRealStr = sobranteReal >= 0 ? `+$${sobranteReal.toFixed(2)}` : `-$${Math.abs(sobranteReal).toFixed(2)}`;
-            lines.push(rightAlign("SOBRANTE/FALTANTE REAL:", sobRealStr));
+            const sobEfStr = sobranteReal >= 0 ? `+$${sobranteReal.toFixed(2)}` : `-$${Math.abs(sobranteReal).toFixed(2)}`;
+            lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", sobEfStr));
             lines.push("-".repeat(chars_per_line));
 
             lines.push(center("TRANSFERENCIAS"));

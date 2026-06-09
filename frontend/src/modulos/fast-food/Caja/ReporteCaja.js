@@ -138,15 +138,12 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(center("EFECTIVO"));
         lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCash.toFixed(2)}`));
         lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
-        lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoTotalBruto.toFixed(2)}`));
+        lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpenses.toFixed(2)}`));
+        lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoEsperadoFinal.toFixed(2)}`));
         lines.push("-".repeat(chars_per_line));
         lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
-        const sobBrutoStr = sobranteBruto >= 0 ? `+$${sobranteBruto.toFixed(2)}` : `-$${Math.abs(sobranteBruto).toFixed(2)}`;
-        lines.push(rightAlign("Sobrante/Faltante Bruto:", sobBrutoStr));
-        lines.push("-".repeat(chars_per_line));
-        lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpenses.toFixed(2)}`));
-        const sobRealStr = sobranteEfectivo >= 0 ? `+$${sobranteEfectivo.toFixed(2)}` : `-$${Math.abs(sobranteEfectivo).toFixed(2)}`;
-        lines.push(rightAlign("SOBRANTE/FALTANTE REAL:", sobRealStr));
+        const sobEfStr = sobranteEfectivo >= 0 ? `+$${sobranteEfectivo.toFixed(2)}` : `-$${Math.abs(sobranteEfectivo).toFixed(2)}`;
+        lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", sobEfStr));
         lines.push("-".repeat(chars_per_line));
 
         lines.push(center("TRANSFERENCIAS"));
@@ -244,17 +241,14 @@ const ReporteCaja = ({ shiftId }) => {
         addRow('Efectivo Inicial Base:', formatCurrency(openingCash));
         y += 2;
         addRow('Ventas en efec. sist.:', formatCurrency(paymentStats.efectivo));
-        addRow('Total Efectivo Esperado:', formatCurrency(efectivoTotalBruto), true);
-        y += 2;
-        addRow('Efectivo Físico Caja:', formatCurrency(efectivoFisico));
-        doc.setTextColor(sobranteBruto >= 0 ? 40 : 220, sobranteBruto >= 0 ? 167 : 53, sobranteBruto >= 0 ? 69 : 69);
-        addRow('Sobrante/Faltante Bruto:', `${sobranteBruto >= 0 ? '+' : ''}${formatCurrency(sobranteBruto)}`);
-        doc.setTextColor(0, 0, 0);
-        y += 2;
         doc.setTextColor(220, 53, 69);
         addRow('Gastos (Egresos):', `-${formatCurrency(totalExpenses)}`);
+        doc.setTextColor(0, 0, 0);
+        addRow('Total Efectivo Esperado:', formatCurrency(efectivoEsperadoFinal), true);
+        y += 2;
+        addRow('Efectivo Físico Caja:', formatCurrency(efectivoFisico));
         doc.setTextColor(sobranteEfectivo >= 0 ? 40 : 220, sobranteEfectivo >= 0 ? 167 : 53, sobranteEfectivo >= 0 ? 69 : 69);
-        addRow('SOBRANTE/FALTANTE REAL:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`, true);
+        addRow('SOBRANTE/FALTANTE EFEC.:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`);
         doc.setTextColor(0, 0, 0);
         y += 4;
 
@@ -373,24 +367,20 @@ const ReporteCaja = ({ shiftId }) => {
                     <span>Ventas del Turno:</span> 
                     <span>${paymentStats.efectivo.toFixed(2)}</span>
                 </div>
+                <div style={styles.textRow}>
+                    <span>Gastos (Egresos):</span> 
+                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
+                </div>
                 <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem' }}>
                     <span>Total Efectivo Esperado:</span> 
-                    <span>${efectivoTotalBruto.toFixed(2)}</span>
+                    <span>${efectivoEsperadoFinal.toFixed(2)}</span>
                 </div>
                 <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                     <span>Efectivo Físico (Contado):</span> 
                     <span>${efectivoFisico.toFixed(2)}</span>
                 </div>
-                <div style={{ ...styles.textTotal, border: 'none', color: sobranteBruto >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-                    <span>Sobrante / Faltante Bruto:</span> 
-                    <span>{sobranteBruto >= 0 ? '+' : ''}${sobranteBruto.toFixed(2)}</span>
-                </div>
-                <div style={styles.textRow}>
-                    <span>Gastos (Egresos):</span> 
-                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
-                </div>
                 <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-                    <span>SOBRANTE / FALTANTE REAL:</span> 
+                    <span>SOBRANTE / FALTANTE EFEC.:</span> 
                     <span>{sobranteEfectivo >= 0 ? '+' : ''}${sobranteEfectivo.toFixed(2)}</span>
                 </div>
             </div>
