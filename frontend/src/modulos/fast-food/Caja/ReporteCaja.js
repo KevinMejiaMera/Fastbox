@@ -101,10 +101,11 @@ const ReporteCaja = ({ shiftId }) => {
         }
     }
 
-    // CÁLCULOS COMPARATIVOS
+    const efectivoTotalBruto = openingCash + paymentStats.efectivo;
     const efectivoFisico = closingCash - transferenciasFisico; 
-    const efectivoSistema = openingCash + paymentStats.efectivo - totalExpenses;
-    const sobranteEfectivo = efectivoFisico - efectivoSistema;
+    const sobranteBruto = efectivoFisico - efectivoTotalBruto;
+    const efectivoEsperadoFinal = efectivoTotalBruto - totalExpenses;
+    const sobranteEfectivo = efectivoFisico - efectivoEsperadoFinal;
     
     const transferenciasSistema = paymentStats.transferencia;
     const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
@@ -137,17 +138,22 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(center("EFECTIVO"));
         lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCash.toFixed(2)}`));
         lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
-        lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpenses.toFixed(2)}`));
-        lines.push(rightAlign("Efectivo Esperado:", `$${efectivoSistema.toFixed(2)}`));
+        lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoTotalBruto.toFixed(2)}`));
         lines.push("-".repeat(chars_per_line));
         lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
-        lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", `$${sobranteEfectivo.toFixed(2)}`));
+        const sobBrutoStr = sobranteBruto >= 0 ? `+$${sobranteBruto.toFixed(2)}` : `-$${Math.abs(sobranteBruto).toFixed(2)}`;
+        lines.push(rightAlign("Sobrante/Faltante Bruto:", sobBrutoStr));
+        lines.push("-".repeat(chars_per_line));
+        lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpenses.toFixed(2)}`));
+        const sobRealStr = sobranteEfectivo >= 0 ? `+$${sobranteEfectivo.toFixed(2)}` : `-$${Math.abs(sobranteEfectivo).toFixed(2)}`;
+        lines.push(rightAlign("SOBRANTE/FALTANTE REAL:", sobRealStr));
         lines.push("-".repeat(chars_per_line));
 
         lines.push(center("TRANSFERENCIAS"));
         lines.push(rightAlign("Dinero en transf. sist.:", `$${transferenciasSistema.toFixed(2)}`));
         lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
-        lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", `$${sobranteTransferencia.toFixed(2)}`));
+        const sobTrStr = sobranteTransferencia >= 0 ? `+$${sobranteTransferencia.toFixed(2)}` : `-$${Math.abs(sobranteTransferencia).toFixed(2)}`;
+        lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", sobTrStr));
         lines.push("-".repeat(chars_per_line));
 
         if (expensesList.length > 0) {
@@ -238,14 +244,17 @@ const ReporteCaja = ({ shiftId }) => {
         addRow('Efectivo Inicial Base:', formatCurrency(openingCash));
         y += 2;
         addRow('Ventas en efec. sist.:', formatCurrency(paymentStats.efectivo));
-        doc.setTextColor(220, 53, 69);
-        addRow('Gastos (Egresos):', `-${formatCurrency(totalExpenses)}`);
-        doc.setTextColor(0, 0, 0);
-        addRow('Efectivo Esperado:', formatCurrency(efectivoSistema), true);
+        addRow('Total Efectivo Esperado:', formatCurrency(efectivoTotalBruto), true);
         y += 2;
         addRow('Efectivo Físico Caja:', formatCurrency(efectivoFisico));
+        doc.setTextColor(sobranteBruto >= 0 ? 40 : 220, sobranteBruto >= 0 ? 167 : 53, sobranteBruto >= 0 ? 69 : 69);
+        addRow('Sobrante/Faltante Bruto:', `${sobranteBruto >= 0 ? '+' : ''}${formatCurrency(sobranteBruto)}`);
+        doc.setTextColor(0, 0, 0);
+        y += 2;
+        doc.setTextColor(220, 53, 69);
+        addRow('Gastos (Egresos):', `-${formatCurrency(totalExpenses)}`);
         doc.setTextColor(sobranteEfectivo >= 0 ? 40 : 220, sobranteEfectivo >= 0 ? 167 : 53, sobranteEfectivo >= 0 ? 69 : 69);
-        addRow('SOBRANTE/FALTANTE EFEC.:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`);
+        addRow('SOBRANTE/FALTANTE REAL:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`, true);
         doc.setTextColor(0, 0, 0);
         y += 4;
 
