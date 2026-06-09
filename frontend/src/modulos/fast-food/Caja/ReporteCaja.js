@@ -373,20 +373,24 @@ const ReporteCaja = ({ shiftId }) => {
                     <span>Ventas del Turno:</span> 
                     <span>${paymentStats.efectivo.toFixed(2)}</span>
                 </div>
-                <div style={styles.textRow}>
-                    <span>Gastos (Egresos):</span> 
-                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
-                </div>
                 <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem' }}>
-                    <span>Efectivo en Sistema:</span> 
-                    <span>${efectivoSistema.toFixed(2)}</span>
+                    <span>Total Efectivo Esperado:</span> 
+                    <span>${efectivoTotalBruto.toFixed(2)}</span>
                 </div>
                 <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                     <span>Efectivo Físico (Contado):</span> 
                     <span>${efectivoFisico.toFixed(2)}</span>
                 </div>
+                <div style={{ ...styles.textTotal, border: 'none', color: sobranteBruto >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+                    <span>Sobrante / Faltante Bruto:</span> 
+                    <span>{sobranteBruto >= 0 ? '+' : ''}${sobranteBruto.toFixed(2)}</span>
+                </div>
+                <div style={styles.textRow}>
+                    <span>Gastos (Egresos):</span> 
+                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
+                </div>
                 <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-                    <span>Sobrante / Faltante Efectivo:</span> 
+                    <span>SOBRANTE / FALTANTE REAL:</span> 
                     <span>{sobranteEfectivo >= 0 ? '+' : ''}${sobranteEfectivo.toFixed(2)}</span>
                 </div>
             </div>
