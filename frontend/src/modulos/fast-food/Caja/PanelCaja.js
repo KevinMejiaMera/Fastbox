@@ -136,22 +136,22 @@ const PanelCaja = () => {
             
             lines.push(center("EFECTIVO"));
             lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCashVal.toFixed(2)}`));
-            lines.push(rightAlign("Dinero en efec. sistema:", `$${paymentStats.efectivo.toFixed(2)}`));
-            lines.push(rightAlign("Dinero en efec. caja:", `$${efectivoFisico.toFixed(2)}`));
-            lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", `$${sobranteEfectivo.toFixed(2)}`));
+            lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
+            lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpensesVal.toFixed(2)}`));
+            lines.push(rightAlign("Efectivo Esperado:", `$${efectivoSistema.toFixed(2)}`));
+            lines.push("-".repeat(chars_per_line));
+            lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
+            const sobEfStr = sobranteEfectivo >= 0 ? `+$${sobranteEfectivo.toFixed(2)}` : `-$${Math.abs(sobranteEfectivo).toFixed(2)}`;
+            lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", sobEfStr));
             lines.push("-".repeat(chars_per_line));
 
             lines.push(center("TRANSFERENCIAS"));
             lines.push(rightAlign("Dinero en transf. sist.:", `$${transferenciasSistema.toFixed(2)}`));
             lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
-            lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", `$${sobranteTransferencia.toFixed(2)}`));
+            const sobTrStr = sobranteTransferencia >= 0 ? `+$${sobranteTransferencia.toFixed(2)}` : `-$${Math.abs(sobranteTransferencia).toFixed(2)}`;
+            lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", sobTrStr));
             lines.push("-".repeat(chars_per_line));
 
-            lines.push(center("GASTOS Y TOTALES"));
-            lines.push(rightAlign("Gastos sistema:", `-$${totalExpensesVal.toFixed(2)}`));
-            lines.push(rightAlign("Efectivo calculado:", `$${efectivoSistema.toFixed(2)}`));
-            lines.push(rightAlign("Efectivo total:", `$${efectivoFisico.toFixed(2)}`));
-            lines.push("-".repeat(chars_per_line));
 
             if (expensesList.length > 0) {
                 lines.push(center("DETALLE DE GASTOS"));

@@ -136,8 +136,11 @@ const ReporteCaja = ({ shiftId }) => {
         
         lines.push(center("EFECTIVO"));
         lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCash.toFixed(2)}`));
-        lines.push(rightAlign("Dinero en efec. sistema:", `$${paymentStats.efectivo.toFixed(2)}`));
-        lines.push(rightAlign("Dinero en efec. caja:", `$${efectivoFisico.toFixed(2)}`));
+        lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
+        lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpenses.toFixed(2)}`));
+        lines.push(rightAlign("Efectivo Esperado:", `$${efectivoSistema.toFixed(2)}`));
+        lines.push("-".repeat(chars_per_line));
+        lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
         lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", `$${sobranteEfectivo.toFixed(2)}`));
         lines.push("-".repeat(chars_per_line));
 
@@ -145,12 +148,6 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(rightAlign("Dinero en transf. sist.:", `$${transferenciasSistema.toFixed(2)}`));
         lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
         lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", `$${sobranteTransferencia.toFixed(2)}`));
-        lines.push("-".repeat(chars_per_line));
-
-        lines.push(center("GASTOS Y TOTALES"));
-        lines.push(rightAlign("Gastos sistema:", `-$${totalExpenses.toFixed(2)}`));
-        lines.push(rightAlign("Efectivo calculado:", `$${efectivoSistema.toFixed(2)}`));
-        lines.push(rightAlign("Efectivo total:", `$${efectivoFisico.toFixed(2)}`));
         lines.push("-".repeat(chars_per_line));
 
         if (expensesList.length > 0) {
@@ -240,29 +237,26 @@ const ReporteCaja = ({ shiftId }) => {
 
         addRow('Efectivo Inicial Base:', formatCurrency(openingCash));
         y += 2;
-        addRow('Dinero en efec. sistema:', formatCurrency(paymentStats.efectivo));
-        addRow('Dinero en efec. caja:', formatCurrency(efectivoFisico));
-        
-        doc.setTextColor(sobranteEfectivo >= 0 ? 40 : 220, sobranteEfectivo >= 0 ? 167 : 53, sobranteEfectivo >= 0 ? 69 : 69);
-        addRow('Sobrante/Faltante Efec.:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`);
+        addRow('Ventas en efec. sist.:', formatCurrency(paymentStats.efectivo));
+        doc.setTextColor(220, 53, 69);
+        addRow('Gastos (Egresos):', `-${formatCurrency(totalExpenses)}`);
         doc.setTextColor(0, 0, 0);
+        addRow('Efectivo Esperado:', formatCurrency(efectivoSistema), true);
         y += 2;
+        addRow('Efectivo Físico Caja:', formatCurrency(efectivoFisico));
+        doc.setTextColor(sobranteEfectivo >= 0 ? 40 : 220, sobranteEfectivo >= 0 ? 167 : 53, sobranteEfectivo >= 0 ? 69 : 69);
+        addRow('SOBRANTE/FALTANTE EFEC.:', `${sobranteEfectivo >= 0 ? '+' : ''}${formatCurrency(sobranteEfectivo)}`);
+        doc.setTextColor(0, 0, 0);
+        y += 4;
 
-        addRow('Dinero en transf. sistema:', formatCurrency(transferenciasSistema));
+        addRow('Dinero en transf. sist.:', formatCurrency(transferenciasSistema));
         addRow('Dinero en transf. caja:', formatCurrency(transferenciasFisico));
         doc.setTextColor(sobranteTransferencia >= 0 ? 40 : 220, sobranteTransferencia >= 0 ? 167 : 53, sobranteTransferencia >= 0 ? 69 : 69);
-        addRow('Sobrante/Faltante Trans.:', `${sobranteTransferencia >= 0 ? '+' : ''}${formatCurrency(sobranteTransferencia)}`);
+        addRow('SOBRANTE/FALTANTE TRANS.:', `${sobranteTransferencia >= 0 ? '+' : ''}${formatCurrency(sobranteTransferencia)}`);
         doc.setTextColor(0, 0, 0);
         y += 4;
-        
-        doc.setTextColor(220, 53, 69);
-        addRow('Gastos sistema:', `-${formatCurrency(totalExpenses)}`);
-        doc.setTextColor(0, 0, 0);
-        y += 4;
-        
-        addRow('Efectivo calculado:', formatCurrency(efectivoSistema), true);
-        addRow('Efectivo total:', formatCurrency(efectivoFisico), true);
-        
+
+
         y += 8;
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
