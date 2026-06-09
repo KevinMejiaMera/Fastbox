@@ -112,7 +112,7 @@ const PanelCaja = () => {
             const efectivoTotalBruto = openingCashVal + paymentStats.efectivo;
             const efectivoFisico = closingCashVal - transferenciasFisico;
             const sobranteBruto = efectivoFisico - efectivoTotalBruto;
-            const efectivoEsperadoFinal = efectivoTotalBruto - totalExpensesVal;
+            const efectivoEsperadoFinal = efectivoTotalBruto;
             const sobranteReal = efectivoFisico - efectivoEsperadoFinal;
             const transferenciasSistema = paymentStats.transferencia;
             const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
@@ -139,7 +139,6 @@ const PanelCaja = () => {
             lines.push(center("EFECTIVO"));
             lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCashVal.toFixed(2)}`));
             lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
-            lines.push(rightAlign("Gastos (Egresos):", `-$${totalExpensesVal.toFixed(2)}`));
             lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoEsperadoFinal.toFixed(2)}`));
             lines.push("-".repeat(chars_per_line));
             lines.push(rightAlign("Efectivo Físico Caja:", `$${efectivoFisico.toFixed(2)}`));
