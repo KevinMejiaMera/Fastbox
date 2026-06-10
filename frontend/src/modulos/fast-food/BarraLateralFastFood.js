@@ -29,6 +29,9 @@ const BarraLateralFastFood = () => {
                 <li className={isActive('/fast-food/bodega')}>
                     <Link to="/fast-food/bodega">Bodega (Insumos)</Link>
                 </li>
+                <li className={isActive('/fast-food/mezclas')}>
+                    <Link to="/fast-food/mezclas">Mezclas</Link>
+                </li>
                 <li className={isActive('/fast-food/customers')}>
                     <Link to="/fast-food/customers">Clientes</Link>
                 </li>

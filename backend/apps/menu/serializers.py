@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, Size, Extra, Combo, ComboProduct, Supply, SupplyMovement, RecipeIngredient
+from .models import Category, Product, Size, Extra, Combo, ComboProduct, Supply, SupplyMovement, RecipeIngredient, Recipe, RecipeSupply, RecipeProduction
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -306,5 +306,101 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = RecipeIngredient
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at']
+
+
+# ============================================================================
+# SERIALIZERS PARA RECETAS DE PRODUCCIÓN (MEZCLAS)
+# ============================================================================
+
+class RecipeSupplySerializer(serializers.ModelSerializer):
+    """Serializer para insumos de una receta de producción"""
+    supply_name = serializers.CharField(source='supply.name', read_only=True)
+    supply_unit = serializers.CharField(source='supply.get_unit_display', read_only=True)
+
+    class Meta:
+        model = RecipeSupply
+        fields = '__all__'
+        read_only_fields = ['id', 'recipe', 'created_at']
+
+
+class RecipeListSerializer(serializers.ModelSerializer):
+    """Serializer para listado de recetas de producción"""
+    ingredients_count = serializers.SerializerMethodField()
+    ingredients = RecipeSupplySerializer(many=True, read_only=True)
+    output_supply_name = serializers.CharField(source='output_supply.name', read_only=True, allow_null=True)
+    output_supply_unit = serializers.CharField(source='output_supply.get_unit_display', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Recipe
+        fields = [
+            'id', 'name', 'description',
+            'output_supply', 'output_supply_name', 'output_supply_unit',
+            'output_quantity', 'is_active',
+            'ingredients', 'ingredients_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_ingredients_count(self, obj):
+        return obj.ingredients.count()
+
+
+class RecipeDetailSerializer(serializers.ModelSerializer):
+    """Serializer detallado para receta con ingredientes"""
+    ingredients = RecipeSupplySerializer(many=True, read_only=True)
+    output_supply_name = serializers.CharField(source='output_supply.name', read_only=True, allow_null=True)
+    output_supply_unit = serializers.CharField(source='output_supply.get_unit_display', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Recipe
+        fields = [
+            'id', 'name', 'description',
+            'output_supply', 'output_supply_name', 'output_supply_unit',
+            'output_quantity', 'is_active',
+            'ingredients', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer para crear/actualizar recetas con ingredientes anidados"""
+    ingredients = RecipeSupplySerializer(many=True, required=False)
+
+    class Meta:
+        model = Recipe
+        fields = [
+            'name', 'description',
+            'output_supply', 'output_quantity',
+            'is_active', 'ingredients'
+        ]
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients', [])
+        recipe = Recipe.objects.create(**validated_data)
+        for ing_data in ingredients_data:
+            RecipeSupply.objects.create(recipe=recipe, **ing_data)
+        return recipe
+
+    def update(self, instance, validated_data):
+        ingredients_data = validated_data.pop('ingredients', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if ingredients_data is not None:
+            instance.ingredients.all().delete()
+            for ing_data in ingredients_data:
+                RecipeSupply.objects.create(recipe=instance, **ing_data)
+
+        return instance
+
+
+class RecipeProductionSerializer(serializers.ModelSerializer):
+    """Serializer para historial de producciones"""
+    recipe_name = serializers.CharField(source='recipe.name', read_only=True)
+
+    class Meta:
+        model = RecipeProduction
         fields = '__all__'
         read_only_fields = ['id', 'created_at']

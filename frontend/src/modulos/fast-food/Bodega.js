@@ -24,7 +24,7 @@ const Bodega = () => {
     
     // Formularios
     const [editingSupply, setEditingSupply] = useState(null);
-    const [supplyForm, setSupplyForm] = useState({ name: '', description: '', unit: '', current_stock: 0, is_active: true });
+    const [supplyForm, setSupplyForm] = useState({ name: '', description: '', unit: '', current_stock: 0, is_active: true, is_production_item: false });
     const [unitOptions, setUnitOptions] = useState([]);
     
     const [movementForm, setMovementForm] = useState({ supply: '', movement_type: 'in', quantity: 0, reason: '' });
@@ -32,6 +32,8 @@ const Bodega = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [productRecipes, setProductRecipes] = useState([]);
     const [recipeForm, setRecipeForm] = useState({ supply: '', quantity: 0 });
+
+    // (Mezclas movido a su propia página /fast-food/mezclas)
 
     const fetchData = async () => {
         setLoading(true);
@@ -169,6 +171,16 @@ const Bodega = () => {
     }
 
 
+    const getStockDisplay = (supplyId) => {
+        const s = supplies.find(sp => sp.id === supplyId);
+        if (!s) return { stock: 0, unit: '', color: 'gray' };
+        return {
+            stock: s.current_stock,
+            unit: s.unit_display,
+            color: s.current_stock <= 0 ? 'red' : 'green'
+        };
+    };
+
     if (loading && supplies.length === 0) return <div>Cargando Bodega...</div>;
 
     return (
@@ -189,7 +201,7 @@ const Bodega = () => {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
                         <button className="btn btn-primary" onClick={() => {
                             setEditingSupply(null);
-                            setSupplyForm({ name: '', description: '', unit: unitOptions.length ? unitOptions[0].value : '', current_stock: 0, is_active: true });
+                            setSupplyForm({ name: '', description: '', unit: unitOptions.length ? unitOptions[0].value : '', current_stock: 0, is_active: true, is_production_item: false });
                             setIsSupplyModalOpen(true);
                         }}>Nuevo Insumo</button>
                     </div>
@@ -211,11 +223,14 @@ const Bodega = () => {
                                         <td>{s.name}</td>
                                         <td>{s.unit_display}</td>
                                         <td style={{ fontWeight: 'bold', color: s.current_stock <= 0 ? 'red' : 'green'}}>{Math.round(s.current_stock)}</td>
-                                        <td>{s.is_active ? 'Activo' : 'Inactivo'}</td>
+                                        <td>
+                                            {s.is_active ? 'Activo' : 'Inactivo'}
+                                            {s.is_production_item && <span style={{ marginLeft: '4px', fontSize: '11px', background: '#0d6efd', color: '#fff', padding: '1px 6px', borderRadius: '8px' }}>Mezcla</span>}
+                                        </td>
                                         <td>
                                             <button className="btn btn-secondary" style={{ marginRight: '5px', padding: '0.25rem' }} onClick={() => {
                                                 setEditingSupply(s);
-                                                setSupplyForm({ name: s.name, description: s.description, unit: s.unit, current_stock: s.current_stock, is_active: s.is_active });
+                                                setSupplyForm({ name: s.name, description: s.description, unit: s.unit, current_stock: s.current_stock, is_active: s.is_active, is_production_item: s.is_production_item || false });
                                                 setIsSupplyModalOpen(true);
                                             }}>Editar</button>
                                             
@@ -340,6 +355,8 @@ const Bodega = () => {
                 </div>
             )}
 
+            {/* FIN TABLAS - Mezclas movido a su propia página /fast-food/mezclas */}
+
             {/* MODALS */}
             {/* Modal Insumo */}
             <Modal isOpen={isSupplyModalOpen} onClose={() => setIsSupplyModalOpen(false)} title={editingSupply ? 'Editar Insumo' : 'Nuevo Insumo'}>
@@ -360,6 +377,14 @@ const Bodega = () => {
                         <label>Stock Inicial</label>
                         <input type="number" step="1" required value={supplyForm.current_stock} onChange={e => setSupplyForm({...supplyForm, current_stock: e.target.value})} disabled={!!editingSupply} />
                         {editingSupply && <small>Para modificar el stock de un insumo existente, registre un movimiento (Ingreso/Ajuste).</small>}
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="checkbox" id="is_production_item"
+                            checked={supplyForm.is_production_item}
+                            onChange={e => setSupplyForm({...supplyForm, is_production_item: e.target.checked})} />
+                        <label htmlFor="is_production_item" style={{ margin: 0 }}>
+                            Producto de mezcla (no aparece en POS, solo se gestiona desde Mezclas)
+                        </label>
                     </div>
                     <div className="form-actions">
                         <button type="button" className="btn btn-secondary" onClick={() => setIsSupplyModalOpen(false)}>Cancelar</button>

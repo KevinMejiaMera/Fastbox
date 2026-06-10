@@ -515,8 +515,12 @@ class MenuViewSet(viewsets.ViewSet):
 # VIEWSETS DE BODEGA / INVENTARIO
 # ============================================================================
 
-from .models import Supply, SupplyMovement, RecipeIngredient
-from .serializers import SupplySerializer, SupplyMovementSerializer, RecipeIngredientSerializer
+from .models import Supply, SupplyMovement, RecipeIngredient, Recipe, RecipeSupply, RecipeProduction
+from .serializers import (
+    SupplySerializer, SupplyMovementSerializer, RecipeIngredientSerializer,
+    RecipeListSerializer, RecipeDetailSerializer, RecipeCreateUpdateSerializer,
+    RecipeProductionSerializer
+)
 
 class SupplyViewSet(viewsets.ModelViewSet):
     """
@@ -526,7 +530,7 @@ class SupplyViewSet(viewsets.ModelViewSet):
     serializer_class = SupplySerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filterset_fields = ['is_active', 'unit']
+    filterset_fields = ['is_active', 'unit', 'is_production_item']
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'current_stock', 'created_at']
     ordering = ['name']
@@ -603,3 +607,147 @@ class RecipeIngredientViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['product', 'supply']
+
+
+# ============================================================================
+# VIEWSETS PARA RECETAS DE PRODUCCIÓN (MEZCLAS)
+# ============================================================================
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para administrar recetas de producción (mezclas)
+    """
+    queryset = Recipe.objects.all()
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return RecipeListSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return RecipeCreateUpdateSerializer
+        return RecipeDetailSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.prefetch_related('ingredients__supply').select_related('output_supply')
+        if self.action in ['retrieve', 'produce']:
+            qs = qs.prefetch_related('productions')
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def produce(self, request, pk=None):
+        """Ejecuta la producción: descuenta insumos y genera el output"""
+        from decimal import Decimal
+
+        recipe = self.get_object()
+        batch_multiplier = request.data.get('batch_multiplier', 1)
+        notes = request.data.get('notes', '')
+
+        try:
+            multiplier = Decimal(str(batch_multiplier))
+        except (TypeError, ValueError):
+            return Response({'error': 'Multiplicador inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if multiplier <= 0:
+            return Response({'error': 'El multiplicador debe ser mayor a 0'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ingredients = recipe.ingredients.all().select_related('supply')
+        if not ingredients:
+            return Response({'error': 'La receta no tiene ingredientes'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validar stock suficiente
+        stock_errors = []
+        for ing in ingredients:
+            needed = ing.quantity_required * multiplier
+            if ing.supply.current_stock < needed:
+                stock_errors.append(
+                    f'{ing.supply.name}: necesita {needed} {ing.supply.get_unit_display()}, '
+                    f'disponible {ing.supply.current_stock} {ing.supply.get_unit_display()}'
+                )
+
+        if stock_errors:
+            return Response({
+                'error': 'Stock insuficiente para producir',
+                'details': stock_errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        created_by = request.user.username if hasattr(request, 'user') and request.user.is_authenticated else 'Admin'
+
+        # Descontar insumos
+        deductions = []
+        for ing in ingredients:
+            qty = ing.quantity_required * multiplier
+            supply = ing.supply
+            supply.current_stock -= qty
+            supply.save()
+
+            SupplyMovement.objects.create(
+                supply=supply,
+                movement_type='production_out',
+                quantity=qty,
+                reason=f'Producción: {recipe.name} x{multiplier}',
+                created_by=created_by
+            )
+            deductions.append({
+                'supply_id': str(supply.id),
+                'supply_name': supply.name,
+                'quantity': float(qty),
+                'unit': supply.get_unit_display()
+            })
+
+        # Generar output
+        output = None
+        if recipe.output_supply and recipe.output_quantity > 0:
+            output_qty = recipe.output_quantity * multiplier
+            recipe.output_supply.current_stock += output_qty
+            recipe.output_supply.save()
+
+            SupplyMovement.objects.create(
+                supply=recipe.output_supply,
+                movement_type='production_in',
+                quantity=output_qty,
+                reason=f'Producción: {recipe.name} x{multiplier}',
+                created_by=created_by
+            )
+            output = {
+                'supply_id': str(recipe.output_supply.id),
+                'supply_name': recipe.output_supply.name,
+                'quantity': float(output_qty),
+                'unit': recipe.output_supply.get_unit_display()
+            }
+
+        # Registrar producción
+        production = RecipeProduction.objects.create(
+            recipe=recipe,
+            batch_multiplier=multiplier,
+            notes=notes,
+            created_by=created_by
+        )
+
+        return Response({
+            'message': 'Producción realizada con éxito',
+            'production_id': str(production.id),
+            'recipe_name': recipe.name,
+            'batch_multiplier': float(multiplier),
+            'deductions': deductions,
+            'output': output,
+            'created_at': production.created_at.isoformat()
+        })
+
+
+class RecipeProductionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet de solo lectura para historial de producciones
+    """
+    queryset = RecipeProduction.objects.all().select_related('recipe')
+    serializer_class = RecipeProductionSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['recipe']
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']

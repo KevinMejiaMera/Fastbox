@@ -8,6 +8,7 @@ import ServicePlaceholder from './components/ServicePlaceholder';
 import PanelFastFood from './modulos/fast-food/PanelFastFood';
 import Inventario from './modulos/fast-food/Inventario';
 import Bodega from './modulos/fast-food/Bodega';
+import Mezclas from './modulos/fast-food/Mezclas';
 import Ordenes from './modulos/fast-food/Ordenes';
 import Clientes from './modulos/fast-food/Clientes';
 import Reportes from './modulos/fast-food/Reportes';
@@ -108,6 +109,11 @@ function App() {
           <Route path="/fast-food/bodega" element={
             <FastFoodRoute>
               <Bodega />
+            </FastFoodRoute>
+          } />
+          <Route path="/fast-food/mezclas" element={
+            <FastFoodRoute>
+              <Mezclas />
             </FastFoodRoute>
           } />
           <Route path="/fast-food/orders" element={

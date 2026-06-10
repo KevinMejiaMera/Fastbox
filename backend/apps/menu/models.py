@@ -378,6 +378,10 @@ class Supply(models.Model):
     )
     
     is_active = models.BooleanField(default=True, verbose_name='Activo')
+    is_production_item = models.BooleanField(
+        default=False, verbose_name='Producto de mezcla',
+        help_text='Si está marcado, este insumo solo se gestiona desde Mezclas/Producción y no aparece en el POS'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -398,6 +402,8 @@ class SupplyMovement(models.Model):
         ('out', 'Egreso (Desecho/Pérdida)'),
         ('sale', 'Egreso por Venta'),
         ('adjustment', 'Ajuste de Inventario'),
+        ('production_out', 'Egreso por Producción'),
+        ('production_in', 'Ingreso por Producción'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -446,3 +452,82 @@ class RecipeIngredient(models.Model):
         if self.size:
             return f'{self.quantity} {self.supply.get_unit_display()} de {self.supply.name} para {self.product.name} ({self.size.name})'
         return f'{self.quantity} {self.supply.get_unit_display()} de {self.supply.name} para {self.product.name}'
+
+
+class Recipe(models.Model):
+    """Receta/Mezcla de producción - combina insumos para crear un producto"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, verbose_name='Nombre')
+    description = models.TextField(blank=True, verbose_name='Descripción')
+
+    output_supply = models.ForeignKey(
+        Supply, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='produced_by_recipes', verbose_name='Insumo de salida'
+    )
+    output_quantity = models.DecimalField(
+        max_digits=12, decimal_places=3, default=0,
+        verbose_name='Cantidad generada por batch'
+    )
+
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Receta de Producción'
+        verbose_name_plural = 'Recetas de Producción'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class RecipeSupply(models.Model):
+    """Insumo requerido por una receta de producción"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='ingredients', verbose_name='Receta'
+    )
+    supply = models.ForeignKey(
+        Supply, on_delete=models.PROTECT,
+        related_name='recipe_supplies', verbose_name='Insumo'
+    )
+    quantity_required = models.DecimalField(
+        max_digits=12, decimal_places=3, verbose_name='Cantidad requerida por batch'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Ingrediente de Receta de Producción'
+        verbose_name_plural = 'Ingredientes de Recetas de Producción'
+        unique_together = ['recipe', 'supply']
+
+    def __str__(self):
+        return f'{self.quantity_required} de {self.supply.name} para {self.recipe.name}'
+
+
+class RecipeProduction(models.Model):
+    """Registro de una producción ejecutada"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='productions', verbose_name='Receta'
+    )
+    batch_multiplier = models.DecimalField(
+        max_digits=12, decimal_places=3, default=1,
+        verbose_name='Multiplicador (cantidad de batches)'
+    )
+    notes = models.TextField(blank=True, verbose_name='Notas')
+    created_by = models.CharField(max_length=100, blank=True, verbose_name='Realizado por')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de producción')
+
+    class Meta:
+        verbose_name = 'Producción'
+        verbose_name_plural = 'Producciones'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.recipe.name} x{self.batch_multiplier} - {self.created_at.strftime("%d/%m/%Y %H:%M")}'
