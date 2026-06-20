@@ -137,7 +137,7 @@ class ComboListSerializer(serializers.ModelSerializer):
         model = Combo
         fields = [
             'id', 'name', 'slug', 'description', 'image',
-            'price', 'is_active', 'is_featured', 'display_order',
+            'price', 'is_active', 'is_featured', 'is_promotion', 'display_order',
             'products_count', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -157,7 +157,7 @@ class ComboDetailSerializer(serializers.ModelSerializer):
         model = Combo
         fields = [
             'id', 'name', 'slug', 'description', 'image',
-            'price', 'is_active', 'is_featured', 'display_order',
+            'price', 'is_active', 'is_featured', 'is_promotion', 'display_order',
             'combo_products', 'total_individual_price', 'savings',
             'created_at', 'updated_at'
         ]
@@ -185,9 +185,10 @@ class ComboCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Combo
         fields = [
-            'name', 'slug', 'description', 'image', 'price',
-            'is_active', 'is_featured', 'display_order', 'combo_products'
+            'id', 'name', 'slug', 'description', 'image', 'price',
+            'is_active', 'is_featured', 'is_promotion', 'display_order', 'combo_products'
         ]
+        read_only_fields = ['id']
     
     def create(self, validated_data):
         """Crea combo con productos incluidos"""

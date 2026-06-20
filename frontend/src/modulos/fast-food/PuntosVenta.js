@@ -48,6 +48,7 @@ const PuntosVenta = () => {
     const [checkingShift, setCheckingShift] = useState(true);
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [promotions, setPromotions] = useState([]);
     const [tables, setTables] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -171,6 +172,20 @@ const PuntosVenta = () => {
             }
 
             try {
+                const promosRes = await api.get('/api/menu/combos/?is_promotion=true', {
+                    baseURL: process.env.REACT_APP_FAST_FOOD_SERVICE
+                });
+
+                if (!isMounted) return;
+
+                const loadedPromos = promosRes.data.results || promosRes.data || [];
+                setPromotions(loadedPromos.filter(p => p.is_active));
+
+            } catch (err) {
+                console.error('Error cargando promociones:', err);
+            }
+
+            try {
                 const tablesRes = await api.get('/api/pos/tables/', {
                     baseURL: process.env.REACT_APP_FAST_FOOD_SERVICE
                 });
@@ -214,39 +229,79 @@ const PuntosVenta = () => {
     // =====================================
     // 5. LÓGICA DEL CARRITO
     // =====================================
-    const addToCart = useCallback((product) => {
+    const addToCart = useCallback((product, isPromo = false, promoQuantity = 1, promoDiscountPct = 0, promoName = '') => {
         setCart(prevCart => {
-            const existingItemIndex = prevCart.findIndex(item => item.product_id === product.id);
+            const existingItemIndex = prevCart.findIndex(item => 
+                item.product_id === product.id && 
+                item.isPromo === isPromo &&
+                item.name === (isPromo ? promoName : product.name)
+            );
             if (existingItemIndex >= 0) {
                 const newCart = [...prevCart];
                 newCart[existingItemIndex] = {
                     ...newCart[existingItemIndex],
-                    quantity: newCart[existingItemIndex].quantity + 1
+                    quantity: newCart[existingItemIndex].quantity + (isPromo ? promoQuantity : 1)
                 };
                 return newCart;
             } else {
                 return [...prevCart, {
                     product_id: product.id,
-                    name: product.name,
+                    name: isPromo ? promoName : product.name,
                     description: product.description || '',
                     price: parseFloat(product.price),
-                    quantity: 1,
-                    image: product.image,
-                    note: '', // Nueva propiedad para notas
-                    discount_percentage: 0 // Nuevo porcentaje individual
+                    quantity: isPromo ? promoQuantity : 1,
+                    image: isPromo ? product.promoImage : product.image,
+                    note: isPromo ? 'Promo aplicada' : '',
+                    discount_percentage: isPromo ? promoDiscountPct : 0,
+                    isPromo: isPromo
                 }];
             }
         });
     }, []);
 
-    const removeFromCart = useCallback((productId) => {
-        setCart(prevCart => prevCart.filter(item => item.product_id !== productId));
+    const handleAddPromo = async (promo) => {
+        try {
+            const res = await api.get(`/api/menu/combos/${promo.id}/products/`, {
+                baseURL: process.env.REACT_APP_FAST_FOOD_SERVICE
+            });
+            const promoProducts = res.data;
+            if (promoProducts.length > 0) {
+                const comboProduct = promoProducts[0];
+                const realProduct = comboProduct.product;
+                const quantity = comboProduct.quantity;
+                
+                const originalTotal = realProduct.price * quantity;
+                let discountPct = 0;
+                if (originalTotal > 0 && promo.price < originalTotal) {
+                    discountPct = ((originalTotal - promo.price) / originalTotal) * 100;
+                }
+                
+                // Agregamos imagen de la promo al producto temporalmente
+                realProduct.promoImage = promo.image;
+                
+                addToCart(realProduct, true, quantity, discountPct, promo.name);
+            } else {
+                alert("Esta promoción no tiene productos asociados.");
+            }
+        } catch(e) {
+            console.error("Error al cargar la promo", e);
+        }
+    };
+
+    const removeFromCart = useCallback((itemToRemove) => {
+        setCart(prevCart => prevCart.filter(item => 
+            !(item.product_id === itemToRemove.product_id && 
+              item.isPromo === itemToRemove.isPromo && 
+              item.name === itemToRemove.name)
+        ));
     }, []);
 
-    const updateQuantity = useCallback((productId, delta) => {
+    const updateQuantity = useCallback((itemToUpdate, delta) => {
         setCart(prevCart => {
             return prevCart.map(item => {
-                if (item.product_id === productId) {
+                if (item.product_id === itemToUpdate.product_id && 
+                    item.isPromo === itemToUpdate.isPromo && 
+                    item.name === itemToUpdate.name) {
                     const newQuantity = Math.max(1, item.quantity + delta);
                     return { ...item, quantity: newQuantity };
                 }
@@ -255,10 +310,12 @@ const PuntosVenta = () => {
         });
     }, []);
 
-    const updateItemDiscount = useCallback((productId, percentage) => {
+    const updateItemDiscount = useCallback((itemToUpdate, percentage) => {
         setCart(prevCart => {
             return prevCart.map(item => {
-                if (item.product_id === productId) {
+                if (item.product_id === itemToUpdate.product_id && 
+                    item.isPromo === itemToUpdate.isPromo && 
+                    item.name === itemToUpdate.name) {
                     return { ...item, discount_percentage: Math.max(0, Math.min(100, percentage)) };
                 }
                 return item;
@@ -266,10 +323,14 @@ const PuntosVenta = () => {
         });
     }, []);
 
-    // Función para agregar/editar nota
-    const handleAddNote = (productId) => {
-        const item = cart.find(item => item.product_id === productId);
-        setEditingNoteForItem(productId);
+    const handleAddNote = (itemToNote) => {
+        const item = cart.find(i => 
+            i.product_id === itemToNote.product_id && 
+            i.isPromo === itemToNote.isPromo && 
+            i.name === itemToNote.name
+        );
+        // Usamos una combinacion unica para el estado
+        setEditingNoteForItem(`${itemToNote.product_id}-${itemToNote.isPromo ? 'promo' : 'norm'}-${itemToNote.name}`);
         setNoteText(item?.note || '');
     };
 
@@ -278,7 +339,8 @@ const PuntosVenta = () => {
 
         setCart(prevCart => {
             return prevCart.map(item => {
-                if (item.product_id === editingNoteForItem) {
+                const itemId = `${item.product_id}-${item.isPromo ? 'promo' : 'norm'}-${item.name}`;
+                if (itemId === editingNoteForItem) {
                     return { ...item, note: noteText.trim() };
                 }
                 return item;
@@ -1344,6 +1406,26 @@ const PuntosVenta = () => {
                             >
                                 Todos
                             </button>
+                            {promotions.length > 0 && (
+                                <button
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '6px',
+                                        border: selectedCategory === 'promotions' ? 'none' : '2px solid #fbbf24',
+                                        backgroundColor: selectedCategory === 'promotions' ? '#f59e0b' : '#fffbeb',
+                                        color: selectedCategory === 'promotions' ? '#ffffff' : '#b45309',
+                                        fontWeight: '700',
+                                        fontSize: '0.875rem',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        whiteSpace: 'nowrap',
+                                        minHeight: TOUCH_MIN_SIZE
+                                    }}
+                                    onClick={() => setSelectedCategory('promotions')}
+                                >
+                                    ⭐ Promociones
+                                </button>
+                            )}
                             {categories.map(cat => (
                                 <button
                                     key={cat.id}
@@ -1382,9 +1464,9 @@ const PuntosVenta = () => {
                                 'repeat(auto-fill, minmax(160px, 1fr))',
                             gap: '0.75rem'
                         }}>
-                            {filteredProducts.map(product => (
+                            {(selectedCategory === 'promotions' ? promotions : filteredProducts).map(item => (
                                 <div
-                                    key={product.id}
+                                    key={item.id}
                                     style={{
                                         backgroundColor: '#ffffff',
                                         borderRadius: '8px',
@@ -1394,11 +1476,11 @@ const PuntosVenta = () => {
                                         border: '1px solid #e5e7eb',
                                         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                                     }}
-                                    onClick={() => addToCart(product)}
+                                    onClick={() => selectedCategory === 'promotions' ? handleAddPromo(item) : addToCart(item)}
                                     onMouseEnter={screenWidth > 768 ? (e) => {
                                         e.currentTarget.style.transform = 'translateY(-4px)';
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                                        e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                        e.currentTarget.style.borderColor = selectedCategory === 'promotions' ? '#f59e0b' : 'var(--primary-color)';
                                     } : undefined}
                                     onMouseLeave={screenWidth > 768 ? (e) => {
                                         e.currentTarget.style.transform = 'translateY(0)';
@@ -1414,10 +1496,10 @@ const PuntosVenta = () => {
                                         justifyContent: 'center',
                                         padding: '0.5rem'
                                     }}>
-                                        {product.image ? (
+                                        {item.image ? (
                                             <img
-                                                src={product.image.startsWith('http') ? product.image : `${process.env.REACT_APP_FAST_FOOD_SERVICE}${product.image}`}
-                                                alt={product.name}
+                                                src={item.image.startsWith('http') ? item.image : `${process.env.REACT_APP_FAST_FOOD_SERVICE}${item.image}`}
+                                                alt={item.name}
                                                 style={{
                                                     maxWidth: '100%',
                                                     maxHeight: '100%',
@@ -1438,15 +1520,15 @@ const PuntosVenta = () => {
                                         <h3 style={{
                                             fontSize: screenWidth <= 768 ? '0.875rem' : '0.9375rem',
                                             fontWeight: '600',
-                                            color: 'var(--primary-color)',
+                                            color: selectedCategory === 'promotions' ? '#b45309' : 'var(--primary-color)',
                                             marginBottom: '0.25rem',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                                            {product.name}
+                                            {item.name}
                                         </h3>
-                                        {product.description && (
+                                        {item.description && (
                                             <p style={{
                                                 fontSize: '0.75rem',
                                                 color: '#6b7280',
@@ -1457,16 +1539,16 @@ const PuntosVenta = () => {
                                                 WebkitLineClamp: 2,
                                                 WebkitBoxOrient: 'vertical'
                                             }}>
-                                                {product.description}
+                                                {item.description}
                                             </p>
                                         )}
                                         <p style={{
                                             fontSize: screenWidth <= 768 ? '1rem' : '1.125rem',
                                             fontWeight: '700',
-                                            color: 'var(--primary-color)',
+                                            color: selectedCategory === 'promotions' ? '#b45309' : 'var(--primary-color)',
                                             margin: 0
                                         }}>
-                                            ${product.price}
+                                            ${item.price}
                                         </p>
                                     </div>
                                 </div>
@@ -1610,7 +1692,7 @@ const PuntosVenta = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center'
                                                         }}
-                                                        onClick={() => updateQuantity(item.product_id, -1)}
+                                                        onClick={() => updateQuantity(item, -1)}
                                                     >
                                                         −
                                                     </button>
@@ -1637,7 +1719,7 @@ const PuntosVenta = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center'
                                                         }}
-                                                        onClick={() => updateQuantity(item.product_id, 1)}
+                                                        onClick={() => updateQuantity(item, 1)}
                                                     >
                                                         +
                                                     </button>
@@ -1658,7 +1740,7 @@ const PuntosVenta = () => {
                                                         alignItems: 'center',
                                                         justifyContent: 'center'
                                                     }}
-                                                    onClick={() => removeFromCart(item.product_id)}
+                                                    onClick={() => removeFromCart(item)}
                                                     title="Eliminar producto"
                                                 >
                                                     ×
@@ -1713,7 +1795,7 @@ const PuntosVenta = () => {
                                                         min="0"
                                                         max="100"
                                                         value={item.discount_percentage || ''}
-                                                        onChange={(e) => updateItemDiscount(item.product_id, e.target.value)}
+                                                        onChange={(e) => updateItemDiscount(item, e.target.value)}
                                                         placeholder="0"
                                                         style={{
                                                             width: '32px',
@@ -1740,7 +1822,8 @@ const PuntosVenta = () => {
                                                         whiteSpace: 'nowrap',
                                                         minHeight: TOUCH_MIN_SIZE
                                                     }}
-                                                    onClick={() => handleAddNote(item.product_id)}
+                                                    onClick={() => handleAddNote(item)}
+                                                    title={item.note ? "Editar nota" : "Agregar nota"}
                                                 >
                                                     {item.note ? '📝 Editar' : '✏️ Nota'}
                                                 </button>
@@ -1990,6 +2073,27 @@ const PuntosVenta = () => {
                             >
                                 Todos los productos
                             </button>
+                            {promotions.length > 0 && (
+                                <button
+                                    style={{
+                                        padding: '0.625rem 1.25rem',
+                                        borderRadius: '6px',
+                                        border: selectedCategory === 'promotions' ? 'none' : '2px solid #fbbf24',
+                                        backgroundColor: selectedCategory === 'promotions' ? '#f59e0b' : '#fffbeb',
+                                        color: selectedCategory === 'promotions' ? '#ffffff' : '#b45309',
+                                        fontWeight: '700',
+                                        fontSize: '0.9375rem',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        whiteSpace: 'nowrap',
+                                        boxShadow: selectedCategory === 'promotions' ? '0 2px 4px rgba(245, 158, 11, 0.3)' : 'none',
+                                        minHeight: TOUCH_MIN_SIZE
+                                    }}
+                                    onClick={() => setSelectedCategory('promotions')}
+                                >
+                                    ⭐ Promociones
+                                </button>
+                            )}
                             {categories.map(cat => (
                                 <button
                                     key={cat.id}
@@ -2027,9 +2131,9 @@ const PuntosVenta = () => {
                             gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
                             gap: '1rem'
                         }}>
-                            {filteredProducts.map(product => (
+                            {(selectedCategory === 'promotions' ? promotions : filteredProducts).map(item => (
                                 <div
-                                    key={product.id}
+                                    key={item.id}
                                     style={{
                                         backgroundColor: '#ffffff',
                                         borderRadius: '10px',
@@ -2039,11 +2143,11 @@ const PuntosVenta = () => {
                                         border: '1px solid #e5e7eb',
                                         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                                     }}
-                                    onClick={() => addToCart(product)}
+                                    onClick={() => selectedCategory === 'promotions' ? handleAddPromo(item) : addToCart(item)}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.transform = 'translateY(-4px)';
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                                        e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                        e.currentTarget.style.borderColor = selectedCategory === 'promotions' ? '#f59e0b' : 'var(--primary-color)';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.currentTarget.style.transform = 'translateY(0)';
@@ -2059,10 +2163,10 @@ const PuntosVenta = () => {
                                         justifyContent: 'center',
                                         padding: '0.75rem'
                                     }}>
-                                        {product.image ? (
+                                        {item.image ? (
                                             <img
-                                                src={product.image.startsWith('http') ? product.image : `${process.env.REACT_APP_FAST_FOOD_SERVICE}${product.image}`}
-                                                alt={product.name}
+                                                src={item.image.startsWith('http') ? item.image : `${process.env.REACT_APP_FAST_FOOD_SERVICE}${item.image}`}
+                                                alt={item.name}
                                                 style={{
                                                     maxWidth: '100%',
                                                     maxHeight: '100%',
@@ -2083,15 +2187,15 @@ const PuntosVenta = () => {
                                         <h3 style={{
                                             fontSize: '0.9375rem',
                                             fontWeight: '600',
-                                            color: 'var(--primary-color)',
+                                            color: selectedCategory === 'promotions' ? '#b45309' : 'var(--primary-color)',
                                             marginBottom: '0.375rem',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                                            {product.name}
+                                            {item.name}
                                         </h3>
-                                        {product.description && (
+                                        {item.description && (
                                             <p style={{
                                                 fontSize: '0.75rem',
                                                 color: '#6b7280',
@@ -2102,16 +2206,16 @@ const PuntosVenta = () => {
                                                 WebkitLineClamp: 2,
                                                 WebkitBoxOrient: 'vertical'
                                             }}>
-                                                {product.description}
+                                                {item.description}
                                             </p>
                                         )}
                                         <p style={{
                                             fontSize: '1.125rem',
                                             fontWeight: '700',
-                                            color: 'var(--primary-color)',
+                                            color: selectedCategory === 'promotions' ? '#b45309' : 'var(--primary-color)',
                                             margin: 0
                                         }}>
-                                            ${product.price}
+                                            ${item.price}
                                         </p>
                                     </div>
                                 </div>
@@ -2254,7 +2358,7 @@ const PuntosVenta = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center'
                                                         }}
-                                                        onClick={() => updateQuantity(item.product_id, -1)}
+                                                        onClick={() => updateQuantity(item, -1)}
                                                     >
                                                         −
                                                     </button>
@@ -2281,7 +2385,7 @@ const PuntosVenta = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center'
                                                         }}
-                                                        onClick={() => updateQuantity(item.product_id, 1)}
+                                                        onClick={() => updateQuantity(item, 1)}
                                                     >
                                                         +
                                                     </button>
@@ -2302,7 +2406,7 @@ const PuntosVenta = () => {
                                                         alignItems: 'center',
                                                         justifyContent: 'center'
                                                     }}
-                                                    onClick={() => removeFromCart(item.product_id)}
+                                                    onClick={() => removeFromCart(item)}
                                                     title="Eliminar producto"
                                                 >
                                                     ×
@@ -2357,7 +2461,7 @@ const PuntosVenta = () => {
                                                         min="0"
                                                         max="100"
                                                         value={item.discount_percentage || ''}
-                                                        onChange={(e) => updateItemDiscount(item.product_id, e.target.value)}
+                                                        onChange={(e) => updateItemDiscount(item, e.target.value)}
                                                         placeholder="0"
                                                         style={{
                                                             width: '40px',
@@ -2384,7 +2488,7 @@ const PuntosVenta = () => {
                                                         minHeight: TOUCH_MIN_SIZE,
                                                         minWidth: '60px'
                                                     }}
-                                                    onClick={() => handleAddNote(item.product_id)}
+                                                    onClick={() => handleAddNote(item)}
                                                     title={item.note ? "Editar nota" : "Agregar nota"}
                                                 >
                                                     {item.note ? '📝 Editar' : '✏️ Nota'}

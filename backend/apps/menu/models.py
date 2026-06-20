@@ -282,6 +282,7 @@ class Combo(models.Model):
     # Configuración
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     is_featured = models.BooleanField(default=False, verbose_name='Destacado')
+    is_promotion = models.BooleanField(default=False, verbose_name='Es Promoción')
     
     display_order = models.PositiveIntegerField(default=0, verbose_name='Orden')
     

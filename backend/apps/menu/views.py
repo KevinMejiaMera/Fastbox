@@ -378,7 +378,7 @@ class ComboViewSet(viewsets.ModelViewSet):
     queryset = Combo.objects.all()
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filterset_fields = ['is_active', 'is_featured']
+    filterset_fields = ['is_active', 'is_featured', 'is_promotion']
     search_fields = ['name', 'description']
     ordering_fields = ['display_order', 'name', 'price', 'created_at']
     ordering = ['display_order', 'name']

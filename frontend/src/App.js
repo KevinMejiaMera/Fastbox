@@ -15,6 +15,7 @@ import Reportes from './modulos/fast-food/Reportes';
 import PuntosVenta from './modulos/fast-food/PuntosVenta';
 import PanelCaja from './modulos/fast-food/Caja/PanelCaja';
 import Impresoras from './modulos/fast-food/Impresoras';
+import Promociones from './modulos/fast-food/Promociones';
 import DisenoFastFood from './modulos/fast-food/DisenoFastFood';
 import logo from './assets/logo.png';
 import './App.css';
@@ -104,6 +105,11 @@ function App() {
           <Route path="/fast-food/inventory" element={
             <FastFoodRoute>
               <Inventario />
+            </FastFoodRoute>
+          } />
+          <Route path="/fast-food/promotions" element={
+            <FastFoodRoute>
+              <Promociones />
             </FastFoodRoute>
           } />
           <Route path="/fast-food/bodega" element={

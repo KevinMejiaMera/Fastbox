@@ -3,6 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 
 const BarraLateralFastFood = () => {
     const location = useLocation();
+    
+    // Auth check
+    const user = JSON.parse(localStorage.getItem('user'));
+    const roleName = user?.role_details?.name;
+    const isAdmin = roleName === 'SUPER_ADMIN' || roleName === 'ADMIN_FAST_FOOD' || user?.is_superuser;
 
     const isActive = (path) => {
         return location.pathname === path ? 'active' : '';
@@ -26,6 +31,11 @@ const BarraLateralFastFood = () => {
                 <li className={isActive('/fast-food/inventory')}>
                     <Link to="/fast-food/inventory">Menú</Link>
                 </li>
+                {isAdmin && (
+                    <li className={isActive('/fast-food/promotions')}>
+                        <Link to="/fast-food/promotions">Promociones</Link>
+                    </li>
+                )}
                 <li className={isActive('/fast-food/bodega')}>
                     <Link to="/fast-food/bodega">Bodega (Insumos)</Link>
                 </li>
