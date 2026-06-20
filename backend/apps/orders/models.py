@@ -329,7 +329,12 @@ class Order(models.Model):
     def mark_as_cancelled(self, reason=''):
         """Cancela la orden"""
         if self.can_be_cancelled():
+            # Si ya estaba pagada o descontó inventario, lo revertimos
+            if self.payment_status == 'paid' or getattr(self, '_inventory_deducted', False):
+                self.revert_inventory()
+                
             self.status = 'cancelled'
+            self.payment_status = 'refunded'
             self.cancelled_at = timezone.now()
             if reason:
                 self.notes = f'{self.notes}\nCancelación: {reason}'.strip()
@@ -339,7 +344,44 @@ class Order(models.Model):
 
     def can_be_cancelled(self):
         """Verifica si la orden puede ser cancelada"""
-        return self.status in ['pending', 'confirmed', 'preparing']
+        # Se permite cancelar órdenes incluso completadas para corregir errores
+        return self.status not in ['cancelled', 'rejected']
+        
+    def revert_inventory(self):
+        """Revierte la deducción de inventario cuando se anula una orden"""
+        try:
+            from apps.menu.models import RecipeIngredient, SupplyMovement
+        except ImportError:
+            return
+            
+        for item in self.items.all():
+            recipes = RecipeIngredient.objects.filter(product=item.product)
+            if item.size:
+                size_recipes = recipes.filter(size=item.size)
+                if size_recipes.exists():
+                    recipes = size_recipes
+                else:
+                    recipes = recipes.filter(size__isnull=True)
+            else:
+                recipes = recipes.filter(size__isnull=True)
+                
+            for recipe in recipes:
+                total_qty_to_revert = recipe.quantity * item.quantity
+                
+                SupplyMovement.objects.create(
+                    supply=recipe.supply,
+                    movement_type='adjustment',
+                    quantity=total_qty_to_revert,
+                    reason=f'Anulación orden {self.order_number}',
+                    reference_id=self.order_number,
+                    created_by='Sistema de Cancelación'
+                )
+                
+                recipe.supply.current_stock += total_qty_to_revert
+                recipe.supply.save()
+                
+        # Marcar que ya no está descontado
+        self._inventory_deducted = False
 
 
 class OrderItem(models.Model):

@@ -203,16 +203,18 @@ class ShiftViewSet(viewsets.ModelViewSet):
         start_time = shift.opened_at
         end_time = shift.closed_at or timezone.now()
         
-        # 1. Obtener Órdenes en el rango
-        orders = Order.objects.filter(
+        # 1. Obtener Órdenes en el rango (incluyendo anuladas para el reporte)
+        all_orders = Order.objects.filter(
             created_at__gte=start_time,
             created_at__lte=end_time,
-            status__in=['delivered', 'completed']
+            status__in=['delivered', 'completed', 'cancelled']
         ).select_related('customer').order_by('created_at')
         
-        # 2. Calcular Totales de Ventas (desde Órdenes para items, desde Pagos para dinero)
-        total_orders = orders.count()
-        total_sales = orders.aggregate(total=Sum('total'))['total'] or 0
+        valid_orders = all_orders.exclude(status='cancelled')
+        
+        # 2. Calcular Totales de Ventas (solo de las válidas)
+        total_orders = valid_orders.count()
+        total_sales = valid_orders.aggregate(total=Sum('total'))['total'] or 0
         
         # 3. Desglose por Método de Pago (Consultando Pagos)
         from apps.payments.models import Payment
@@ -229,12 +231,12 @@ class ShiftViewSet(viewsets.ModelViewSet):
             count=Count('id')
         )
         
-        # 4. Detalle de Órdenes usando el Serializer existente
-        orders_data = OrderReportDetailSerializer(orders, many=True).data
+        # 4. Detalle de Órdenes usando el Serializer existente (todas para poder listarlas en ventas anuladas)
+        orders_data = OrderReportDetailSerializer(all_orders, many=True).data
         
-        # 5. Productos más vendidos en este turno
+        # 5. Productos más vendidos en este turno (solo válidas)
         top_products = OrderItem.objects.filter(
-            order__in=orders
+            order__in=valid_orders
         ).values(
             'product__name'
         ).annotate(

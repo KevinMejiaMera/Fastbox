@@ -81,6 +81,17 @@ const PanelCaja = () => {
             const expensesList = reportData.expenses || [];
 
             let paymentStats = { efectivo: 0, transferencia: 0, tarjeta: 0 };
+            let cancelledStats = { count: 0, total: 0 };
+            
+            if (reportData.orders_detail && Array.isArray(reportData.orders_detail)) {
+                reportData.orders_detail.forEach(order => {
+                    if (['cancelled'].includes(order.status) || order.status_display?.toLowerCase() === 'anulada') {
+                        cancelledStats.count += 1;
+                        cancelledStats.total += parseFloat(order.total_amount || order.total || 0);
+                    }
+                });
+            }
+
             if (reportData.payment_methods && Array.isArray(reportData.payment_methods) && reportData.payment_methods.length > 0) {
                 reportData.payment_methods.forEach(pm => {
                     const method = String(pm.payment_method__name || pm.method || pm.name || '').toLowerCase();
@@ -156,6 +167,11 @@ const PanelCaja = () => {
             lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
             const sobTrStr = sobranteTransferencia >= 0 ? `+$${sobranteTransferencia.toFixed(2)}` : `-$${Math.abs(sobranteTransferencia).toFixed(2)}`;
             lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", sobTrStr));
+            lines.push("-".repeat(chars_per_line));
+
+            lines.push(center("VENTAS ANULADAS"));
+            lines.push(rightAlign("Cant. Ventas Anuladas:", `${cancelledStats.count}`));
+            lines.push(rightAlign("Total Ventas Anuladas:", `$${cancelledStats.total.toFixed(2)}`));
             lines.push("-".repeat(chars_per_line));
 
 

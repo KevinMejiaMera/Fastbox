@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../../services/api';
 import printerService from '../../services/printerService';
+import { AuthContext } from '../../context/AuthContext';
 const Ordenes = () => {
+    const { user } = useContext(AuthContext);
+    const roleName = user?.role_details?.name;
+    const isAdmin = roleName === 'SUPER_ADMIN' || roleName === 'ADMIN_FAST_FOOD' || user?.is_superuser;
+
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -106,25 +111,36 @@ const Ordenes = () => {
         setSelectedOrder(null);
     };
 
-    const handleDeleteOrder = async () => {
+    const handleCancelOrder = async () => {
         if (!selectedOrder) return;
 
-        if (!window.confirm(`¿Estás seguro de que quieres eliminar la Orden ${selectedOrder.order_number}? Esta acción no se puede deshacer.`)) {
+        const reason = window.prompt(`¿Está seguro de anular la Orden ${selectedOrder.order_number}?\nPor favor, ingrese el motivo de la anulación:`);
+        
+        if (reason === null) {
+            return; // El usuario canceló el prompt
+        }
+        
+        if (reason.trim() === '') {
+            alert('Debe ingresar un motivo para anular la orden.');
             return;
         }
 
         try {
-            await api.delete(`/api/orders/orders/${selectedOrder.order_number}/`, {
+            const response = await api.post(`/api/orders/orders/${selectedOrder.order_number}/cancel/`, {
+                reason: reason
+            }, {
                 baseURL: process.env.REACT_APP_FAST_FOOD_SERVICE
             });
 
-            // Eliminar del estado local
-            setOrders(prev => prev.filter(o => o.id !== selectedOrder.id));
-            alert('Orden eliminada exitosamente');
+            // Actualizar del estado local en vez de eliminarlo
+            setOrders(prev => prev.map(o => 
+                o.id === selectedOrder.id ? { ...o, ...response.data } : o
+            ));
+            alert('Orden anulada exitosamente');
             closeModal();
         } catch (err) {
-            console.error('Error deleting order:', err);
-            alert('Error al eliminar la orden');
+            console.error('Error cancelling order:', err);
+            alert(`Error al anular la orden: ${err.response?.data?.detail || err.message}`);
         }
     };
 
@@ -163,27 +179,34 @@ const Ordenes = () => {
 
 
     const getStatusDisplay = (status) => {
+        if (!status) return '';
         const statusMap = {
             'pending': 'Pendiente',
-            'completed': 'Completado'
+            'completed': 'Completado',
+            'cancelled': 'Anulada'
         };
         return statusMap[status] || status;
     };
 
     const getStatusColor = (status) => {
+        if (!status) return 'bg-gray-100 text-gray-700 border-gray-200';
         const statusColors = {
             'completado': 'bg-green-100 text-green-700 border-green-200',
             'completed': 'bg-green-100 text-green-700 border-green-200',
             'pendiente': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-            'pending': 'bg-yellow-100 text-yellow-700 border-yellow-200'
+            'pending': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+            'anulada': 'bg-red-100 text-red-700 border-red-200',
+            'cancelled': 'bg-red-100 text-red-700 border-red-200'
         };
         return statusColors[status.toLowerCase()] || 'bg-gray-100 text-gray-700 border-gray-200';
     };
 
     const getStatusKey = (statusDisplay) => {
+        if (!statusDisplay) return '';
         const reverseMap = {
             'Pendiente': 'pending',
-            'Completado': 'completed'
+            'Completado': 'completed',
+            'Anulada': 'cancelled'
         };
         return reverseMap[statusDisplay] || statusDisplay.toLowerCase();
     };
@@ -198,12 +221,19 @@ const Ordenes = () => {
                 ['completed'].includes(a.status?.toLowerCase());
             const bCompleted = ['completado', 'completed'].includes(b.status_display?.toLowerCase()) ||
                 ['completed'].includes(b.status?.toLowerCase());
+            const aCancelled = ['anulada', 'cancelled'].includes(a.status_display?.toLowerCase()) ||
+                ['cancelled'].includes(a.status?.toLowerCase());
+            const bCancelled = ['anulada', 'cancelled'].includes(b.status_display?.toLowerCase()) ||
+                ['cancelled'].includes(b.status?.toLowerCase());
+                
+            const aInactive = aCompleted || aCancelled;
+            const bInactive = bCompleted || bCancelled;
 
-            if (aCompleted !== bCompleted) {
-                return aCompleted ? 1 : -1;
+            if (aInactive !== bInactive) {
+                return aInactive ? 1 : -1;
             }
 
-            if (!aCompleted) {
+            if (!aInactive) {
                 return new Date(a.created_at) - new Date(b.created_at);
             } else {
                 return new Date(b.created_at) - new Date(a.created_at);
@@ -314,6 +344,8 @@ const Ordenes = () => {
                                     sortedAndFilteredOrders.map(order => {
                                         const isCompleted = ['completado', 'completed'].includes(order.status_display?.toLowerCase()) ||
                                             ['completed'].includes(order.status?.toLowerCase());
+                                        const isCancelled = ['anulada', 'cancelled'].includes(order.status_display?.toLowerCase()) ||
+                                            ['cancelled'].includes(order.status?.toLowerCase());
                                         return (
                                             <tr
                                                 key={order.id}
@@ -321,7 +353,7 @@ const Ordenes = () => {
                                                 style={{
                                                     borderBottom: '1px solid #e5e7eb',
                                                     transition: 'background-color 0.2s',
-                                                    opacity: isCompleted ? 0.6 : 1,
+                                                    opacity: (isCompleted || isCancelled) ? 0.6 : 1,
                                                     cursor: 'pointer'
                                                 }}
                                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--sidebar-bg)'}
@@ -349,23 +381,24 @@ const Ordenes = () => {
                                                 </td>
                                                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                                                     <select
-                                                        value={getStatusKey(order.status_display)}
+                                                        value={getStatusKey(order.status_display || getStatusDisplay(order.status))}
                                                         onChange={(e) => handleStatusChange(order.order_number, e.target.value, e)}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        disabled={updatingStatus[order.order_number]}
-                                                        className={getStatusColor(order.status_display)}
+                                                        disabled={updatingStatus[order.order_number] || isCancelled}
+                                                        className={getStatusColor(order.status_display || order.status)}
                                                         style={{
                                                             padding: '6px 12px',
                                                             borderRadius: '9999px',
                                                             fontSize: '12px',
                                                             fontWeight: '500',
                                                             border: '1px solid',
-                                                            cursor: updatingStatus[order.order_number] ? 'wait' : 'pointer',
+                                                            cursor: updatingStatus[order.order_number] ? 'wait' : (isCancelled ? 'not-allowed' : 'pointer'),
                                                             outline: 'none'
                                                         }}
                                                     >
                                                         <option value="pending">Pendiente</option>
                                                         <option value="completed">Completado</option>
+                                                        {isCancelled && <option value="cancelled">Anulada</option>}
                                                     </select>
                                                 </td>
                                                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
@@ -526,8 +559,10 @@ const Ordenes = () => {
                                             borderRadius: '9999px',
                                             fontSize: '12px',
                                             fontWeight: '500',
-                                            backgroundColor: selectedOrder.status_display?.toLowerCase() === 'completado' || selectedOrder.status?.toLowerCase() === 'completed' ? '#dcfce7' : '#fef3c7',
-                                            color: selectedOrder.status_display?.toLowerCase() === 'completado' || selectedOrder.status?.toLowerCase() === 'completed' ? '#166534' : '#92400e'
+                                            backgroundColor: (selectedOrder.status_display?.toLowerCase() === 'anulada' || selectedOrder.status?.toLowerCase() === 'cancelled') ? '#fee2e2' :
+                                                             (selectedOrder.status_display?.toLowerCase() === 'completado' || selectedOrder.status?.toLowerCase() === 'completed') ? '#dcfce7' : '#fef3c7',
+                                            color: (selectedOrder.status_display?.toLowerCase() === 'anulada' || selectedOrder.status?.toLowerCase() === 'cancelled') ? '#991b1b' :
+                                                   (selectedOrder.status_display?.toLowerCase() === 'completado' || selectedOrder.status?.toLowerCase() === 'completed') ? '#166534' : '#92400e'
                                         }}>
                                             {selectedOrder.status_display || getStatusDisplay(selectedOrder.status)}
                                         </span>
@@ -674,21 +709,23 @@ const Ordenes = () => {
 
                             {/* BOTONES DE ACCIÓN (FOOTER) */}
                             <div style={{ marginTop: '32px', borderTop: '1px solid #e5e7eb', paddingTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                                <button
-                                    onClick={handleDeleteOrder}
-                                    style={{
-                                        padding: '10px 20px',
-                                        backgroundColor: '#fee2e2',
-                                        color: '#b91c1c',
-                                        border: '1px solid #fca5a5',
-                                        borderRadius: '8px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        marginRight: 'auto'
-                                    }}
-                                >
-                                    Eliminar Orden
-                                </button>
+                                {isAdmin && selectedOrder.status !== 'cancelled' && selectedOrder.status_display?.toLowerCase() !== 'anulada' && (
+                                    <button
+                                        onClick={handleCancelOrder}
+                                        style={{
+                                            padding: '10px 20px',
+                                            backgroundColor: '#fee2e2',
+                                            color: '#b91c1c',
+                                            border: '1px solid #fca5a5',
+                                            borderRadius: '8px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            marginRight: 'auto'
+                                        }}
+                                    >
+                                        Anular Orden
+                                    </button>
+                                )}
                                 <button
                                     onClick={closeModal}
                                     style={{

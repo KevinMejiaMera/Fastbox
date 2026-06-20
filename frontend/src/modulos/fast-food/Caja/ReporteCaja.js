@@ -61,6 +61,16 @@ const ReporteCaja = ({ shiftId }) => {
         transferencia: 0,
         tarjeta: 0
     };
+    let cancelledStats = { count: 0, total: 0 };
+    
+    if (reportData.orders_detail && Array.isArray(reportData.orders_detail)) {
+        reportData.orders_detail.forEach(order => {
+            if (['cancelled'].includes(order.status) || order.status_display?.toLowerCase() === 'anulada') {
+                cancelledStats.count += 1;
+                cancelledStats.total += parseFloat(order.total_amount || order.total || 0);
+            }
+        });
+    }
 
     if (reportData.payment_methods && Array.isArray(reportData.payment_methods) && reportData.payment_methods.length > 0) {
         reportData.payment_methods.forEach(pm => {
@@ -156,6 +166,11 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", sobTrStr));
         lines.push("-".repeat(chars_per_line));
 
+        lines.push(center("VENTAS ANULADAS"));
+        lines.push(rightAlign("Cant. Ventas Anuladas:", `${cancelledStats.count}`));
+        lines.push(rightAlign("Total Ventas Anuladas:", `$${cancelledStats.total.toFixed(2)}`));
+        lines.push("-".repeat(chars_per_line));
+
         if (expensesList.length > 0) {
             lines.push(center("DETALLE DE GASTOS"));
             expensesList.forEach(exp => {
@@ -190,7 +205,7 @@ const ReporteCaja = ({ shiftId }) => {
         const closingLines = shift_info.closing_notes ? tempDoc.splitTextToSize(`Cierre: ${shift_info.closing_notes}`, 70) : [];
         const openingLines = shift_info.opening_notes ? tempDoc.splitTextToSize(`Apertura: ${shift_info.opening_notes}`, 70) : [];
         
-        let estHeight = 140; 
+        let estHeight = 160; 
         if (shift_info.opening_notes || shift_info.closing_notes || expensesList.length > 0) {
             estHeight += 10;
             if (expensesList.length > 0) {
@@ -262,6 +277,17 @@ const ReporteCaja = ({ shiftId }) => {
         doc.setTextColor(sobranteTransferencia >= 0 ? 40 : 220, sobranteTransferencia >= 0 ? 167 : 53, sobranteTransferencia >= 0 ? 69 : 69);
         addRow('SOBRANTE/FALTANTE TRANS.:', `${sobranteTransferencia >= 0 ? '+' : ''}${formatCurrency(sobranteTransferencia)}`);
         doc.setTextColor(0, 0, 0);
+        y += 4;
+
+        y += 8;
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('Ventas Anuladas', MARGIN, y);
+        y += 6;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        addRow('Cant. Ventas Anuladas:', `${cancelledStats.count}`);
+        addRow('Total Ventas Anuladas:', formatCurrency(cancelledStats.total));
         y += 4;
 
 
@@ -416,6 +442,19 @@ const ReporteCaja = ({ shiftId }) => {
                 <h3 style={styles.titleInfo}>Total General de Ventas (Todos los métodos)</h3>
                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary-color)', textAlign: 'center' }}>
                     ${totalSales.toFixed(2)}
+                </div>
+            </div>
+
+            {/* SECCIÓN DE VENTAS ANULADAS */}
+            <div style={{ backgroundColor: '#fee2e2', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                <h3 style={{ ...styles.titleInfo, color: '#991b1b' }}>Ventas Anuladas</h3>
+                <div style={{ ...styles.textRow, fontWeight: 'bold' }}>
+                    <span>Cantidad de Ventas Anuladas:</span> 
+                    <span>{cancelledStats.count}</span>
+                </div>
+                <div style={{ ...styles.textRow, fontWeight: 'bold', color: '#991b1b' }}>
+                    <span>Total Ventas Anuladas:</span> 
+                    <span>${cancelledStats.total.toFixed(2)}</span>
                 </div>
             </div>
 
