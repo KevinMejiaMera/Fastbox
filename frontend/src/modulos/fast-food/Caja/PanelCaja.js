@@ -82,12 +82,16 @@ const PanelCaja = () => {
 
             let paymentStats = { efectivo: 0, transferencia: 0, tarjeta: 0 };
             let cancelledStats = { count: 0, total: 0 };
+            let employeeStats = { count: 0, total: 0 };
             
             if (reportData.orders_detail && Array.isArray(reportData.orders_detail)) {
                 reportData.orders_detail.forEach(order => {
                     if (['cancelled'].includes(order.status) || order.status_display?.toLowerCase() === 'anulada') {
                         cancelledStats.count += 1;
                         cancelledStats.total += parseFloat(order.total_amount || order.total || 0);
+                    } else if (order.notes && order.notes.includes('[VENTA_EMPLEADO]')) {
+                        employeeStats.count += 1;
+                        employeeStats.total += parseFloat(order.total_amount || order.total || 0);
                     }
                 });
             }
@@ -172,6 +176,11 @@ const PanelCaja = () => {
             lines.push(center("VENTAS ANULADAS"));
             lines.push(rightAlign("Cant. Ventas Anuladas:", `${cancelledStats.count}`));
             lines.push(rightAlign("Total Ventas Anuladas:", `$${cancelledStats.total.toFixed(2)}`));
+            lines.push("-".repeat(chars_per_line));
+
+            lines.push(center("VENTAS A EMPLEADOS"));
+            lines.push(rightAlign("Cant. Ventas Empleado:", `${employeeStats.count}`));
+            lines.push(rightAlign("Total Ventas Empleado:", `$${employeeStats.total.toFixed(2)}`));
             lines.push("-".repeat(chars_per_line));
 
 

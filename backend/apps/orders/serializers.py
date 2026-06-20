@@ -622,7 +622,7 @@ class OrderReportDetailSerializer(serializers.ModelSerializer):
         fields = [
             'order_number', 'id', 'status', 'customer_name', 
             'items', 'payment_method_display',
-            'total_amount', 'timestamp',
+            'total_amount', 'timestamp', 'notes',
         ]
         
     def get_payment_method_display(self, obj):

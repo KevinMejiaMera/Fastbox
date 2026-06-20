@@ -62,12 +62,16 @@ const ReporteCaja = ({ shiftId }) => {
         tarjeta: 0
     };
     let cancelledStats = { count: 0, total: 0 };
+    let employeeStats = { count: 0, total: 0 };
     
     if (reportData.orders_detail && Array.isArray(reportData.orders_detail)) {
         reportData.orders_detail.forEach(order => {
             if (['cancelled'].includes(order.status) || order.status_display?.toLowerCase() === 'anulada') {
                 cancelledStats.count += 1;
                 cancelledStats.total += parseFloat(order.total_amount || order.total || 0);
+            } else if (order.notes && order.notes.includes('[VENTA_EMPLEADO]')) {
+                employeeStats.count += 1;
+                employeeStats.total += parseFloat(order.total_amount || order.total || 0);
             }
         });
     }
@@ -171,6 +175,11 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(rightAlign("Total Ventas Anuladas:", `$${cancelledStats.total.toFixed(2)}`));
         lines.push("-".repeat(chars_per_line));
 
+        lines.push(center("VENTAS A EMPLEADOS"));
+        lines.push(rightAlign("Cant. Ventas Empleado:", `${employeeStats.count}`));
+        lines.push(rightAlign("Total Ventas Empleado:", `$${employeeStats.total.toFixed(2)}`));
+        lines.push("-".repeat(chars_per_line));
+
         if (expensesList.length > 0) {
             lines.push(center("DETALLE DE GASTOS"));
             expensesList.forEach(exp => {
@@ -205,7 +214,7 @@ const ReporteCaja = ({ shiftId }) => {
         const closingLines = shift_info.closing_notes ? tempDoc.splitTextToSize(`Cierre: ${shift_info.closing_notes}`, 70) : [];
         const openingLines = shift_info.opening_notes ? tempDoc.splitTextToSize(`Apertura: ${shift_info.opening_notes}`, 70) : [];
         
-        let estHeight = 160; 
+        let estHeight = 195; 
         if (shift_info.opening_notes || shift_info.closing_notes || expensesList.length > 0) {
             estHeight += 10;
             if (expensesList.length > 0) {
@@ -288,6 +297,17 @@ const ReporteCaja = ({ shiftId }) => {
         doc.setFont(undefined, 'normal');
         addRow('Cant. Ventas Anuladas:', `${cancelledStats.count}`);
         addRow('Total Ventas Anuladas:', formatCurrency(cancelledStats.total));
+        y += 4;
+
+        y += 8;
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('Ventas a Empleados', MARGIN, y);
+        y += 6;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        addRow('Cant. Ventas Empleado:', `${employeeStats.count}`);
+        addRow('Total Ventas Empleado:', formatCurrency(employeeStats.total));
         y += 4;
 
 
@@ -455,6 +475,19 @@ const ReporteCaja = ({ shiftId }) => {
                 <div style={{ ...styles.textRow, fontWeight: 'bold', color: '#991b1b' }}>
                     <span>Total Ventas Anuladas:</span> 
                     <span>${cancelledStats.total.toFixed(2)}</span>
+                </div>
+            </div>
+
+            {/* SECCIÓN DE VENTAS A EMPLEADOS */}
+            <div style={{ backgroundColor: '#e0e7ff', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                <h3 style={{ ...styles.titleInfo, color: '#3730a3' }}>Ventas a Empleados</h3>
+                <div style={{ ...styles.textRow, fontWeight: 'bold' }}>
+                    <span>Cantidad de Ventas:</span> 
+                    <span>{employeeStats.count}</span>
+                </div>
+                <div style={{ ...styles.textRow, fontWeight: 'bold', color: '#3730a3' }}>
+                    <span>Total Ventas:</span> 
+                    <span>${employeeStats.total.toFixed(2)}</span>
                 </div>
             </div>
 

@@ -65,6 +65,7 @@ const PuntosVenta = () => {
     const [selectedTable, setSelectedTable] = useState('');
     const [discountCode, setDiscountCode] = useState('');
     const [orderDiscountPercentage, setOrderDiscountPercentage] = useState(0);
+    const [isEmployeeDiscount, setIsEmployeeDiscount] = useState(false);
     const [appliedDiscount, setAppliedDiscount] = useState(null);
 
     const [paymentMethod, setPaymentMethod] = useState('efectivo');
@@ -530,9 +531,13 @@ const PuntosVenta = () => {
 
         // Preparar notas con información de pago
         let orderNotes = '';
+        if (isEmployeeDiscount) {
+            orderNotes += '[VENTA_EMPLEADO]';
+        }
         if (cashGiven) {
             const change = cashGiven - calculateTotal;
-            orderNotes = `Pago con: ${formatCurrency(cashGiven)} - Cambio: ${formatCurrency(change)}`;
+            if (orderNotes) orderNotes += ' | ';
+            orderNotes += `Pago con: ${formatCurrency(cashGiven)} - Cambio: ${formatCurrency(change)}`;
         }
 
         // Modificado para incluir notas en los items y porcentajes de descuento
@@ -615,6 +620,8 @@ const PuntosVenta = () => {
             setCart([]);
             setAppliedDiscount(null);
             setDiscountCode('');
+            setIsEmployeeDiscount(false);
+            setOrderDiscountPercentage(0);
             setSelectedTable('');
             setSelectedCustomer(null);
             setCustomerSearch('');
@@ -878,9 +885,38 @@ const PuntosVenta = () => {
                                 minHeight: TOUCH_MIN_SIZE,
                                 minWidth: TOUCH_MIN_SIZE
                             }}
-                            onClick={() => setOrderDiscountPercentage(0)}
+                            onClick={() => {
+                                setOrderDiscountPercentage(0);
+                                setIsEmployeeDiscount(false);
+                            }}
                         >
                             Limpiar
+                        </button>
+                        <button
+                            style={{
+                                padding: screenWidth <= 1366 ? '0 0.5rem' : '0 1rem',
+                                backgroundColor: isEmployeeDiscount ? 'var(--primary-color)' : '#f3f4f6',
+                                border: '2px solid #d1d5db',
+                                borderRadius: '8px',
+                                color: isEmployeeDiscount ? '#ffffff' : '#374151',
+                                fontWeight: '600',
+                                fontSize: screenWidth <= 1366 ? '0.875rem' : '0.9375rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minHeight: TOUCH_MIN_SIZE,
+                                marginLeft: '0.5rem'
+                            }}
+                            onClick={() => {
+                                const newValue = !isEmployeeDiscount;
+                                setIsEmployeeDiscount(newValue);
+                                setOrderDiscountPercentage(newValue ? 15 : 0);
+                            }}
+                            title="Descuento Empleado (15%)"
+                        >
+                            <i className="bi bi-person-badge" style={{ marginRight: '0.25rem' }}></i> Empleado
                         </button>
                     </div>
                 </div>
