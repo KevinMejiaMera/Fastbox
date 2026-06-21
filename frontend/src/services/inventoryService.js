@@ -30,6 +30,10 @@ const inventoryService = {
         const response = await api.get('/api/menu/supply-movements/', { baseURL: INVENTORY_SERVICE_URL });
         return response.data.results || response.data;
     },
+    deleteMovement: async (id) => {
+        const response = await api.delete(`/api/menu/supply-movements/${id}/`, { baseURL: INVENTORY_SERVICE_URL });
+        return response.data;
+    },
 
     // Recetas (Producto -> Insumo para POS)
     getRecipeIngredients: async (productId) => {

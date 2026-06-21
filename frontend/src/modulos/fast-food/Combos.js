@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import Modal from '../../comun/Modal';
 
-const Combos = () => {
+const Combos = ({ isAdmin = true }) => {
     const [combos, setCombos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -113,13 +113,15 @@ const Combos = () => {
         <div>
             <div className="page-header" style={{ marginTop: '1rem' }}>
                 <h3>Gestión de Combos</h3>
-                <button className="btn btn-primary" onClick={() => {
-                    setEditingCombo(null);
-                    setNewCombo({ name: '', description: '', price: '', image: null });
-                    setIsModalOpen(true);
-                }}>
-                    + Nuevo Combo
-                </button>
+                {isAdmin && (
+                    <button className="btn btn-primary" onClick={() => {
+                        setEditingCombo(null);
+                        setNewCombo({ name: '', description: '', price: '', image: null });
+                        setIsModalOpen(true);
+                    }}>
+                        + Nuevo Combo
+                    </button>
+                )}
             </div>
 
             <div className="table-responsive">
@@ -131,7 +133,7 @@ const Combos = () => {
                             <th>Descripción</th>
                             <th>Precio</th>
                             <th>Productos</th>
-                            <th>Acciones</th>
+                            {isAdmin && <th>Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -155,21 +157,23 @@ const Combos = () => {
                                     <td>{combo.description}</td>
                                     <td>${combo.price}</td>
                                     <td>{combo.products_count || 0}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-outline"
-                                            onClick={() => handleEditCombo(combo)}
-                                            style={{ marginRight: '5px' }}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-danger"
-                                            onClick={() => handleDeleteCombo(combo.id)}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </td>
+                                    {isAdmin && (
+                                        <td>
+                                            <button
+                                                className="btn btn-sm btn-outline"
+                                                onClick={() => handleEditCombo(combo)}
+                                                style={{ marginRight: '5px' }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() => handleDeleteCombo(combo.id)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))
                         )}

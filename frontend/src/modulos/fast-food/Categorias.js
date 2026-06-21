@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import Modal from '../../comun/Modal';
 
-const Categorias = () => {
+const Categorias = ({ isAdmin = true }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -112,13 +112,15 @@ const Categorias = () => {
         <div>
             <div className="page-header" style={{ marginTop: '1rem' }}>
                 <h3>Gestión de Categorías</h3>
-                <button className="btn btn-primary" onClick={() => {
-                    setEditingCategory(null);
-                    setNewCategory({ name: '', description: '', image: null });
-                    setIsModalOpen(true);
-                }}>
-                    + Nueva Categoría
-                </button>
+                {isAdmin && (
+                    <button className="btn btn-primary" onClick={() => {
+                        setEditingCategory(null);
+                        setNewCategory({ name: '', description: '', image: null });
+                        setIsModalOpen(true);
+                    }}>
+                        + Nueva Categoría
+                    </button>
+                )}
             </div>
 
             <div className="table-responsive">
@@ -129,7 +131,7 @@ const Categorias = () => {
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th>Productos Activos</th>
-                            <th>Acciones</th>
+                            {isAdmin && <th>Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -152,21 +154,23 @@ const Categorias = () => {
                                     <td>{cat.name}</td>
                                     <td>{cat.description}</td>
                                     <td>{cat.products_count || 0}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-outline"
-                                            onClick={() => handleEditCategory(cat)}
-                                            style={{ marginRight: '5px' }}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-danger"
-                                            onClick={() => handleDeleteCategory(cat.id)}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </td>
+                                    {isAdmin && (
+                                        <td>
+                                            <button
+                                                className="btn btn-sm btn-outline"
+                                                onClick={() => handleEditCategory(cat)}
+                                                style={{ marginRight: '5px' }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() => handleDeleteCategory(cat.id)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))
                         )}

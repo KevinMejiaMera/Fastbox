@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../../services/api';
+import { AuthContext } from '../../context/AuthContext';
 import Modal from '../../comun/Modal';
 import Categorias from './Categorias';
 import Extras from './Extras';
 import Combos from './Combos';
 import Tamanos from './Tamanos';
+import MovimientosInventario from './MovimientosInventario';
 
 const Inventario = () => {
     const [activeTab, setActiveTab] = useState('products'); // products, categories, extras, combos, sizes
@@ -17,6 +19,8 @@ const Inventario = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Estado del formulario de producto
+    const [isProductMovementsModalOpen, setIsProductMovementsModalOpen] = useState(false);
+
     const [newProduct, setNewProduct] = useState({
         name: '',
         description: '',
@@ -27,6 +31,10 @@ const Inventario = () => {
         is_available: true
     });
     const [editingProduct, setEditingProduct] = useState(null);
+
+    const { user } = useContext(AuthContext);
+    const roleName = user?.role_details?.name;
+    const isAdmin = roleName === 'SUPER_ADMIN' || roleName === 'ADMIN_FAST_FOOD' || user?.is_superuser;
 
     const fetchProducts = async () => {
         try {
@@ -191,26 +199,44 @@ const Inventario = () => {
                 >
                     Tamaños
                 </button>
+
+                {isAdmin && (
+                    <button
+                        className={`btn ${activeTab === 'insumos' ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={() => setActiveTab('insumos')}
+                    >
+                        Insumos
+                    </button>
+                )}
             </div>
 
             {/* Contenido de Pestañas */}
-            {activeTab === 'categories' && <Categorias />}
-            {activeTab === 'extras' && <Extras />}
-            {activeTab === 'combos' && <Combos />}
-            {activeTab === 'sizes' && <Tamanos />}
+            {activeTab === 'categories' && <Categorias isAdmin={isAdmin} />}
+            {activeTab === 'extras' && <Extras isAdmin={isAdmin} />}
+            {activeTab === 'combos' && <Combos isAdmin={isAdmin} />}
+            {activeTab === 'sizes' && <Tamanos isAdmin={isAdmin} />}
+
 
             {/* Contenido de Productos */}
             {
                 activeTab === 'products' && (
                     <>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                            <button className="btn btn-primary" onClick={() => {
-                                setEditingProduct(null);
-                                setNewProduct({ name: '', description: '', price: '', category: '', image: null });
-                                setIsModalOpen(true);
-                            }}>
-                                Nuevo Producto
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => setIsProductMovementsModalOpen(true)}
+                            >
+                                Movimientos
                             </button>
+                            {isAdmin && (
+                                <button className="btn btn-primary" onClick={() => {
+                                    setEditingProduct(null);
+                                    setNewProduct({ name: '', description: '', price: '', category: '', image: null, is_active: true, is_available: true });
+                                    setIsModalOpen(true);
+                                }}>
+                                    Nuevo Producto
+                                </button>
+                            )}
                         </div>
 
                         {loading ? <div>Cargando inventario...</div> : error ? <div className="alert alert-error">{error}</div> : (
@@ -223,7 +249,7 @@ const Inventario = () => {
                                             <th>Categoría</th>
                                             <th>Precio</th>
                                             <th>Disponible</th>
-                                            <th>Acciones</th>
+                                            {isAdmin && <th>Acciones</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -247,24 +273,24 @@ const Inventario = () => {
                                                     <td>{product.category_name || product.category}</td>
                                                     <td>${product.price}</td>
                                                     <td>{product.is_available ? 'Sí' : 'No'}</td>
-                                                    <td>
-                                                        <button
-                                                            className="btn btn-secondary"
-                                                            onClick={() => handleEditProduct(product)}
-                                                            style={{ marginRight: '5px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                                                        >
-                                                            Editar
-                                                        </button>
-                                                        <button
-                                                            className="btn btn-danger"
-                                                            onClick={() => handleDeleteProduct(product.id)}
-                                                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                                                        >
-                                                            Eliminar
-                                                        </button>
-                                                    </td>
+                                                    {isAdmin && (
+                                                        <td>
+                                                            <button
+                                                                className="btn btn-sm btn-outline"
+                                                                onClick={() => handleEditProduct(product)}
+                                                                style={{ marginRight: '5px' }}
+                                                            >
+                                                                ✏️
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-sm btn-danger"
+                                                                onClick={() => handleDeleteProduct(product.id)}
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        </td>
+                                                    )}
                                                 </tr>
-
                                             ))
                                         )}
                                     </tbody>
@@ -359,6 +385,14 @@ const Inventario = () => {
                                 </div>
                             </form>
                         </Modal>
+                        <Modal
+                           isOpen={isProductMovementsModalOpen}
+                           onClose={() => setIsProductMovementsModalOpen(false)}
+                           title="Movimientos de Inventario"
+                           style={{ maxWidth: '900px' }}
+                         >
+                           <MovimientosInventario />
+                         </Modal>
                     </>
                 )
             }

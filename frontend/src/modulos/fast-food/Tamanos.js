@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import Modal from '../../comun/Modal';
 
-const Tamanos = () => {
+const Tamanos = ({ isAdmin = true }) => {
     const [sizes, setSizes] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -110,13 +110,15 @@ const Tamanos = () => {
         <div>
             <div className="page-header" style={{ marginTop: '1rem' }}>
                 <h3>Gestión de Tamaños</h3>
-                <button className="btn btn-primary" onClick={() => {
-                    setEditingSize(null);
-                    setNewSize({ product: '', name: '', price_adjustment: 0, is_default: false });
-                    setIsModalOpen(true);
-                }}>
-                    + Nuevo Tamaño
-                </button>
+                {isAdmin && (
+                    <button className="btn btn-primary" onClick={() => {
+                        setEditingSize(null);
+                        setNewSize({ product: '', name: '', price_adjustment: 0, is_default: false });
+                        setIsModalOpen(true);
+                    }}>
+                        + Nuevo Tamaño
+                    </button>
+                )}
             </div>
 
             <div className="table-responsive">
@@ -128,7 +130,7 @@ const Tamanos = () => {
                             <th>Nombre</th>
                             <th>Ajuste de Precio</th>
                             <th>Por Defecto</th>
-                            <th>Acciones</th>
+                            {isAdmin && <th>Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -142,21 +144,23 @@ const Tamanos = () => {
                                     <td>{size.name}</td>
                                     <td>${size.price_adjustment}</td>
                                     <td>{size.is_default ? 'Sí' : 'No'}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-outline"
-                                            onClick={() => handleEditSize(size)}
-                                            style={{ marginRight: '5px' }}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-danger"
-                                            onClick={() => handleDeleteSize(size.id)}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </td>
+                                    {isAdmin && (
+                                        <td>
+                                            <button
+                                                className="btn btn-sm btn-outline"
+                                                onClick={() => handleEditSize(size)}
+                                                style={{ marginRight: '5px' }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() => handleDeleteSize(size.id)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))
                         )}

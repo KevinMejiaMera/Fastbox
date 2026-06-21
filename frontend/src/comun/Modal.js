@@ -1,12 +1,12 @@
 import React from 'react';
 import '../App.css'; // Asegúrate de que los estilos estén disponibles
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, maxWidth }) => {
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content">
+            <div className="modal-content" style={maxWidth ? { maxWidth } : {}}>
                 <div className="modal-header">
                     <h3>{title}</h3>
                     <button onClick={onClose} className="btn-close">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import Modal from '../../comun/Modal';
 
-const Extras = () => {
+const Extras = ({ isAdmin = true }) => {
     const [extras, setExtras] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -108,13 +108,15 @@ const Extras = () => {
         <div>
             <div className="page-header" style={{ marginTop: '1rem' }}>
                 <h3>Gestión de Extras/Adicionales</h3>
-                <button className="btn btn-primary" onClick={() => {
-                    setEditingExtra(null);
-                    setNewExtra({ name: '', description: '', price: '', image: null });
-                    setIsModalOpen(true);
-                }}>
-                    + Nuevo Extra
-                </button>
+                {isAdmin && (
+                    <button className="btn btn-primary" onClick={() => {
+                        setEditingExtra(null);
+                        setNewExtra({ name: '', description: '', price: '', image: null });
+                        setIsModalOpen(true);
+                    }}>
+                        + Nuevo Extra
+                    </button>
+                )}
             </div>
 
             <div className="table-responsive">
@@ -125,7 +127,7 @@ const Extras = () => {
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th>Precio</th>
-                            <th>Acciones</th>
+                            {isAdmin && <th>Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -138,21 +140,23 @@ const Extras = () => {
                                     <td>{extra.name}</td>
                                     <td>{extra.description}</td>
                                     <td>${extra.price}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-outline"
-                                            onClick={() => handleEditExtra(extra)}
-                                            style={{ marginRight: '5px' }}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-danger"
-                                            onClick={() => handleDeleteExtra(extra.id)}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </td>
+                                    {isAdmin && (
+                                        <td>
+                                            <button
+                                                className="btn btn-sm btn-outline"
+                                                onClick={() => handleEditExtra(extra)}
+                                                style={{ marginRight: '5px' }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() => handleDeleteExtra(extra.id)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))
                         )}

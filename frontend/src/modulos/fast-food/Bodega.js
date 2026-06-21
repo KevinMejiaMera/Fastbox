@@ -27,11 +27,11 @@ const Bodega = () => {
     const [supplyForm, setSupplyForm] = useState({ name: '', description: '', unit: '', current_stock: 0, is_active: true, is_production_item: false });
     const [unitOptions, setUnitOptions] = useState([]);
     
-    const [movementForm, setMovementForm] = useState({ supply: '', movement_type: 'in', quantity: 0, reason: '' });
+    const [movementForm, setMovementForm] = useState({ supply: '', movement_type: 'in', quantity: 0, reason: '', lockedSupply: false });
     
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [productRecipes, setProductRecipes] = useState([]);
-    const [recipeForm, setRecipeForm] = useState({ supply: '', quantity: 0 });
+    const [allRecipes, setAllRecipes] = useState([]);
+    const [recipeForm, setRecipeForm] = useState({ id: null, product: '', supply: '', quantity: 0 });
+    const [viewDetailsProductId, setViewDetailsProductId] = useState(null);
 
     // (Mezclas movido a su propia página /fast-food/mezclas)
 
@@ -56,6 +56,11 @@ const Bodega = () => {
             if (activeTab === 'movimientos') {
                 const movs = await inventoryService.getMovements();
                 setMovements(movs);
+            }
+            
+            if (activeTab === 'recetas') {
+                const recs = await inventoryService.getRecipeIngredients();
+                setAllRecipes(recs);
             }
         } catch (error) {
             console.error("Error fetching bodega data:", error);
@@ -120,50 +125,45 @@ const Bodega = () => {
     };
 
     // ---- HANDLERS RECETAS ----
-    const loadProductRecipes = async (productId) => {
+    const loadAllRecipes = async () => {
         try {
-            const data = await inventoryService.getRecipeIngredients(productId);
-            setProductRecipes(data);
+            const data = await inventoryService.getRecipeIngredients();
+            setAllRecipes(data);
         } catch (error) {
             console.error(error);
         }
     };
 
-    const handleProductSelect = (e) => {
-        const prodId = e.target.value;
-        const prod = products.find(p => p.id === prodId);
-        setSelectedProduct(prod);
-        if (prod) {
-            loadProductRecipes(prod.id);
-        } else {
-            setProductRecipes([]);
-        }
-    };
-
     const handleRecipeSubmit = async (e) => {
         e.preventDefault();
-        if (!selectedProduct) return;
         try {
+            // Edit not implemented in service, but we can delete and create if needed, 
+            // or if the service supports it we would use updateRecipeIngredient.
+            // But wait, the service only has createRecipeIngredient and deleteRecipeIngredient.
+            // So if editing, we delete the old and create the new.
+            if (recipeForm.id) {
+                await inventoryService.deleteRecipeIngredient(recipeForm.id);
+            }
             await inventoryService.createRecipeIngredient({
-                product: selectedProduct.id,
+                product: recipeForm.product,
                 supply: recipeForm.supply,
                 quantity: parseFloat(recipeForm.quantity),
                 size: null
             });
             setIsRecipeModalOpen(false);
-            loadProductRecipes(selectedProduct.id);
+            loadAllRecipes();
         } catch (error) {
             console.error(error.response?.data || error);
             const msg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-            alert('Error al agregar receta: ' + msg);
+            alert('Error al guardar receta: ' + msg);
         }
     };
     
     const handleDeleteRecipe = async (id) => {
-        if(window.confirm('¿Eliminar este insumo de la receta?')) {
+        if(window.confirm('¿Eliminar esta receta?')) {
             try {
                 await inventoryService.deleteRecipeIngredient(id);
-                loadProductRecipes(selectedProduct.id);
+                loadAllRecipes();
             } catch (error) {
                 alert('Error al eliminar');
             }
@@ -191,7 +191,7 @@ const Bodega = () => {
 
             <div className="tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '10px' }}>
                 <button className={`btn ${activeTab === 'insumos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('insumos')}>Insumos</button>
-                <button className={`btn ${activeTab === 'movimientos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('movimientos')}>Movimientos</button>
+                {isAdmin && <button className={`btn ${activeTab === 'movimientos' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('movimientos')}>Movimientos</button>}
                 <button className={`btn ${activeTab === 'recetas' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('recetas')}>Recetas (Descuentos)</button>
             </div>
 
@@ -212,7 +212,7 @@ const Bodega = () => {
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Unidad</th>
-                                    <th>Stock Actual</th>
+                                    {isAdmin && <th>Stock Actual</th>}
                                     <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -222,7 +222,7 @@ const Bodega = () => {
                                     <tr key={s.id}>
                                         <td>{s.name}</td>
                                         <td>{s.unit_display}</td>
-                                        <td style={{ fontWeight: 'bold', color: s.current_stock <= 0 ? 'red' : 'green'}}>{Math.round(s.current_stock)}</td>
+                                        {isAdmin && <td style={{ fontWeight: 'bold', color: s.current_stock <= 0 ? 'red' : 'green'}}>{Math.round(s.current_stock)}</td>}
                                         <td>
                                             {s.is_active ? 'Activo' : 'Inactivo'}
                                             {s.is_production_item && <span style={{ marginLeft: '4px', fontSize: '11px', background: '#0d6efd', color: '#fff', padding: '1px 6px', borderRadius: '8px' }}>Mezcla</span>}
@@ -239,13 +239,13 @@ const Bodega = () => {
                                             )}
                                             
                                             <button className="btn btn-success" style={{ marginRight: '5px', padding: '0.25rem' }} title="Agregar Stock" onClick={() => {
-                                                setMovementForm({ supply: s.id, movement_type: 'in', quantity: 0, reason: '' });
+                                                setMovementForm({ supply: s.id, movement_type: 'in', quantity: 0, reason: '', lockedSupply: true });
                                                 setIsMovementModalOpen(true);
                                             }}><i className="bi bi-arrow-up"></i></button>
                                             
                                             {isAdmin && (
                                                 <button className="btn btn-warning" style={{ padding: '0.25rem' }} title="Reducir Stock" onClick={() => {
-                                                    setMovementForm({ supply: s.id, movement_type: 'out', quantity: 0, reason: '' });
+                                                    setMovementForm({ supply: s.id, movement_type: 'out', quantity: 0, reason: '', lockedSupply: true });
                                                     setIsMovementModalOpen(true);
                                                 }}><i className="bi bi-arrow-down"></i></button>
                                             )}
@@ -263,7 +263,7 @@ const Bodega = () => {
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
                         <button className="btn btn-primary" onClick={() => {
-                            setMovementForm({ supply: supplies[0]?.id || '', movement_type: 'in', quantity: 0, reason: '' });
+                            setMovementForm({ supply: supplies[0]?.id || '', movement_type: 'in', quantity: 0, reason: '', lockedSupply: false });
                             setIsMovementModalOpen(true);
                         }}>Registrar Movimiento</button>
                     </div>
@@ -304,56 +304,49 @@ const Bodega = () => {
             )}
 
             {/* TAB RECETAS */}
-            {activeTab === 'recetas' && (
+            {activeTab === 'recetas' && (() => {
+                const productsWithRecipes = [...new Set(allRecipes.map(r => r.product))].map(productId => {
+                    return {
+                        product: productId,
+                        product_name: allRecipes.find(r => r.product === productId).product_name,
+                        recipes: allRecipes.filter(r => r.product === productId)
+                    }
+                });
+
+                return (
                 <div>
-                    <div className="form-group" style={{ maxWidth: '400px', marginBottom: '20px' }}>
-                        <label>Seleccionar Producto del Menú para ver/editar Receta:</label>
-                        <select className="form-control" onChange={handleProductSelect} value={selectedProduct?.id || ''}>
-                            <option value="">-- Seleccione un Producto --</option>
-                            {products.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </select>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                        <button className="btn btn-primary" onClick={() => {
+                            setRecipeForm({ id: null, product: products[0]?.id || '', supply: supplies[0]?.id || '', quantity: 0 });
+                            setIsRecipeModalOpen(true);
+                        }}>Nueva Receta</button>
                     </div>
 
-                    {selectedProduct && (
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <h3>Insumos que se descuentan al vender: {selectedProduct.name}</h3>
-                                <button className="btn btn-primary" onClick={() => {
-                                    setRecipeForm({ supply: supplies[0]?.id || '', quantity: 0 });
-                                    setIsRecipeModalOpen(true);
-                                }}>Agregar Insumo a Receta</button>
-                            </div>
-                            
-                            <div className="table-responsive">
-                                <table className="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Insumo</th>
-                                            <th>Cantidad a descontar por venta</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {productRecipes.length === 0 ? <tr><td colSpan="3">Este producto no descuenta insumos.</td></tr> : productRecipes.map(r => (
-                                            <tr key={r.id}>
-                                                <td>{r.supply_name}</td>
-                                                <td>{Math.round(r.quantity)} {r.supply_unit}</td>
-                                                <td>
-                                                    {isAdmin && (
-                                                        <button className="btn btn-danger" style={{ padding: '0.25rem' }} onClick={() => handleDeleteRecipe(r.id)}>Eliminar</button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
+                    <div className="table-responsive">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Producto Principal</th>
+                                    <th>Insumos Configurados</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {productsWithRecipes.length === 0 ? <tr><td colSpan="3">No hay productos con recetas configuradas.</td></tr> : productsWithRecipes.map(p => (
+                                    <tr key={p.product}>
+                                        <td>{p.product_name}</td>
+                                        <td>{p.recipes.length} insumo(s)</td>
+                                        <td>
+                                            <button className="btn btn-primary" style={{ padding: '0.25rem' }} onClick={() => setViewDetailsProductId(p.product)}>Ver Detalles / Editar</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            )}
+                );
+            })()}
 
             {/* FIN TABLAS - Mezclas movido a su propia página /fast-food/mezclas */}
 
@@ -398,8 +391,8 @@ const Bodega = () => {
                 <form onSubmit={handleMovementSubmit}>
                     <div className="form-group">
                         <label>Insumo</label>
-                        <select className="form-control" required value={movementForm.supply} onChange={e => setMovementForm({...movementForm, supply: e.target.value})}>
-                            {supplies.map(s => <option key={s.id} value={s.id}>{s.name} (Stock actual: {s.current_stock})</option>)}
+                        <select className="form-control" required value={movementForm.supply} onChange={e => setMovementForm({...movementForm, supply: e.target.value})} disabled={movementForm.lockedSupply}>
+                            {supplies.map(s => <option key={s.id} value={s.id}>{s.name} {isAdmin ? `(Stock actual: ${s.current_stock})` : ''}</option>)}
                         </select>
                     </div>
                     <div className="form-group">
@@ -429,9 +422,64 @@ const Bodega = () => {
                 </form>
             </Modal>
 
+            {/* Modal Detalles Receta */}
+            {viewDetailsProductId && (() => {
+                const viewDetailsProduct = [...new Set(allRecipes.map(r => r.product))]
+                    .map(productId => ({
+                        product: productId,
+                        product_name: allRecipes.find(r => r.product === productId).product_name,
+                        recipes: allRecipes.filter(r => r.product === productId)
+                    })).find(p => p.product === viewDetailsProductId);
+
+                if (!viewDetailsProduct) return null;
+
+                return (
+                    <Modal isOpen={true} onClose={() => setViewDetailsProductId(null)} title={`Detalles de Receta: ${viewDetailsProduct.product_name}`} maxWidth="800px">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                            <button className="btn btn-primary" onClick={() => {
+                                setRecipeForm({ id: null, product: viewDetailsProduct.product, supply: supplies[0]?.id || '', quantity: 0 });
+                                setIsRecipeModalOpen(true);
+                            }}>Agregar Insumo a esta Receta</button>
+                        </div>
+                        <div className="table-responsive">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Insumo</th>
+                                        <th>Cantidad</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {viewDetailsProduct.recipes.map(r => (
+                                        <tr key={r.id}>
+                                            <td>{r.supply_name}</td>
+                                            <td>{Math.round(r.quantity)} {r.supply_unit}</td>
+                                            <td>
+                                                <button className="btn btn-secondary" style={{ marginRight: '5px', padding: '0.25rem' }} onClick={() => {
+                                                    setRecipeForm({ id: r.id, product: r.product, supply: r.supply, quantity: r.quantity });
+                                                    setIsRecipeModalOpen(true);
+                                                }}>Editar</button>
+                                                <button className="btn btn-danger" style={{ padding: '0.25rem' }} onClick={() => handleDeleteRecipe(r.id)}>Eliminar</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Modal>
+                );
+            })()}
+
             {/* Modal Receta */}
-            <Modal isOpen={isRecipeModalOpen} onClose={() => setIsRecipeModalOpen(false)} title={`Agregar Insumo a ${selectedProduct?.name}`}>
+            <Modal isOpen={isRecipeModalOpen} onClose={() => setIsRecipeModalOpen(false)} title={recipeForm.id ? "Editar Receta" : "Nueva Receta"}>
                 <form onSubmit={handleRecipeSubmit}>
+                    <div className="form-group">
+                        <label>Producto del Menú</label>
+                        <select className="form-control" required value={recipeForm.product} onChange={e => setRecipeForm({...recipeForm, product: e.target.value})}>
+                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                    </div>
                     <div className="form-group">
                         <label>Insumo a descontar</label>
                         <select className="form-control" required value={recipeForm.supply} onChange={e => setRecipeForm({...recipeForm, supply: e.target.value})}>

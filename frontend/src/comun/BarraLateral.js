@@ -272,7 +272,7 @@ const BarraLateral = () => {
                             if (isAdminFastFood && item.path.startsWith('/fast-food')) return true;
                             
                             // Para empleados normales de Fast Food
-                            const employeePaths = ['/fast-food/pos', '/fast-food/orders', '/fast-food/shift', '/fast-food/bodega'];
+                            const employeePaths = ['/fast-food/pos', '/fast-food/orders', '/fast-food/shift', '/fast-food/bodega', '/fast-food/inventory'];
                             return employeePaths.includes(item.path);
                         });
 
