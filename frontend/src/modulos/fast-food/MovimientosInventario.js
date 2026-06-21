@@ -251,7 +251,7 @@ const MovimientosInventario = () => {
                                                     {traducirTipo(m.movement_type)}
                                                 </span>
                                             </td>
-                                            <td>{m.quantity}</td>
+                                            <td>{Number(m.quantity)}</td>
                                             <td>{limpiarMotivo(m.reason)}</td>
                                             <td style={{ whiteSpace: 'nowrap' }}>
                                                 {fecha ? new Date(fecha).toLocaleString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}

@@ -14,6 +14,8 @@ const Ordenes = () => {
     const [updatingStatus, setUpdatingStatus] = useState({});
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
 
 
 
@@ -34,6 +36,10 @@ const Ordenes = () => {
 
         fetchOrders();
     }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     useEffect(() => {
         const handleEscape = (e) => {
@@ -240,6 +246,12 @@ const Ordenes = () => {
             }
         });
 
+    const totalPages = Math.ceil(sortedAndFilteredOrders.length / itemsPerPage);
+    const paginatedOrders = sortedAndFilteredOrders.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     if (loading) {
         return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--sidebar-bg)' }}>
@@ -332,7 +344,7 @@ const Ordenes = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedAndFilteredOrders.length === 0 ? (
+                                {paginatedOrders.length === 0 ? (
                                     <tr>
                                         <td colSpan="6" style={{ padding: '48px 24px', textAlign: 'center' }}>
                                             <p style={{ color: '#6b7280', fontWeight: '500', fontSize: '16px' }}>
@@ -341,7 +353,7 @@ const Ordenes = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    sortedAndFilteredOrders.map(order => {
+                                    paginatedOrders.map(order => {
                                         const isCompleted = ['completado', 'completed'].includes(order.status_display?.toLowerCase()) ||
                                             ['completed'].includes(order.status?.toLowerCase());
                                         const isCancelled = ['anulada', 'cancelled'].includes(order.status_display?.toLowerCase()) ||
@@ -419,6 +431,51 @@ const Ordenes = () => {
                             </tbody>
                         </table>
                     </div>
+                    
+                    {totalPages > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
+                            <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>
+                                Mostrando del {(currentPage - 1) * itemsPerPage + 1} al {Math.min(currentPage * itemsPerPage, sortedAndFilteredOrders.length)} de {sortedAndFilteredOrders.length} órdenes
+                            </p>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    style={{
+                                        padding: '8px 16px',
+                                        fontSize: '14px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #d1d5db',
+                                        backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                                        color: currentPage === 1 ? '#9ca3af' : '#374151',
+                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Anterior
+                                </button>
+                                <span style={{ padding: '8px 16px', fontSize: '14px', color: '#4b5563', fontWeight: '500', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '6px' }}>
+                                    {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    style={{
+                                        padding: '8px 16px',
+                                        fontSize: '14px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #d1d5db',
+                                        backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+                                        color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Siguiente
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer Stats */}
