@@ -135,7 +135,12 @@ const PanelCaja = () => {
             const transferenciasSistema = paymentStats.transferencia;
             const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
 
-            const chars_per_line = 42;
+            const sobranteEfectivo = sobranteReal;
+
+            const countSales = reportData.orders_detail ? reportData.orders_detail.length : 0;
+            const totalSales = parseFloat(reportData.total_sales || 0);
+
+            const chars_per_line = 54;
             let lines = [];
             const center = (text) => ' '.repeat(Math.max(0, Math.floor((chars_per_line - text.length) / 2))) + text;
             const rightAlign = (label, value) => {
@@ -143,66 +148,100 @@ const PanelCaja = () => {
                 const padding = Math.max(0, chars_per_line - label.length - valueStr.length);
                 return label + ' '.repeat(padding) + valueStr;
             };
+            const formatRow3 = (label, count, amount) => {
+                const countStr = `: ${count}`;
+                const amountStr = `(${parseFloat(amount).toFixed(2)})`;
+                const labelPad = label.padEnd(22, ' ');
+                const countPad = countStr.padEnd(12, ' ');
+                const amountPad = amountStr.padStart(20, ' ');
+                return labelPad + countPad + amountPad;
+            };
 
-            lines.push(center("REPORTE DE CAJA"));
-            lines.push("=".repeat(chars_per_line));
             const current_time = new Date();
-            lines.push(`Fecha: ${current_time.toLocaleDateString()}  Hora: ${current_time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
-            lines.push(`Turno: ${shift_info.number}`);
-            lines.push(`Encargado: ${shift_info.user || shift_info.manager_name}`);
-            lines.push(`Apertura: ${new Date(shift_info.opened_at).toLocaleString()}`);
-            lines.push(`Cierre: ${shift_info.closed_at ? new Date(shift_info.closed_at).toLocaleString() : 'En curso'}`);
-            lines.push("-".repeat(chars_per_line));
+            const pad0 = (n) => n.toString().padStart(2, '0');
+            const dateStr = `${current_time.getFullYear()}-${pad0(current_time.getMonth()+1)}-${pad0(current_time.getDate())} ${pad0(current_time.getHours())}:${pad0(current_time.getMinutes())}:${pad0(current_time.getSeconds())}`;
             
-            lines.push(center("EFECTIVO"));
-            lines.push(rightAlign("Efectivo Inicial Base:", `$${openingCashVal.toFixed(2)}`));
-            lines.push(rightAlign("Ventas en efec. sist.:", `$${paymentStats.efectivo.toFixed(2)}`));
-            lines.push(rightAlign("Total Efectivo Esperado:", `$${efectivoEsperadoFinal.toFixed(2)}`));
-            lines.push("-".repeat(chars_per_line));
-            lines.push(rightAlign("Efec. Declarado (Cajero):", `$${efectivoFisicoDeclarado.toFixed(2)}`));
-            lines.push(rightAlign("Menos Gastos (Egresos):", `-$${totalExpensesVal.toFixed(2)}`));
-            lines.push(rightAlign("Efectivo Físico Real:", `$${efectivoFisicoReal.toFixed(2)}`));
-            const sobEfStr = sobranteReal >= 0 ? `+$${sobranteReal.toFixed(2)}` : `-$${Math.abs(sobranteReal).toFixed(2)}`;
-            lines.push(rightAlign("SOBRANTE/FALTANTE EFEC.:", sobEfStr));
-            lines.push("-".repeat(chars_per_line));
-
-            lines.push(center("TRANSFERENCIAS"));
-            lines.push(rightAlign("Dinero en transf. sist.:", `$${transferenciasSistema.toFixed(2)}`));
-            lines.push(rightAlign("Dinero en transf. caja:", `$${transferenciasFisico.toFixed(2)}`));
-            const sobTrStr = sobranteTransferencia >= 0 ? `+$${sobranteTransferencia.toFixed(2)}` : `-$${Math.abs(sobranteTransferencia).toFixed(2)}`;
-            lines.push(rightAlign("SOBRANTE/FALTANTE TRANS.:", sobTrStr));
-            lines.push("-".repeat(chars_per_line));
-
-            lines.push(center("VENTAS ANULADAS"));
-            lines.push(rightAlign("Cant. Ventas Anuladas:", `${cancelledStats.count}`));
-            lines.push(rightAlign("Total Ventas Anuladas:", `$${cancelledStats.total.toFixed(2)}`));
-            lines.push("-".repeat(chars_per_line));
-
-            lines.push(center("VENTAS A EMPLEADOS"));
-            lines.push(rightAlign("Cant. Ventas Empleado:", `${employeeStats.count}`));
-            lines.push(rightAlign("Total Ventas Empleado:", `$${employeeStats.total.toFixed(2)}`));
-            lines.push("-".repeat(chars_per_line));
-
+            lines.push(center(`CIERRE DE CAJA #${shift_info.number}`));
+            lines.push(center(dateStr));
+            lines.push(center(`USUARIO: ${shift_info.user || shift_info.manager_name}`));
+            lines.push("");
 
             if (expensesList.length > 0) {
-                lines.push(center("DETALLE DE GASTOS"));
+                lines.push(center("GASTOS DE CAJA"));
                 expensesList.forEach(exp => {
-                    const desc = exp.description.length > 28 ? exp.description.substring(0, 28) + ".." : exp.description;
-                    lines.push(rightAlign(desc, `$${parseFloat(exp.amount).toFixed(2)}`));
+                    const desc = "- " + exp.description;
+                    lines.push(rightAlign(desc.length > 30 ? desc.substring(0, 30) : desc, `-${parseFloat(exp.amount).toFixed(2)}`));
                 });
                 lines.push("-".repeat(chars_per_line));
             }
 
+            lines.push(center("RESUMEN DEL CIERRE"));
+            lines.push("-".repeat(chars_per_line));
+            
+            lines.push(formatRow3("TOTAL VENTAS", countSales, totalSales));
+            lines.push(formatRow3("VENTAS ANULADAS", cancelledStats.count, cancelledStats.total));
+            lines.push("-".repeat(chars_per_line));
+            
+            lines.push(rightAlign("EFECTIVO", paymentStats.efectivo.toFixed(2)));
+            lines.push(rightAlign("TRANSFERENCIA", paymentStats.transferencia.toFixed(2)));
+            lines.push("-".repeat(chars_per_line));
+            
+            lines.push(formatRow3("TOTAL GASTOS", expensesList.length, `-${totalExpensesVal.toFixed(2)}`));
+            lines.push(formatRow3("TOTAL INGRESOS", 0, "0.00"));
+            lines.push(formatRow3("TOTAL OTROS/EXTRAS", 0, "0.00"));
+            lines.push("");
+
+            lines.push(center("-------DESGLOCE TRIBUTARIO VENTAS-------"));
+            lines.push(formatRow3("NOTAS DE ENTREGA", countSales, totalSales));
+            lines.push(formatRow3("FACTURAS", 0, "0.00"));
+            lines.push(rightAlign("      BASE 0% :", totalSales.toFixed(2)));
+            lines.push(rightAlign("      BASE IVA :", "0.00"));
+            lines.push(rightAlign("      IVA :", "0.00"));
+            lines.push(rightAlign("      TOTAL :", totalSales.toFixed(2)));
+            lines.push("");
+
+            lines.push(center("CAJA"));
+            lines.push("-".repeat(chars_per_line));
+            
+            lines.push("[EFECTIVO]");
+            lines.push(rightAlign("SISTEMA", efectivoEsperadoFinal.toFixed(2)));
+            lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
+            lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
+            lines.push("");
+
+            lines.push("[TRANSFERENCIA]");
+            lines.push(rightAlign("SISTEMA", transferenciasSistema.toFixed(2)));
+            lines.push(rightAlign("CONTEO FISICO", transferenciasFisico.toFixed(2)));
+            lines.push(rightAlign("DIFERENCIA", sobranteTransferencia.toFixed(2)));
+            lines.push("");
+
+            const totalSistema = efectivoEsperadoFinal + transferenciasSistema;
+            const totalConteo = efectivoFisicoDeclarado + transferenciasFisico;
+            const totalDiferencia = sobranteEfectivo + sobranteTransferencia;
+
+            lines.push("RESUMEN:");
+            lines.push(rightAlign("SISTEMA", totalSistema.toFixed(2)));
+            lines.push(rightAlign("CONTEO FISICO", totalConteo.toFixed(2)));
+            lines.push(rightAlign("DIFERENCIA", totalDiferencia.toFixed(2)));
+            lines.push("");
+
             if (shift_info.closing_notes) {
-                lines.push("NOTAS DE CIERRE:");
-                const notesText = shift_info.closing_notes;
-                for(let i=0; i<notesText.length; i+=chars_per_line) {
-                    lines.push(notesText.substring(i, i+chars_per_line));
+                if (shift_info.closing_notes.includes('Cierre Ciego')) {
+                    lines.push(center("Conteo de monedas y billetes:"));
+                    let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
+                    notesText = notesText.replace(/, /g, '\n');
+                    const notesLines = notesText.split('\n');
+                    notesLines.forEach(l => lines.push(l));
+                } else {
+                    lines.push("NOTAS DE CIERRE:");
+                    const notesText = shift_info.closing_notes;
+                    for(let i=0; i<notesText.length; i+=chars_per_line) {
+                        lines.push(notesText.substring(i, i+chars_per_line));
+                    }
                 }
                 lines.push("-".repeat(chars_per_line));
             }
 
-            lines.push("\n\n\n");
             const ticketContent = lines.join("\n");
 
             await printerService.printCustomTicket(ticketContent, 'report');
