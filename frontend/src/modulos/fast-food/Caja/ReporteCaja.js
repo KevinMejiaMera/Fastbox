@@ -119,9 +119,8 @@ const ReporteCaja = ({ shiftId }) => {
     const efectivoEsperadoFinal = efectivoTotalBruto;
     
     const efectivoFisicoDeclarado = closingCash - transferenciasFisico; 
-    const efectivoFisicoReal = efectivoFisicoDeclarado - totalExpenses;
     
-    const sobranteEfectivo = efectivoFisicoReal - efectivoEsperadoFinal;
+    const sobranteEfectivo = efectivoFisicoDeclarado - efectivoEsperadoFinal;
     
     const transferenciasSistema = paymentStats.transferencia;
     const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
@@ -442,17 +441,15 @@ const ReporteCaja = ({ shiftId }) => {
                 </div>
                 
                 <div style={{ ...styles.textRow, marginTop: '1rem' }}>
-                    <span>Efec. Declarado (Cajero):</span> 
+                    <span>Efec. Físico (Cajero):</span> 
                     <span>${efectivoFisicoDeclarado.toFixed(2)}</span>
                 </div>
-                <div style={styles.textRow}>
-                    <span>Menos Gastos (Egresos):</span> 
-                    <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
-                </div>
-                <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-                    <span>Efectivo Físico Real:</span> 
-                    <span>${efectivoFisicoReal.toFixed(2)}</span>
-                </div>
+                {totalExpenses > 0 && (
+                    <div style={styles.textRow}>
+                        <span>Gastos (Egresos):</span> 
+                        <span style={{ color: 'var(--danger-color)' }}>${totalExpenses.toFixed(2)}</span>
+                    </div>
+                )}
                 <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                     <span>SOBRANTE / FALTANTE EFEC.:</span> 
                     <span>{sobranteEfectivo >= 0 ? '+' : ''}${sobranteEfectivo.toFixed(2)}</span>

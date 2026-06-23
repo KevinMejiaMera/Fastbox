@@ -128,14 +128,11 @@ const PanelCaja = () => {
             const efectivoEsperadoFinal = efectivoTotalBruto;
 
             const efectivoFisicoDeclarado = closingCashVal - transferenciasFisico;
-            const efectivoFisicoReal = efectivoFisicoDeclarado - totalExpensesVal;
             
-            const sobranteReal = efectivoFisicoReal - efectivoEsperadoFinal;
+            const sobranteEfectivo = efectivoFisicoDeclarado - efectivoEsperadoFinal;
             
             const transferenciasSistema = paymentStats.transferencia;
             const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
-
-            const sobranteEfectivo = sobranteReal;
 
             const countSales = reportData.orders_detail ? reportData.orders_detail.length : 0;
             const totalSales = parseFloat(reportData.total_sales || 0);
