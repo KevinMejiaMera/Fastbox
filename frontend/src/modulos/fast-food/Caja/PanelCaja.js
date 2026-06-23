@@ -140,9 +140,12 @@ const PanelCaja = () => {
             const countSales = reportData.orders_detail ? reportData.orders_detail.length : 0;
             const totalSales = parseFloat(reportData.total_sales || 0);
 
-            const chars_per_line = 54;
+            const chars_per_line = 32;
             let lines = [];
-            const center = (text) => ' '.repeat(Math.max(0, Math.floor((chars_per_line - text.length) / 2))) + text;
+            const center = (text) => {
+                const padding = Math.max(0, Math.floor((chars_per_line - text.length) / 2));
+                return ' '.repeat(padding) + text;
+            };
             const rightAlign = (label, value) => {
                 const valueStr = String(value);
                 const padding = Math.max(0, chars_per_line - label.length - valueStr.length);
@@ -151,9 +154,9 @@ const PanelCaja = () => {
             const formatRow3 = (label, count, amount) => {
                 const countStr = `: ${count}`;
                 const amountStr = `(${parseFloat(amount).toFixed(2)})`;
-                const labelPad = label.padEnd(22, ' ');
-                const countPad = countStr.padEnd(12, ' ');
-                const amountPad = amountStr.padStart(20, ' ');
+                let labelPad = label.length > 16 ? label.substring(0, 16) : label.padEnd(16, ' ');
+                let countPad = countStr.length > 6 ? countStr.substring(0, 6) : countStr.padEnd(6, ' ');
+                let amountPad = amountStr.padStart(10, ' ');
                 return labelPad + countPad + amountPad;
             };
 
@@ -161,7 +164,8 @@ const PanelCaja = () => {
             const pad0 = (n) => n.toString().padStart(2, '0');
             const dateStr = `${current_time.getFullYear()}-${pad0(current_time.getMonth()+1)}-${pad0(current_time.getDate())} ${pad0(current_time.getHours())}:${pad0(current_time.getMinutes())}:${pad0(current_time.getSeconds())}`;
             
-            lines.push(center(`CIERRE DE CAJA #${shift_info.number}`));
+            lines.push(center("CIERRE DE CAJA"));
+            lines.push(center(`#${shift_info.number}`));
             lines.push(center(dateStr));
             lines.push(center(`USUARIO: ${shift_info.user || shift_info.manager_name}`));
             lines.push("");
@@ -170,7 +174,10 @@ const PanelCaja = () => {
                 lines.push(center("GASTOS DE CAJA"));
                 expensesList.forEach(exp => {
                     const desc = "- " + exp.description;
-                    lines.push(rightAlign(desc.length > 30 ? desc.substring(0, 30) : desc, `-${parseFloat(exp.amount).toFixed(2)}`));
+                    const val = `-${parseFloat(exp.amount).toFixed(2)}`;
+                    const maxDescLen = chars_per_line - val.length - 1;
+                    const truncatedDesc = desc.length > maxDescLen ? desc.substring(0, maxDescLen) : desc;
+                    lines.push(rightAlign(truncatedDesc, val));
                 });
                 lines.push("-".repeat(chars_per_line));
             }
@@ -188,16 +195,16 @@ const PanelCaja = () => {
             
             lines.push(formatRow3("TOTAL GASTOS", expensesList.length, `-${totalExpensesVal.toFixed(2)}`));
             lines.push(formatRow3("TOTAL INGRESOS", 0, "0.00"));
-            lines.push(formatRow3("TOTAL OTROS/EXTRAS", 0, "0.00"));
+            lines.push(formatRow3("OTROS/EXTRAS", 0, "0.00"));
             lines.push("");
 
-            lines.push(center("-------DESGLOCE TRIBUTARIO VENTAS-------"));
+            lines.push(center("DESGLOCE TRIBUTARIO VENTAS"));
             lines.push(formatRow3("NOTAS DE ENTREGA", countSales, totalSales));
             lines.push(formatRow3("FACTURAS", 0, "0.00"));
-            lines.push(rightAlign("      BASE 0% :", totalSales.toFixed(2)));
-            lines.push(rightAlign("      BASE IVA :", "0.00"));
-            lines.push(rightAlign("      IVA :", "0.00"));
-            lines.push(rightAlign("      TOTAL :", totalSales.toFixed(2)));
+            lines.push(rightAlign("   BASE 0% :", totalSales.toFixed(2)));
+            lines.push(rightAlign("   BASE IVA :", "0.00"));
+            lines.push(rightAlign("   IVA :", "0.00"));
+            lines.push(rightAlign("   TOTAL :", totalSales.toFixed(2)));
             lines.push("");
 
             lines.push(center("CAJA"));
