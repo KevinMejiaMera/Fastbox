@@ -190,15 +190,6 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(formatRow3("OTROS/EXTRAS", 0, "0.00"));
         lines.push("");
 
-        lines.push(center("DESGLOCE TRIBUTARIO VENTAS"));
-        lines.push(formatRow3("NOTAS DE ENTREGA", countSales, totalSales));
-        lines.push(formatRow3("FACTURAS", 0, "0.00"));
-        lines.push(rightAlign("   BASE 0% :", totalSales.toFixed(2)));
-        lines.push(rightAlign("   BASE IVA :", "0.00"));
-        lines.push(rightAlign("   IVA :", "0.00"));
-        lines.push(rightAlign("   TOTAL :", totalSales.toFixed(2)));
-        lines.push("");
-
         lines.push(center("CAJA"));
         lines.push("-".repeat(chars_per_line));
         
@@ -228,9 +219,9 @@ const ReporteCaja = ({ shiftId }) => {
             if (shift_info.closing_notes.includes('Cierre Ciego')) {
                 lines.push(center("Conteo de monedas y billetes:"));
                 let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
-                notesText = notesText.replace(/, /g, '\n');
-                const notesLines = notesText.split('\n');
-                notesLines.forEach(l => lines.push(l));
+                for(let i=0; i<notesText.length; i+=chars_per_line) {
+                    lines.push(notesText.substring(i, i+chars_per_line));
+                }
             } else {
                 lines.push("NOTAS DE CIERRE:");
                 const notesText = shift_info.closing_notes;
@@ -305,15 +296,6 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(formatRow3("TOTAL OTROS/EXTRAS", 0, "0.00"));
         lines.push("");
 
-        lines.push(center("-------DESGLOCE TRIBUTARIO VENTAS-------"));
-        lines.push(formatRow3("NOTAS DE ENTREGA", countSales, totalSales));
-        lines.push(formatRow3("FACTURAS", 0, "0.00"));
-        lines.push(rightAlign("      BASE 0% :", totalSales.toFixed(2)));
-        lines.push(rightAlign("      BASE IVA :", "0.00"));
-        lines.push(rightAlign("      IVA :", "0.00"));
-        lines.push(rightAlign("      TOTAL :", totalSales.toFixed(2)));
-        lines.push("");
-
         lines.push(center("CAJA"));
         lines.push("-".repeat(chars_per_line));
         
@@ -343,9 +325,9 @@ const ReporteCaja = ({ shiftId }) => {
             if (shift_info.closing_notes.includes('Cierre Ciego')) {
                 lines.push(center("Conteo de monedas y billetes:"));
                 let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
-                notesText = notesText.replace(/, /g, '\n');
-                const notesLines = notesText.split('\n');
-                notesLines.forEach(l => lines.push(l));
+                for(let i=0; i<notesText.length; i+=chars_per_line) {
+                    lines.push(notesText.substring(i, i+chars_per_line));
+                }
             } else {
                 lines.push("NOTAS DE CIERRE:");
                 const notesText = shift_info.closing_notes;
