@@ -471,17 +471,15 @@ const PanelCaja = () => {
                                     )}
                                 </div>
 
-                                {/* Solo admins pueden cerrar caja */}
-                                {isAdmin && (
-                                    <div style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Cerrar Caja</h3>
-                                        <button onClick={() => setIsBlindModalOpen(true)} style={styles.buttonDanger}
-                                            onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                                            onMouseLeave={(e) => e.target.style.opacity = '1'}>
-                                            Cerrar Caja (Conteo de Efectivo)
-                                        </button>
-                                    </div>
-                                )}
+                                {/* Cerrar caja - habilitado para todos los usuarios */}
+                                <div style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Cerrar Caja</h3>
+                                    <button onClick={() => setIsBlindModalOpen(true)} style={styles.buttonDanger}
+                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
+                                        Cerrar Caja (Conteo de Efectivo)
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div>
