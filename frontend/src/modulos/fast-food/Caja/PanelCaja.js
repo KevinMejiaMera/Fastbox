@@ -400,7 +400,7 @@ const PanelCaja = () => {
             borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '2rem', color: 'var(--primary-color)'
         },
-        grid: { display: 'grid', gridTemplateColumns: isAdmin ? '350px 1fr' : '1fr', gap: '2rem' },
+        grid: { display: 'grid', gridTemplateColumns: (isAdmin || currentShift?.status === 'open') ? '350px 1fr' : '1fr', gap: '2rem' },
         card: {
             backgroundColor: '#ffffff', borderRadius: '16px', padding: '2rem',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
@@ -471,32 +471,17 @@ const PanelCaja = () => {
                                     )}
                                 </div>
 
-                                <div style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Cerrar Caja</h3>
-                                    <button onClick={() => setIsBlindModalOpen(true)} style={styles.buttonDanger}
-                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
-                                        Cerrar Caja (Conteo de Efectivo)
-                                    </button>
-                                </div>
-
-                                <form onSubmit={handleAddExpense} style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Registrar Gasto (Egreso)</h3>
-                                    
-                                    <label style={styles.label}>Monto del Gasto</label>
-                                    <input type="number" step="0.01" required style={styles.input} placeholder="Ej: 15.50"
-                                        value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} />
-
-                                    <label style={styles.label}>Descripción / Motivo</label>
-                                    <textarea style={{ ...styles.input, resize: 'vertical' }} rows="2" required placeholder="Ej: Pago de agua"
-                                        value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} />
-
-                                    <button type="submit" style={{...styles.buttonPrimary, backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)'}}
-                                        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
-                                        onMouseLeave={(e) => e.target.style.opacity = '1'}>
-                                        Registrar Gasto
-                                    </button>
-                                </form>
+                                {/* Solo admins pueden cerrar caja */}
+                                {isAdmin && (
+                                    <div style={{ borderTop: '1px solid #e9ecef', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: '#1a1a2e' }}>Cerrar Caja</h3>
+                                        <button onClick={() => setIsBlindModalOpen(true)} style={styles.buttonDanger}
+                                            onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                            onMouseLeave={(e) => e.target.style.opacity = '1'}>
+                                            Cerrar Caja (Conteo de Efectivo)
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div>
@@ -527,7 +512,38 @@ const PanelCaja = () => {
                         )}
                     </div>
 
-                    {/* Historial de Cajas */}
+                    {/* Formulario Registrar Gasto - visible para todos cuando hay caja abierta */}
+                    {currentShift && currentShift.status === 'open' && (
+                        <div style={{ ...styles.card, borderTop: '4px solid var(--secondary-color)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                <div style={{ width: '40px', height: '40px', backgroundColor: 'var(--secondary-color)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', color: 'var(--primary-color)' }}>
+                                    <i className="bi bi-dash-circle"></i>
+                                </div>
+                                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1a1a2e' }}>Registrar Gasto (Egreso)</h2>
+                            </div>
+                            <p style={{ color: '#6c757d', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                                Registra cualquier salida de efectivo de la caja durante el turno.
+                            </p>
+                            <form onSubmit={handleAddExpense}>
+                                <label style={styles.label}>Monto del Gasto</label>
+                                <input type="number" step="0.01" required style={styles.input} placeholder="Ej: 15.50"
+                                    value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} />
+
+                                <label style={styles.label}>Descripción / Motivo</label>
+                                <textarea style={{ ...styles.input, resize: 'vertical' }} rows="3" required placeholder="Ej: Pago de suministros, compra de papel..."
+                                    value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} />
+
+                                <button type="submit" style={{ ...styles.buttonPrimary, backgroundColor: 'var(--secondary-color)', color: 'var(--primary-color)' }}
+                                    onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                                    onMouseLeave={(e) => e.target.style.opacity = '1'}>
+                                    <i className="bi bi-plus-circle" style={{ marginRight: '0.5rem' }}></i>
+                                    Registrar Gasto
+                                </button>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* Historial de Cajas - solo admins */}
                     {isAdmin && (
                         <div style={styles.card}>
                             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', color: '#1a1a2e' }}>Historial de Cajas</h2>
