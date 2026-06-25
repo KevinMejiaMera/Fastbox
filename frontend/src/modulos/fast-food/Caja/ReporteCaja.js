@@ -116,7 +116,7 @@ const ReporteCaja = ({ shiftId }) => {
     }
 
     const efectivoTotalBruto = openingCash + paymentStats.efectivo;
-    const efectivoEsperadoFinal = efectivoTotalBruto;
+    const efectivoEsperadoFinal = efectivoTotalBruto - totalExpenses;
     
     const efectivoFisicoDeclarado = closingCash - transferenciasFisico; 
     
@@ -194,7 +194,11 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push("-".repeat(chars_per_line));
         
         lines.push("[EFECTIVO]");
-        lines.push(rightAlign("SISTEMA", efectivoEsperadoFinal.toFixed(2)));
+        lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
+        if (totalExpenses > 0) {
+            lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+            lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
+        }
         lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
         lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
         lines.push("");
@@ -219,15 +223,22 @@ const ReporteCaja = ({ shiftId }) => {
             if (shift_info.closing_notes.includes('Cierre Ciego')) {
                 lines.push(center("Conteo de monedas y billetes:"));
                 let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
-                for(let i=0; i<notesText.length; i+=chars_per_line) {
-                    lines.push(notesText.substring(i, i+chars_per_line));
-                }
+                const notesLines = notesText.split('\n');
+                notesLines.forEach(nLine => {
+                    if (nLine.length === 0) lines.push('');
+                    for(let i=0; i<nLine.length; i+=chars_per_line) {
+                        lines.push(nLine.substring(i, i+chars_per_line));
+                    }
+                });
             } else {
                 lines.push("NOTAS DE CIERRE:");
-                const notesText = shift_info.closing_notes;
-                for(let i=0; i<notesText.length; i+=chars_per_line) {
-                    lines.push(notesText.substring(i, i+chars_per_line));
-                }
+                const notesLines = shift_info.closing_notes.split('\n');
+                notesLines.forEach(nLine => {
+                    if (nLine.length === 0) lines.push('');
+                    for(let i=0; i<nLine.length; i+=chars_per_line) {
+                        lines.push(nLine.substring(i, i+chars_per_line));
+                    }
+                });
             }
             lines.push("-".repeat(chars_per_line));
         }
@@ -300,7 +311,11 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push("-".repeat(chars_per_line));
         
         lines.push("[EFECTIVO]");
-        lines.push(rightAlign("SISTEMA", efectivoEsperadoFinal.toFixed(2)));
+        lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
+        if (totalExpenses > 0) {
+            lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+            lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
+        }
         lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
         lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
         lines.push("");
@@ -325,15 +340,22 @@ const ReporteCaja = ({ shiftId }) => {
             if (shift_info.closing_notes.includes('Cierre Ciego')) {
                 lines.push(center("Conteo de monedas y billetes:"));
                 let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
-                for(let i=0; i<notesText.length; i+=chars_per_line) {
-                    lines.push(notesText.substring(i, i+chars_per_line));
-                }
+                const notesLines = notesText.split('\n');
+                notesLines.forEach(nLine => {
+                    if (nLine.length === 0) lines.push('');
+                    for(let i=0; i<nLine.length; i+=chars_per_line) {
+                        lines.push(nLine.substring(i, i+chars_per_line));
+                    }
+                });
             } else {
                 lines.push("NOTAS DE CIERRE:");
-                const notesText = shift_info.closing_notes;
-                for(let i=0; i<notesText.length; i+=chars_per_line) {
-                    lines.push(notesText.substring(i, i+chars_per_line));
-                }
+                const notesLines = shift_info.closing_notes.split('\n');
+                notesLines.forEach(nLine => {
+                    if (nLine.length === 0) lines.push('');
+                    for(let i=0; i<nLine.length; i+=chars_per_line) {
+                        lines.push(nLine.substring(i, i+chars_per_line));
+                    }
+                });
             }
             lines.push("-".repeat(chars_per_line));
         }
@@ -417,6 +439,12 @@ const ReporteCaja = ({ shiftId }) => {
                     <span>Ventas del Turno:</span> 
                     <span>${paymentStats.efectivo.toFixed(2)}</span>
                 </div>
+                {totalExpenses > 0 && (
+                    <div style={styles.textRow}>
+                        <span>Gastos (Egresos):</span> 
+                        <span style={{ color: 'var(--danger-color)' }}>-${totalExpenses.toFixed(2)}</span>
+                    </div>
+                )}
                 <div style={{ ...styles.textTotal, borderColor: '#0d47a1', color: '#0d47a1', fontSize: '1.1rem' }}>
                     <span>Total Efectivo Esperado:</span> 
                     <span>${efectivoEsperadoFinal.toFixed(2)}</span>
@@ -426,12 +454,6 @@ const ReporteCaja = ({ shiftId }) => {
                     <span>Efec. Físico (Cajero):</span> 
                     <span>${efectivoFisicoDeclarado.toFixed(2)}</span>
                 </div>
-                {totalExpenses > 0 && (
-                    <div style={styles.textRow}>
-                        <span>Gastos (Egresos):</span> 
-                        <span style={{ color: 'var(--danger-color)' }}>${totalExpenses.toFixed(2)}</span>
-                    </div>
-                )}
                 <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                     <span>SOBRANTE / FALTANTE EFEC.:</span> 
                     <span>{sobranteEfectivo >= 0 ? '+' : ''}${sobranteEfectivo.toFixed(2)}</span>
