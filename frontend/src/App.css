@@ -312,3 +312,14 @@ select {
     opacity: 1;
   }
 }
+/* ===== ANIMACIÓN PARA PWA BANNER ===== */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
