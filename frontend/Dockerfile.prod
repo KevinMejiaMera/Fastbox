@@ -21,66 +21,57 @@ ENV REACT_APP_AUTH_SERVICE=$REACT_APP_AUTH_SERVICE
 ENV REACT_APP_FAST_FOOD_SERVICE=$REACT_APP_FAST_FOOD_SERVICE
 ENV NODE_ENV=production
 
-# ===== DESHABILITAR ESLINT EN BUILD =====
-ENV DISABLE_ESLINT_PLUGIN=true
-
 # Construir los archivos estáticos
 RUN npm run build
 
 # Serve stage (Nginx ligero para servir los archivos)
 FROM nginx:alpine
 
-# Copiar configuración de Nginx específica para React
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# ===== HEADERS CORRECTOS PARA PWA =====
-RUN apk add --no-cache sed && \
-    # Configuración para manifest.json
+# ===== CONFIGURACIÓN NGINX COMPLETA (CORRECTA) =====
+# En lugar de modificar el archivo con sed, creamos uno nuevo
+RUN echo 'server {' > /etc/nginx/conf.d/default.conf && \
+    echo '    listen 80;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    server_name localhost;' >> /etc/nginx/conf.d/default.conf && \
+    echo '' >> /etc/nginx/conf.d/default.conf && \
+    echo '    root /usr/share/nginx/html;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    index index.html;' >> /etc/nginx/conf.d/default.conf && \
+    echo '' >> /etc/nginx/conf.d/default.conf && \
+    echo '    # Compresión gzip' >> /etc/nginx/conf.d/default.conf && \
+    echo '    gzip on;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;' >> /etc/nginx/conf.d/default.conf && \
+    echo '' >> /etc/nginx/conf.d/default.conf && \
+    echo '    # Manejo de rutas React (SPA)' >> /etc/nginx/conf.d/default.conf && \
+    echo '    location / {' >> /etc/nginx/conf.d/default.conf && \
+    echo '        try_files $uri $uri/ /index.html;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    }' >> /etc/nginx/conf.d/default.conf && \
+    echo '' >> /etc/nginx/conf.d/default.conf && \
+    echo '    # ===== CONFIGURACIÓN PWA =====' >> /etc/nginx/conf.d/default.conf && \
     echo '    location = /manifest.json {' >> /etc/nginx/conf.d/default.conf && \
     echo '        add_header Content-Type application/json;' >> /etc/nginx/conf.d/default.conf && \
     echo '        add_header Cache-Control "public, max-age=3600";' >> /etc/nginx/conf.d/default.conf && \
     echo '    }' >> /etc/nginx/conf.d/default.conf && \
-    # Configuración para service-worker.js
+    echo '' >> /etc/nginx/conf.d/default.conf && \
     echo '    location = /service-worker.js {' >> /etc/nginx/conf.d/default.conf && \
     echo '        add_header Content-Type application/javascript;' >> /etc/nginx/conf.d/default.conf && \
     echo '        add_header Cache-Control "no-cache, no-store, must-revalidate";' >> /etc/nginx/conf.d/default.conf && \
     echo '        add_header Service-Worker-Allowed "/";' >> /etc/nginx/conf.d/default.conf && \
     echo '    }' >> /etc/nginx/conf.d/default.conf && \
-    # Configuración para imágenes con caché largo
-    echo '    location ~* \.(png|jpg|jpeg|gif|ico|svg|webp)$ {' >> /etc/nginx/conf.d/default.conf && \
+    echo '' >> /etc/nginx/conf.d/default.conf && \
+    echo '    # Archivos estáticos con caché largo' >> /etc/nginx/conf.d/default.conf && \
+    echo '    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot)$ {' >> /etc/nginx/conf.d/default.conf && \
     echo '        expires 1y;' >> /etc/nginx/conf.d/default.conf && \
     echo '        add_header Cache-Control "public, immutable";' >> /etc/nginx/conf.d/default.conf && \
-    echo '    }' >> /etc/nginx/conf.d/default.conf
+    echo '        try_files $uri $uri/ =404;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    }' >> /etc/nginx/conf.d/default.conf && \
+    echo '' >> /etc/nginx/conf.d/default.conf && \
+    echo '    # Headers de seguridad' >> /etc/nginx/conf.d/default.conf && \
+    echo '    add_header X-Frame-Options "SAMEORIGIN" always;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    add_header X-Content-Type-Options "nosniff" always;' >> /etc/nginx/conf.d/default.conf && \
+    echo '    add_header X-XSS-Protection "1; mode=block" always;' >> /etc/nginx/conf.d/default.conf && \
+    echo '}' >> /etc/nginx/conf.d/default.conf
 
 # Traer los archivos compilados desde la etapa anterior
 COPY --from=build /app/build /usr/share/nginx/html
-
-# ===== COPIAR SERVICE WORKER MANUALMENTE =====
-# El service-worker.js debe estar en public/ para ser copiado manualmente
-# Si existe, lo copiamos; si no, creamos uno básico
-RUN if [ -f /usr/share/nginx/html/service-worker.js ]; then \
-        echo "✅ Service Worker ya existe en el build"; \
-    else \
-        echo "⚠️ Service Worker no encontrado, creando uno básico..."; \
-        echo 'const CACHE_NAME = "fre-pos-v1";' > /usr/share/nginx/html/service-worker.js && \
-        echo 'const urlsToCache = ["/","/index.html","/manifest.json","/logo.png"];' >> /usr/share/nginx/html/service-worker.js && \
-        echo 'self.addEventListener("install", event => {' >> /usr/share/nginx/html/service-worker.js && \
-        echo '  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));' >> /usr/share/nginx/html/service-worker.js && \
-        echo '  self.skipWaiting();' >> /usr/share/nginx/html/service-worker.js && \
-        echo '});' >> /usr/share/nginx/html/service-worker.js && \
-        echo 'self.addEventListener("activate", event => {' >> /usr/share/nginx/html/service-worker.js && \
-        echo '  event.waitUntil(caches.keys().then(cacheNames => {' >> /usr/share/nginx/html/service-worker.js && \
-        echo '    return Promise.all(cacheNames.map(cacheName => {' >> /usr/share/nginx/html/service-worker.js && \
-        echo '      if (cacheName !== CACHE_NAME) return caches.delete(cacheName);' >> /usr/share/nginx/html/service-worker.js && \
-        echo '    }));' >> /usr/share/nginx/html/service-worker.js && \
-        echo '  }));' >> /usr/share/nginx/html/service-worker.js && \
-        echo '  self.clients.claim();' >> /usr/share/nginx/html/service-worker.js && \
-        echo '});' >> /usr/share/nginx/html/service-worker.js && \
-        echo 'self.addEventListener("fetch", event => {' >> /usr/share/nginx/html/service-worker.js && \
-        echo '  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));' >> /usr/share/nginx/html/service-worker.js && \
-        echo '});' >> /usr/share/nginx/html/service-worker.js && \
-        echo "✅ Service Worker básico creado"; \
-    fi
 
 EXPOSE 80
 
