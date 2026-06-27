@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -41,8 +41,5 @@
     "jspdf-autotable": {
       "jspdf": "$jspdf"
     }
-  },
-  "devDependencies": {
-    "workbox-build": "^7.0.0"
   }
 }

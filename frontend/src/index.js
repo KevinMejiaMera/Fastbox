@@ -10,8 +10,7 @@ root.render(
   </React.StrictMode>
 );
 
-// ===== REGISTRO DEL SERVICE WORKER (PWA) =====
-// SOLO en producción, en desarrollo se usa el SW de CRA
+// ===== REGISTRO DEL SERVICE WORKER (SOLO PRODUCCIÓN) =====
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker

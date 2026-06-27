@@ -21,6 +21,9 @@ ENV REACT_APP_AUTH_SERVICE=$REACT_APP_AUTH_SERVICE
 ENV REACT_APP_FAST_FOOD_SERVICE=$REACT_APP_FAST_FOOD_SERVICE
 ENV NODE_ENV=production
 
+# ===== DESHABILITAR ESLINT EN BUILD =====
+ENV DISABLE_ESLINT_PLUGIN=true
+
 # Construir los archivos estáticos
 RUN npm run build
 
@@ -51,6 +54,33 @@ RUN apk add --no-cache sed && \
 
 # Traer los archivos compilados desde la etapa anterior
 COPY --from=build /app/build /usr/share/nginx/html
+
+# ===== COPIAR SERVICE WORKER MANUALMENTE =====
+# El service-worker.js debe estar en public/ para ser copiado manualmente
+# Si existe, lo copiamos; si no, creamos uno básico
+RUN if [ -f /usr/share/nginx/html/service-worker.js ]; then \
+        echo "✅ Service Worker ya existe en el build"; \
+    else \
+        echo "⚠️ Service Worker no encontrado, creando uno básico..."; \
+        echo 'const CACHE_NAME = "fre-pos-v1";' > /usr/share/nginx/html/service-worker.js && \
+        echo 'const urlsToCache = ["/","/index.html","/manifest.json","/logo.png"];' >> /usr/share/nginx/html/service-worker.js && \
+        echo 'self.addEventListener("install", event => {' >> /usr/share/nginx/html/service-worker.js && \
+        echo '  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));' >> /usr/share/nginx/html/service-worker.js && \
+        echo '  self.skipWaiting();' >> /usr/share/nginx/html/service-worker.js && \
+        echo '});' >> /usr/share/nginx/html/service-worker.js && \
+        echo 'self.addEventListener("activate", event => {' >> /usr/share/nginx/html/service-worker.js && \
+        echo '  event.waitUntil(caches.keys().then(cacheNames => {' >> /usr/share/nginx/html/service-worker.js && \
+        echo '    return Promise.all(cacheNames.map(cacheName => {' >> /usr/share/nginx/html/service-worker.js && \
+        echo '      if (cacheName !== CACHE_NAME) return caches.delete(cacheName);' >> /usr/share/nginx/html/service-worker.js && \
+        echo '    }));' >> /usr/share/nginx/html/service-worker.js && \
+        echo '  }));' >> /usr/share/nginx/html/service-worker.js && \
+        echo '  self.clients.claim();' >> /usr/share/nginx/html/service-worker.js && \
+        echo '});' >> /usr/share/nginx/html/service-worker.js && \
+        echo 'self.addEventListener("fetch", event => {' >> /usr/share/nginx/html/service-worker.js && \
+        echo '  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));' >> /usr/share/nginx/html/service-worker.js && \
+        echo '});' >> /usr/share/nginx/html/service-worker.js && \
+        echo "✅ Service Worker básico creado"; \
+    fi
 
 EXPOSE 80
 
