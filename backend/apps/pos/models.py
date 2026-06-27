@@ -226,17 +226,35 @@ class Shift(models.Model):
             status='completed'
         )
 
-        self.total_cash_sales = payments.filter(
+        cash_from_payments = payments.filter(
             payment_method__method_type='cash'
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         
-        self.total_card_sales = payments.filter(
+        card_from_payments = payments.filter(
             payment_method__method_type__in=['credit_card', 'debit_card']
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         
-        self.total_other_sales = payments.exclude(
+        other_from_payments = payments.exclude(
             payment_method__method_type__in=['cash', 'credit_card', 'debit_card']
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
+
+        if cash_from_payments == 0 and card_from_payments == 0 and other_from_payments == 0:
+            self.total_cash_sales = orders.filter(
+                models.Q(payment_method__icontains='efectivo') | models.Q(payment_method__icontains='cash')
+            ).aggregate(total=models.Sum('total'))['total'] or Decimal('0')
+            
+            self.total_card_sales = orders.filter(
+                models.Q(payment_method__icontains='tarjeta') | models.Q(payment_method__icontains='card')
+            ).aggregate(total=models.Sum('total'))['total'] or Decimal('0')
+            
+            self.total_other_sales = orders.exclude(
+                models.Q(payment_method__icontains='efectivo') | models.Q(payment_method__icontains='cash') | 
+                models.Q(payment_method__icontains='tarjeta') | models.Q(payment_method__icontains='card')
+            ).aggregate(total=models.Sum('total'))['total'] or Decimal('0')
+        else:
+            self.total_cash_sales = cash_from_payments
+            self.total_card_sales = card_from_payments
+            self.total_other_sales = other_from_payments
         
         # self.total_sales = self.total_cash_sales + self.total_card_sales + self.total_other_sales
         # MANTENER el total calculado por Órdenes
@@ -949,17 +967,35 @@ class DailySummary(models.Model):
             status='completed'
         )
         
-        summary.cash_sales = payments.filter(
+        cash_from_payments = payments.filter(
             payment_method__method_type='cash'
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         
-        summary.card_sales = payments.filter(
+        card_from_payments = payments.filter(
             payment_method__method_type__in=['credit_card', 'debit_card']
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
         
-        summary.other_sales = payments.exclude(
+        other_from_payments = payments.exclude(
             payment_method__method_type__in=['cash', 'credit_card', 'debit_card']
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
+
+        if cash_from_payments == 0 and card_from_payments == 0 and other_from_payments == 0:
+            summary.cash_sales = orders.filter(
+                models.Q(payment_method__icontains='efectivo') | models.Q(payment_method__icontains='cash')
+            ).aggregate(total=models.Sum('total'))['total'] or Decimal('0')
+            
+            summary.card_sales = orders.filter(
+                models.Q(payment_method__icontains='tarjeta') | models.Q(payment_method__icontains='card')
+            ).aggregate(total=models.Sum('total'))['total'] or Decimal('0')
+            
+            summary.other_sales = orders.exclude(
+                models.Q(payment_method__icontains='efectivo') | models.Q(payment_method__icontains='cash') | 
+                models.Q(payment_method__icontains='tarjeta') | models.Q(payment_method__icontains='card')
+            ).aggregate(total=models.Sum('total'))['total'] or Decimal('0')
+        else:
+            summary.cash_sales = cash_from_payments
+            summary.card_sales = card_from_payments
+            summary.other_sales = other_from_payments
         
         from apps.pos.models import Shift
         summary.total_shifts = Shift.objects.filter(

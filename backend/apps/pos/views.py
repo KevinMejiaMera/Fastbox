@@ -586,17 +586,12 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 start_date = data['date']
                 end_date = data['date']
                 
-                summary, created = DailySummary.objects.get_or_create(
+                # Siempre regenerar para reflejar los últimos cambios y cobros
+                summary = DailySummary.generate_for_date(
                     date=data['date'],
-                    defaults={'generated_by': 'system'}  # ← MODIFICADO
+                    generated_by='system',
+                    detailed=True
                 )
-                
-                if not summary.top_products or not summary.sales_by_hour:
-                    summary = DailySummary.generate_for_date(
-                        date=data['date'],
-                        generated_by='system',  # ← MODIFICADO
-                        detailed=True
-                    )
                 
                 summary_data = DailySummarySerializer(summary).data
                 
@@ -676,14 +671,12 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
         ecuador_tz = pytz.timezone('America/Guayaquil')
         today = timezone.now().astimezone(ecuador_tz).date()
         
-        try:
-            summary = DailySummary.objects.get(date=today)
-        except DailySummary.DoesNotExist:
-            summary = DailySummary.generate_for_date(
-                date=today,
-                generated_by='system',
-                detailed=True
-            )
+        # Siempre regenerar para tener métricas frescas
+        summary = DailySummary.generate_for_date(
+            date=today,
+            generated_by='system',
+            detailed=True
+        )
         
         return Response(DailySummarySerializer(summary).data)
     
@@ -748,6 +741,13 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
         ecuador_tz = pytz.timezone('America/Guayaquil')
         today = timezone.now().astimezone(ecuador_tz).date()
         yesterday = today - timedelta(days=1)
+        
+        # Siempre regenerar para hoy y así actualizar totales, métodos de pago, etc.
+        DailySummary.generate_for_date(
+            date=today,
+            generated_by='system',
+            detailed=True
+        )
         
         from apps.orders.models import Order
         from .models import Shift 

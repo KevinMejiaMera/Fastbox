@@ -98,17 +98,36 @@ class ReportGenerator:
             status='completed'
         )
         
-        report.cash_sales = payments.filter(
+        cash_from_payments = payments.filter(
             payment_method__method_type='cash'
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        report.card_sales = payments.filter(
+        card_from_payments = payments.filter(
             payment_method__method_type__in=['credit_card', 'debit_card']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        report.other_sales = payments.exclude(
+        other_from_payments = payments.exclude(
             payment_method__method_type__in=['cash', 'credit_card', 'debit_card']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        if cash_from_payments == 0 and card_from_payments == 0 and other_from_payments == 0:
+            from django.db.models import Q
+            report.cash_sales = orders.filter(
+                Q(payment_method__icontains='efectivo') | Q(payment_method__icontains='cash')
+            ).aggregate(total=Sum('total'))['total'] or Decimal('0')
+            
+            report.card_sales = orders.filter(
+                Q(payment_method__icontains='tarjeta') | Q(payment_method__icontains='card')
+            ).aggregate(total=Sum('total'))['total'] or Decimal('0')
+            
+            report.other_sales = orders.exclude(
+                Q(payment_method__icontains='efectivo') | Q(payment_method__icontains='cash') | 
+                Q(payment_method__icontains='tarjeta') | Q(payment_method__icontains='card')
+            ).aggregate(total=Sum('total'))['total'] or Decimal('0')
+        else:
+            report.cash_sales = cash_from_payments
+            report.card_sales = card_from_payments
+            report.other_sales = other_from_payments
         
         # ============ 7. CALCULAR PROMEDIOS ============
         if report.total_orders > 0:
