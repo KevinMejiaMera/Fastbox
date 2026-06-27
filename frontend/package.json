@@ -41,5 +41,8 @@
     "jspdf-autotable": {
       "jspdf": "$jspdf"
     }
+  },
+  "devDependencies": {
+    "workbox-build": "^7.0.0"
   }
 }

@@ -1,25 +1,28 @@
 /* eslint-disable no-restricted-globals */
 
-// Cache name with version
-const CACHE_NAME = 'fre-pos-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/logo.png'
-];
+// ===== WORKBOX CONFIGURACIÓN =====
+// Este archivo será procesado por Workbox en el build
 
-// Instalación: cachear recursos básicos
+const CACHE_NAME = 'fre-pos-v1';
+const { clientsClaim } = self;
+
+clientsClaim();
+
+// Precarga de recursos
+self.__WB_MANIFEST;
+
+// Cache de recursos estáticos
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('✅ Cache abierto para Fre POS');
-        return cache.addAll(urlsToCache);
+        // Workbox inyectará automáticamente los archivos aquí
+        return cache.addAll(self.__WB_MANIFEST || []);
       })
       .catch(err => console.error('❌ Error al cachear recursos:', err))
   );
-  self.skipWaiting(); // Activar SW inmediatamente
+  self.skipWaiting();
 });
 
 // Activación: limpiar caches viejos
@@ -40,20 +43,31 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Estrategia: Network First (primero red, si falla, caché)
+// Estrategia: Stale-While-Revalidate (más eficiente)
 self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request)
+    caches.match(event.request)
       .then(response => {
-        // Clonar respuesta para guardar en caché
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
-        });
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request);
+        // Si está en caché, devolverlo y actualizar en segundo plano
+        const fetchPromise = fetch(event.request)
+          .then(fetchResponse => {
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, fetchResponse.clone());
+            });
+            return fetchResponse;
+          })
+          .catch(() => {
+            // Si falla la red y no hay caché, devolver respuesta por defecto
+            if (event.request.mode === 'navigate') {
+              return caches.match('/index.html');
+            }
+            return new Response('Recurso no disponible', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
+          });
+        
+        return response || fetchPromise;
       })
   );
 });
