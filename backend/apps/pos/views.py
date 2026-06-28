@@ -595,6 +595,24 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 
                 summary_data = DailySummarySerializer(summary).data
                 
+                # Calcular gastos del día
+                from apps.payments.models import CashMovement
+                from django.utils import timezone
+                import datetime as dt
+                
+                start_dt = timezone.make_aware(dt.datetime.combine(data['date'], dt.time.min))
+                end_dt = timezone.make_aware(dt.datetime.combine(data['date'], dt.time.max))
+                
+                expenses_qs = CashMovement.objects.filter(
+                    movement_type='out',
+                    reason='expense',
+                    created_at__gte=start_dt,
+                    created_at__lte=end_dt
+                )
+                from django.db.models import Sum as DSum
+                daily_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
+                summary_data['total_expenses'] = daily_expenses
+                
                 if include_orders_detail:
                     summary_data['orders_detail'] = self._get_orders_detail(start_date, end_date)
 
