@@ -260,7 +260,7 @@ const Reportes = () => {
 
             const listResponse = await api.get('/api/pos/daily-summaries/', {
                 baseURL: getFastFoodBaseURL(),
-                params: { ordering: '-date', limit: 100 },
+                params: { ordering: '-date', limit: 300 },
                 timeout: 10000
             });
 
@@ -1318,7 +1318,30 @@ const Reportes = () => {
                         </div>
                     </div>
 
-                    {/* Botón Generar Reporte - ELIMINADO */}
+                    {/* Botones de Acción */}
+                    <div className="filter-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
+                        {reportType === 'custom' && (
+                            <button
+                                className="action-button secondary"
+                                onClick={forceGenerateReport}
+                                disabled={loadingData || processingShift}
+                                style={{ padding: '8px 15px', height: '38px' }}
+                            >
+                                <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>search</span>
+                                Buscar Datos
+                            </button>
+                        )}
+                        {currentReport && (
+                            <button
+                                className="action-button primary"
+                                onClick={handlePrintPDF}
+                                style={{ padding: '8px 15px', height: '38px', backgroundColor: '#4f46e5', color: 'white' }}
+                            >
+                                <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>download</span>
+                                Descargar Reporte {reportType === 'daily' ? 'Diario' : reportType === 'weekly' ? 'Semanal' : reportType === 'monthly' ? 'Mensual' : 'Personalizado'}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filtros Rápidos */}
@@ -1457,21 +1480,11 @@ const Reportes = () => {
                                         <span className="metadata-item">Usuario: {currentReport.generated_by || 'Sistema'}</span>
                                     </div>
                                 </div>
-                                <div className="detail-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                                    <button
-                                        className="action-button primary"
-                                        onClick={handlePrintPDF}
-                                        style={{ fontSize: '0.9rem', padding: '8px 15px', backgroundColor: '#4f46e5', width: '100%' }}
-                                    >
-                                        <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>download</span>
-                                        Descargar Reporte {reportType === 'daily' ? 'Diario' : reportType === 'weekly' ? 'Semanal' : reportType === 'monthly' ? 'Mensual' : 'Personalizado'}
-                                    </button>
-                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                        <div className={`status-pill ${currentReport.is_closed ? 'closed-pill' : 'open-pill'}`}>
-                                            {currentReport.is_closed ? 'DÍA CERRADO' : 'DÍA ABIERTO'}
-                                        </div>
-                                        <p className="generation-date" style={{ margin: 0 }}>Actualizado: {formatDate(currentReport.generated_at || new Date().toISOString())}</p>
+                                <div className="detail-status">
+                                    <div className={`status-pill ${currentReport.is_closed ? 'closed-pill' : 'open-pill'}`}>
+                                        {currentReport.is_closed ? 'DÍA CERRADO' : 'DÍA ABIERTO'}
                                     </div>
+                                    <p className="generation-date">Actualizado: {formatDate(currentReport.generated_at || new Date().toISOString())}</p>
                                 </div>
                             </div>
 

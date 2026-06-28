@@ -586,12 +586,32 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     date__lte=end_date
                 ).order_by('date')
                 
+                top_products_dict = {}
+                for s in summaries:
+                    if s.top_products:
+                        for prod in s.top_products:
+                            name = prod.get('product__name') or prod.get('name')
+                            qty = prod.get('quantity', 0)
+                            total = prod.get('total_amount', 0)
+                            if name:
+                                if name not in top_products_dict:
+                                    top_products_dict[name] = {'product__name': name, 'quantity': 0, 'total_amount': 0}
+                                top_products_dict[name]['quantity'] += qty
+                                top_products_dict[name]['total_amount'] += float(total)
+                
+                consolidated_top_products = list(top_products_dict.values())
+                consolidated_top_products.sort(key=lambda x: x['quantity'], reverse=True)
+
                 consolidated = {
                     'total_sales': sum(float(s.total_sales) for s in summaries),
                     'total_orders': sum(s.total_orders for s in summaries),
                     'total_items_sold': sum(s.total_items_sold for s in summaries),
                     'total_discounts': sum(float(s.total_discounts) for s in summaries),
                     'total_tips': sum(float(s.total_tips) for s in summaries),
+                    'cash_sales': sum(float(s.cash_sales) for s in summaries if s.cash_sales is not None),
+                    'card_sales': sum(float(s.card_sales) for s in summaries if s.card_sales is not None),
+                    'other_sales': sum(float(s.other_sales) for s in summaries if s.other_sales is not None),
+                    'top_products': consolidated_top_products,
                     'average_order_value': 0,
                     'daily_summaries': DailySummarySerializer(summaries, many=True).data,
                     'start_date': start_date,
