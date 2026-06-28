@@ -483,6 +483,8 @@ class DailySummarySerializer(serializers.ModelSerializer):
     cash_percentage = serializers.SerializerMethodField()
     card_percentage = serializers.SerializerMethodField()
     dine_in_percentage = serializers.SerializerMethodField()
+    total_expenses = serializers.SerializerMethodField()
+    net_profit = serializers.SerializerMethodField()
     
     class Meta:
         model = DailySummary
@@ -516,7 +518,9 @@ class DailySummarySerializer(serializers.ModelSerializer):
             'closing_notes',
             'generated_at',
             'generated_by',
-            'orders_detail', # <--- CAMPO AÑADIDO PARA EL DETALLE DE ÓRDENES
+            'orders_detail',
+            'total_expenses',
+            'net_profit',
         ]
         read_only_fields = ('__all__',)
 
@@ -537,6 +541,31 @@ class DailySummarySerializer(serializers.ModelSerializer):
     def get_dine_in_percentage(self, obj):
         """Porcentaje de ventas dine-in"""
         return float(obj.dine_in_percentage) if obj.dine_in_percentage is not None else 0
+
+    def get_total_expenses(self, obj):
+        """Calcula gastos de ese día en la zona horaria del servidor"""
+        try:
+            from apps.payments.models import CashMovement
+            import pytz
+            from datetime import datetime, time
+            from django.db.models import Sum as DSum
+            
+            ecuador_tz = pytz.timezone('America/Guayaquil')
+            start_dt = ecuador_tz.localize(datetime.combine(obj.date, time.min))
+            end_dt = ecuador_tz.localize(datetime.combine(obj.date, time.max))
+            
+            expenses_qs = CashMovement.objects.filter(
+                movement_type='out',
+                reason='expense',
+                created_at__range=(start_dt, end_dt)
+            )
+            return float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
+        except Exception:
+            return 0
+
+    def get_net_profit(self, obj):
+        return float(obj.total_sales) - self.get_total_expenses(obj)
+
 class DailySummaryGenerateSerializer(serializers.Serializer):
     """Serializer para generar reporte diario"""
     
