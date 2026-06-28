@@ -597,19 +597,13 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 
                 # Calcular gastos del día
                 from apps.payments.models import CashMovement
-                from django.utils import timezone
-                import datetime as dt
-                
-                start_dt = timezone.make_aware(dt.datetime.combine(data['date'], dt.time.min))
-                end_dt = timezone.make_aware(dt.datetime.combine(data['date'], dt.time.max))
+                from django.db.models import Sum as DSum
                 
                 expenses_qs = CashMovement.objects.filter(
                     movement_type='out',
                     reason='expense',
-                    created_at__gte=start_dt,
-                    created_at__lte=end_dt
+                    created_at__date=data['date']
                 )
-                from django.db.models import Sum as DSum
                 daily_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
                 summary_data['total_expenses'] = daily_expenses
                 
@@ -661,19 +655,19 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 for s in summaries:
                     if s.top_products:
                         for prod in s.top_products:
-                            name = prod.get('product__name') or prod.get('name')
+                            name = prod.get('product_name') or prod.get('product__name') or prod.get('name')
                             qty = prod.get('quantity', 0)
                             total = prod.get('total_amount', 0)
                             if name:
                                 if name not in top_products_dict:
-                                    top_products_dict[name] = {'product__name': name, 'quantity': 0, 'total_amount': 0}
+                                    top_products_dict[name] = {'product_name': name, 'quantity': 0, 'total_amount': 0}
                                 top_products_dict[name]['quantity'] += qty
                                 top_products_dict[name]['total_amount'] += float(total)
                     if s.sales_by_hour:
                         for hour_data in s.sales_by_hour:
                             h = hour_data.get('hour')
-                            total = hour_data.get('total', 0)
-                            if h:
+                            total = hour_data.get('total_sales') or hour_data.get('total', 0)
+                            if h is not None:
                                 if h not in sales_by_hour_dict:
                                     sales_by_hour_dict[h] = 0
                                 sales_by_hour_dict[h] += float(total)
@@ -715,19 +709,14 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 # Agregar gastos del rango de fechas
                 try:
                     from apps.payments.models import CashMovement
-                    from django.utils import timezone
-                    import datetime as dt
-                    
-                    start_dt = timezone.make_aware(dt.datetime.combine(start_date, dt.time.min))
-                    end_dt = timezone.make_aware(dt.datetime.combine(end_date, dt.time.max))
+                    from django.db.models import Sum as DSum
                     
                     expenses_qs = CashMovement.objects.filter(
                         movement_type='out',
                         reason='expense',
-                        created_at__gte=start_dt,
-                        created_at__lte=end_dt
+                        created_at__date__gte=start_date,
+                        created_at__date__lte=end_date
                     )
-                    from django.db.models import Sum as DSum
                     total_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
                     expense_list = list(expenses_qs.values('description', 'amount', 'created_at', 'performed_by').order_by('-created_at'))
                     expense_list_serialized = [
@@ -742,6 +731,7 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     consolidated['expenses_list'] = expense_list_serialized
                     consolidated['net_profit'] = consolidated['total_sales'] - total_expenses
                 except Exception as exp_err:
+                    print(f"Error calculando gastos: {exp_err}")
                     consolidated['total_expenses'] = 0
                     consolidated['expenses_list'] = []
                     consolidated['net_profit'] = consolidated['total_sales']
