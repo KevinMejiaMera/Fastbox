@@ -17,6 +17,7 @@ import PanelCaja from './modulos/fast-food/Caja/PanelCaja';
 import Impresoras from './modulos/fast-food/Impresoras';
 import Promociones from './modulos/fast-food/Promociones';
 import DisenoFastFood from './modulos/fast-food/DisenoFastFood';
+import Gastos from './modulos/fast-food/Gastos';
 import logo from './assets/logo.png';
 import './App.css';
 
@@ -274,6 +275,11 @@ function App() {
           <Route path="/fast-food/shift" element={
             <FastFoodRoute>
               <PanelCaja />
+            </FastFoodRoute>
+          } />
+          <Route path="/fast-food/gastos" element={
+            <FastFoodRoute>
+              <Gastos />
             </FastFoodRoute>
           } />
           <Route path="/fast-food/printers" element={
