@@ -438,6 +438,7 @@ const PanelCaja = () => {
 
         const exchangeRate = parseFloat(localStorage.getItem('usdExchangeRate')) || 4000;
         const finalTotalCOP = totalCOP + (totalUSD * exchangeRate);
+        const finalTotalUSD = totalUSD + (totalCOP / exchangeRate);
 
         let det = "";
         
@@ -485,7 +486,7 @@ const PanelCaja = () => {
 
         try {
             await api.post(`/api/pos/shifts/${currentShift.id}/close/`, {
-                closing_cash: finalTotalCOP,
+                closing_cash: finalTotalUSD,
                 closing_notes: notesStr
             }, { baseURL: getFastFoodBaseURL() });
 
