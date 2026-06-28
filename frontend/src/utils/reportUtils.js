@@ -228,25 +228,70 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     
-    doc.text(`Efectivo: ${paymentStats.efectivo.count} pedidos - ${formatCurrency(paymentStats.efectivo.amount)}`, MARGIN, y);
+    doc.text(`Efectivo: ${paymentStats.efectivo.count > 0 ? paymentStats.efectivo.count + ' pedidos - ' : ''}${formatCurrency(paymentStats.efectivo.amount)}`, MARGIN, y);
     y += 5;
-    doc.text(`Transferencia: ${paymentStats.transferencia.count} pedidos - ${formatCurrency(paymentStats.transferencia.amount)}`, MARGIN, y);
-    y += 15;
+    doc.text(`Transferencia / Tarjeta: ${paymentStats.transferencia.count > 0 ? paymentStats.transferencia.count + ' pedidos - ' : ''}${formatCurrency(paymentStats.transferencia.amount)}`, MARGIN, y);
+    y += 12;
 
-    // --- 4. Total Final ---
-    doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
+    // --- 4. Gastos (solo si hay datos de gastos) ---
+    if (report.expenses_list && report.expenses_list.length > 0) {
+        // Línea separadora
+        doc.setDrawColor(220, 220, 220);
+        doc.line(MARGIN, y, pageWidth - MARGIN, y);
+        y += 8;
 
-    // Fix: total_sales puede estar en 'summary' (shift report) o en raíz (daily report)
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(200, 50, 50);
+        doc.text('Gastos del Período', MARGIN, y);
+        y += 7;
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(50);
+
+        report.expenses_list.forEach(exp => {
+            if (y > 270) { doc.addPage(); y = 20; }
+            doc.text(`• ${exp.description} (${exp.date})`, MARGIN, y);
+            doc.text(`- ${formatCurrency(exp.amount)}`, pageWidth - MARGIN, y, { align: 'right' });
+            y += 5;
+        });
+
+        y += 5;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(200, 50, 50);
+        doc.text(`Total Gastos: - ${formatCurrency(report.total_expenses || 0)}`, MARGIN, y);
+        doc.setTextColor(50);
+        y += 12;
+    }
+
+    // --- 5. Total y Ganancia Neta ---
+    doc.setDrawColor(0, 0, 0);
+    doc.line(MARGIN, y, pageWidth - MARGIN, y);
+    y += 8;
+
     const totalSalesVal = report.summary?.total_sales !== undefined
         ? report.summary.total_sales
         : (report.total_sales || 0);
 
-    const totalText = `Total: ${formatCurrency(totalSalesVal).replace('$', '')}`; // Quitar símbolo si la imagen no lo tiene, o dejarlo. Imagen: "Total: 1.620,20" (formato europeo/latino).
-    // Nuestra formatCurrency usa $ y formato inglés/EC (.,). Ajustamos si es necesario.
-    // El usuario pidió "como en la foto".
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(50);
+    doc.text(`Total Ventas: ${formatCurrency(totalSalesVal)}`, MARGIN, y);
+    y += 8;
 
-    doc.text(totalText, MARGIN + 10, y);
+    // Mostrar Ganancia Neta si hay datos de rango
+    if (report.net_profit !== undefined) {
+        const netProfit = parseFloat(report.net_profit || 0);
+        const isPositive = netProfit >= 0;
+        doc.setFontSize(16);
+        doc.setTextColor(isPositive ? 5 : 150, isPositive ? 100 : 20, isPositive ? 50 : 20);
+        doc.text(`Ganancia Neta: ${formatCurrency(netProfit)}`, MARGIN, y);
+        doc.setTextColor(50);
+    } else {
+        doc.setFontSize(16);
+        doc.text(`Total: ${formatCurrency(totalSalesVal)}`, MARGIN + 10, y);
+    }
 
     const reportFileName = report.is_shift_report && report.shift_info
         ? `Reporte_Turno_${report.shift_info.number}.pdf`

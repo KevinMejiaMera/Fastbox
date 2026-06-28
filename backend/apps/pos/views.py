@@ -638,19 +638,38 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     date__lte=end_date
                 ).order_by('date')
                 
-                top_products_dict = {}
+                # Consultar productos directamente de las órdenes reales en el rango
+                from apps.orders.models import Order, OrderItem
+                from django.db.models import Sum, Count
+                from django.utils import timezone
+                import datetime as dt
+                
+                start_dt = dt.datetime.combine(start_date, dt.time.min).replace(tzinfo=timezone.utc) - timedelta(hours=5)
+                end_dt = dt.datetime.combine(end_date, dt.time.max).replace(tzinfo=timezone.utc) - timedelta(hours=5)
+                
+                real_top_products = list(
+                    OrderItem.objects.filter(
+                        order__created_at__gte=start_dt,
+                        order__created_at__lte=end_dt,
+                        order__status__in=['delivered', 'completed']
+                    ).values('product__name').annotate(
+                        quantity=Sum('quantity'),
+                        total_amount=Sum('line_total')
+                    ).order_by('-quantity')[:20]
+                )
+                
+                # Formatear para el PDF
+                consolidated_top_products = [
+                    {
+                        'product__name': p['product__name'] or 'Desconocido',
+                        'quantity': float(p['quantity'] or 0),
+                        'total_amount': float(p['total_amount'] or 0),
+                    } for p in real_top_products
+                ]
+
+                # Consultar ventas por hora directamente de las órdenes reales
                 sales_by_hour_dict = {}
                 for s in summaries:
-                    if s.top_products:
-                        for prod in s.top_products:
-                            name = prod.get('product__name') or prod.get('name')
-                            qty = prod.get('quantity', 0)
-                            total = prod.get('total_amount', 0)
-                            if name:
-                                if name not in top_products_dict:
-                                    top_products_dict[name] = {'product__name': name, 'quantity': 0, 'total_amount': 0}
-                                top_products_dict[name]['quantity'] += qty
-                                top_products_dict[name]['total_amount'] += float(total)
                     if s.sales_by_hour:
                         for hour_data in s.sales_by_hour:
                             h = hour_data.get('hour')
@@ -693,6 +712,34 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                         } for s in summaries
                     ]
                 }
+                
+                # Agregar gastos del rango de fechas
+                try:
+                    from apps.payments.models import CashMovement
+                    expenses_qs = CashMovement.objects.filter(
+                        movement_type='out',
+                        reason='expense',
+                        created_at__date__gte=start_date,
+                        created_at__date__lte=end_date
+                    )
+                    from django.db.models import Sum as DSum
+                    total_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
+                    expense_list = list(expenses_qs.values('description', 'amount', 'created_at', 'performed_by').order_by('-created_at'))
+                    expense_list_serialized = [
+                        {
+                            'description': e['description'],
+                            'amount': float(e['amount']),
+                            'date': e['created_at'].strftime('%Y-%m-%d'),
+                            'performed_by': e['performed_by'],
+                        } for e in expense_list
+                    ]
+                    consolidated['total_expenses'] = total_expenses
+                    consolidated['expenses_list'] = expense_list_serialized
+                    consolidated['net_profit'] = consolidated['total_sales'] - total_expenses
+                except Exception as exp_err:
+                    consolidated['total_expenses'] = 0
+                    consolidated['expenses_list'] = []
+                    consolidated['net_profit'] = consolidated['total_sales']
                 
                 if consolidated['total_orders'] > 0:
                     consolidated['average_order_value'] = consolidated['total_sales'] / consolidated['total_orders']

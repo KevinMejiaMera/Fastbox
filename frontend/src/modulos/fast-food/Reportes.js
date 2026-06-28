@@ -1526,7 +1526,109 @@ const Reportes = () => {
                             <h3 className="section-title">Métricas de Rendimiento</h3>
                             {renderMetrics()}
 
-                            {/* ELIMINADO: Detalle de Órdenes (Web) */}
+                            {/* ===== RESUMEN FINANCIERO (solo para rangos) ===== */}
+                            {(currentReport.start_date && currentReport.end_date) && (
+                                <div style={{ marginTop: '32px' }}>
+                                    <h3 className="section-title" style={{ marginBottom: '16px' }}>
+                                        <span className="material-icons" style={{ marginRight: '8px', verticalAlign: 'middle', color: 'var(--primary-color)' }}>account_balance_wallet</span>
+                                        Resumen Financiero
+                                    </h3>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                                        {/* Card de Ventas */}
+                                        <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                                                <span className="material-icons" style={{ color: '#4ade80', fontSize: '1.5rem' }}>trending_up</span>
+                                                <span style={{ color: '#a0aec0', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ingresos del Período</span>
+                                            </div>
+                                            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#4ade80', marginBottom: '16px' }}>
+                                                {formatCurrency(currentReport.total_sales || 0)}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <span className="material-icons" style={{ fontSize: '1rem', color: '#60a5fa' }}>payments</span>
+                                                        <span style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Efectivo</span>
+                                                    </div>
+                                                    <span style={{ color: '#60a5fa', fontWeight: 600 }}>{formatCurrency(currentReport.cash_sales || 0)}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <span className="material-icons" style={{ fontSize: '1rem', color: '#a78bfa' }}>credit_card</span>
+                                                        <span style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Transferencia / Tarjeta</span>
+                                                    </div>
+                                                    <span style={{ color: '#a78bfa', fontWeight: 600 }}>{formatCurrency((currentReport.card_sales || 0) + (currentReport.other_sales || 0))}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <span className="material-icons" style={{ fontSize: '1rem', color: '#94a3b8' }}>shopping_cart</span>
+                                                        <span style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Órdenes</span>
+                                                    </div>
+                                                    <span style={{ color: '#94a3b8', fontWeight: 600 }}>{currentReport.total_orders || 0} pedidos</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Card de Gastos */}
+                                        <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                                                <span className="material-icons" style={{ color: '#f87171', fontSize: '1.5rem' }}>remove_circle_outline</span>
+                                                <span style={{ color: '#a0aec0', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gastos del Período</span>
+                                            </div>
+                                            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f87171', marginBottom: '16px' }}>
+                                                - {formatCurrency(currentReport.total_expenses || 0)}
+                                            </div>
+
+                                            {currentReport.expenses_list && currentReport.expenses_list.length > 0 ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '160px', overflowY: 'auto' }}>
+                                                    {currentReport.expenses_list.map((exp, i) => (
+                                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', background: 'rgba(248,113,113,0.08)', borderRadius: '8px', borderLeft: '3px solid #f87171' }}>
+                                                            <div>
+                                                                <div style={{ color: '#e2e8f0', fontSize: '0.83rem', fontWeight: 500 }}>{exp.description}</div>
+                                                                <div style={{ color: '#64748b', fontSize: '0.75rem' }}>{exp.date} · {exp.performed_by}</div>
+                                                            </div>
+                                                            <span style={{ color: '#f87171', fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', marginLeft: '10px' }}>
+                                                                - {formatCurrency(exp.amount)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div style={{ color: '#475569', fontStyle: 'italic', fontSize: '0.85rem', textAlign: 'center', padding: '20px 0' }}>
+                                                    No hay gastos registrados en este período
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Card de Ganancia Neta */}
+                                        <div style={{
+                                            background: (currentReport.net_profit || 0) >= 0
+                                                ? 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)'
+                                                : 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
+                                            borderRadius: '16px',
+                                            padding: '20px',
+                                            border: `1px solid ${(currentReport.net_profit || 0) >= 0 ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            minHeight: '180px',
+                                            textAlign: 'center'
+                                        }}>
+                                            <span className="material-icons" style={{ fontSize: '2.5rem', color: (currentReport.net_profit || 0) >= 0 ? '#4ade80' : '#f87171', marginBottom: '12px' }}>
+                                                {(currentReport.net_profit || 0) >= 0 ? 'emoji_events' : 'warning'}
+                                            </span>
+                                            <div style={{ color: '#a0aec0', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Ganancia Neta</div>
+                                            <div style={{ fontSize: '2.4rem', fontWeight: 800, color: (currentReport.net_profit || 0) >= 0 ? '#4ade80' : '#f87171', lineHeight: 1.1 }}>
+                                                {formatCurrency(currentReport.net_profit || currentReport.total_sales || 0)}
+                                            </div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '10px' }}>
+                                                Ventas {formatCurrency(currentReport.total_sales || 0)} − Gastos {formatCurrency(currentReport.total_expenses || 0)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Gráficos Restantes (Ventas por Hora y Top Productos) */}
                             <h3 className="section-title chart-section" style={{ marginTop: '40px' }}>Análisis de Gráficos</h3>
