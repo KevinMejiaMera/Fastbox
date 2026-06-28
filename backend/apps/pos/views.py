@@ -148,7 +148,39 @@ class ShiftViewSet(viewsets.ModelViewSet):
             performed_by=shift.user_name or 'Sistema'
         )
         
-        return Response({'message': 'Gasto registrado exitosamente.', 'expense_id': movement.id})
+        return Response({'message': 'Gasto registrado exitosamente.', 'expense_id': str(movement.id)})
+    
+    @action(detail=False, methods=['post'])
+    def fix_closing_cash(self, request):
+        """
+        Corrige cajas que fueron guardadas en COP en vez de USD.
+        Solo afecta cajas cerradas con closing_cash > umbral (por defecto 10000).
+        """
+        exchange_rate = float(request.data.get('exchange_rate', 4000))
+        threshold = float(request.data.get('threshold', 10000))
+        
+        bad_shifts = Shift.objects.filter(
+            status='closed',
+            closing_cash__gt=threshold
+        )
+        
+        corrected = []
+        for s in bad_shifts:
+            old_value = float(s.closing_cash)
+            new_value = round(old_value / exchange_rate, 2)
+            s.closing_cash = new_value
+            s.save(update_fields=['closing_cash'])
+            corrected.append({
+                'shift_number': s.shift_number,
+                'old_closing_cash': old_value,
+                'new_closing_cash': new_value
+            })
+        
+        return Response({
+            'corrected_count': len(corrected),
+            'corrected_shifts': corrected,
+            'message': f'Se corrigieron {len(corrected)} caja(s) usando tasa {exchange_rate}.'
+        })
     
     @action(detail=False, methods=['get'])
     def current(self, request):

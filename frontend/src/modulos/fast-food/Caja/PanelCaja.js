@@ -854,18 +854,19 @@ const PanelCaja = () => {
                                         if (!window.confirm('¿Deseas recalcular los valores de cierres de caja que puedan estar en COP? Solo afecta cajas con valores mayores a $10,000.')) return;
                                         try {
                                             const exchangeRate = parseFloat(localStorage.getItem('usdExchangeRate')) || 4000;
-                                            const resp = await api.get('/api/pos/shifts/', { baseURL: getFastFoodBaseURL() });
-                                            const badShifts = resp.data.filter(s => parseFloat(s.closing_cash) > 10000);
-                                            if (badShifts.length === 0) { alert('No se encontraron cajas con valores incorrectos.'); return; }
-                                            for (const s of badShifts) {
-                                                const corrected = parseFloat(s.closing_cash) / exchangeRate;
-                                                await api.patch(`/api/pos/shifts/${s.id}/`, { closing_cash: corrected.toFixed(2) }, { baseURL: getFastFoodBaseURL() });
+                                            const resp = await api.post('/api/pos/shifts/fix_closing_cash/', {
+                                                exchange_rate: exchangeRate,
+                                                threshold: 10000
+                                            }, { baseURL: getFastFoodBaseURL() });
+                                            if (resp.data.corrected_count === 0) {
+                                                alert('No se encontraron cajas con valores incorrectos (mayores a $10,000).');
+                                            } else {
+                                                alert(`✅ ${resp.data.message}`);
+                                                loadData();
                                             }
-                                            alert(`✅ Se corrigieron ${badShifts.length} caja(s) de COP a USD correctamente.`);
-                                            loadData();
                                         } catch (err) {
                                             console.error(err);
-                                            alert('Error al recalcular los valores.');
+                                            alert('Error al recalcular los valores: ' + (err.response?.data?.error || err.message));
                                         }
                                     }}
                                     style={{
