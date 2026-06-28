@@ -128,7 +128,7 @@ if cors_origins:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',')]
 else:
     CORS_ALLOWED_ORIGINS = [
-        "https://fastbox.fronteratech.ec",
+        "https://fre.koadevs.com",
         "http://146.190.217.68",
         "http://localhost:3000",
     ]
@@ -152,7 +152,7 @@ if csrf_origins:
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',')]
 else:
     CSRF_TRUSTED_ORIGINS = [
-        "https://fastbox.fronteratech.ec",
+        "https://fre.koadevs.com",
         "http://146.190.217.68",
         "http://localhost:3000",
     ]

@@ -66,9 +66,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        - REACT_APP_API_BASE_URL=https://fre.fronteratech.ec
-        - REACT_APP_AUTH_SERVICE=https://fre.fronteratech.ec
-        - REACT_APP_FAST_FOOD_SERVICE=https://fre.fronteratech.ec
+        - REACT_APP_API_BASE_URL=https://fre.koadevs.com
+        - REACT_APP_AUTH_SERVICE=https://fre.koadevs.com
+        - REACT_APP_FAST_FOOD_SERVICE=https://fre.koadevs.com
     container_name: fastbox_frontend_prod
     networks:
       - fastbox-network
