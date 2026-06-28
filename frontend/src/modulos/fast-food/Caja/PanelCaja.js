@@ -522,11 +522,11 @@ const PanelCaja = () => {
             const taggedDesc = expenseCurrency === 'USD'
                 ? `[USD] ${expenseDescription}`
                 : expenseDescription;
-            // Always store in COP (base currency)
-            const amountInCOP = expenseCurrency === 'USD' ? rawAmount * exchangeRate : rawAmount;
+            // Siempre guardamos en USD en la base de datos
+            const amountInUSD = expenseCurrency === 'COP' ? rawAmount / exchangeRate : rawAmount;
 
             await api.post(`/api/pos/shifts/${currentShift.id}/add_expense/`, {
-                amount: amountInCOP,
+                amount: amountInUSD.toFixed(2),
                 description: taggedDesc
             }, { baseURL: getFastFoodBaseURL() });
             setExpenseAmount('');

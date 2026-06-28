@@ -51,8 +51,8 @@ const ReporteCaja = ({ shiftId }) => {
     
     const openingCash = parseFloat(shift_info.opening_cash || 0);
     const closingCash = parseFloat(shift_info.closing_cash || 0); // Este closingCash puede incluir transferencias si fue caja ciega
-    const totalSales = parseFloat(reportData.total_sales || 0);
-    const totalExpenses = parseFloat(reportData.total_expenses || 0);
+    const totalSales = parseFloat(reportData.summary?.total_sales || reportData.total_sales || 0);
+    const totalExpenses = parseFloat(reportData.summary?.total_expenses || reportData.total_expenses || 0);
     const expensesList = reportData.expenses || [];
 
     // Desglose de métodos de pago (Sistema)
