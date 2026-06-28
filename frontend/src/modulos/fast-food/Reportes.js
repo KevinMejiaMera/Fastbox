@@ -1457,11 +1457,21 @@ const Reportes = () => {
                                         <span className="metadata-item">Usuario: {currentReport.generated_by || 'Sistema'}</span>
                                     </div>
                                 </div>
-                                <div className="detail-status">
-                                    <div className={`status-pill ${currentReport.is_closed ? 'closed-pill' : 'open-pill'}`}>
-                                        {currentReport.is_closed ? 'DÍA CERRADO' : 'DÍA ABIERTO'}
+                                <div className="detail-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                                    <button
+                                        className="action-button primary"
+                                        onClick={handlePrintPDF}
+                                        style={{ fontSize: '0.9rem', padding: '8px 15px', backgroundColor: '#4f46e5', width: '100%' }}
+                                    >
+                                        <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>download</span>
+                                        Descargar Reporte {reportType === 'daily' ? 'Diario' : reportType === 'weekly' ? 'Semanal' : reportType === 'monthly' ? 'Mensual' : 'Personalizado'}
+                                    </button>
+                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <div className={`status-pill ${currentReport.is_closed ? 'closed-pill' : 'open-pill'}`}>
+                                            {currentReport.is_closed ? 'DÍA CERRADO' : 'DÍA ABIERTO'}
+                                        </div>
+                                        <p className="generation-date" style={{ margin: 0 }}>Actualizado: {formatDate(currentReport.generated_at || new Date().toISOString())}</p>
                                     </div>
-                                    <p className="generation-date">Actualizado: {formatDate(currentReport.generated_at || new Date().toISOString())}</p>
                                 </div>
                             </div>
 
@@ -1476,14 +1486,6 @@ const Reportes = () => {
                             {/* Desglose de Turnos (NUEVO) */}
                             <h3 className="section-title chart-section" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span>Desglose de Turnos</span>
-                                <button
-                                    className="action-button primary"
-                                    onClick={handlePrintPDF}
-                                    style={{ fontSize: '0.9rem', padding: '8px 15px' }}
-                                >
-                                    <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>print</span>
-                                    Imprimir Reporte del Día
-                                </button>
                             </h3>
                             <div className="card" style={{ padding: '15px', marginBottom: '20px' }}>
                                 {dayShifts && dayShifts.length > 0 ? (

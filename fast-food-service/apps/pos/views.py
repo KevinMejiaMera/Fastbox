@@ -566,6 +566,11 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     start_date = date(year, month, 1)
                     end_date = date(year, month, last_day)
                     period_name = f'{calendar.month_name[month]} {year}'
+                    
+                elif report_type == 'range':
+                    start_date = data['start_date']
+                    end_date = data['end_date']
+                    period_name = f'Personalizado: {start_date.strftime("%d/%m/%Y")} - {end_date.strftime("%d/%m/%Y")}'
                 
                 current_date = start_date
                 while current_date <= end_date:
