@@ -1271,66 +1271,47 @@ const Reportes = () => {
                 <h3 className="panel-title">Filtros y Generación</h3>
 
                 <div className="filter-group">
-                    {/* Select Tipo de Reporte */}
+                    {/* Selector de Fechas (Siempre Rango) */}
                     <div className="filter-item">
-                        <label className="filter-label">Tipo de Reporte</label>
-                        <select
-                            value={reportType}
-                            onChange={(e) => setReportType(e.target.value)}
-                            className="form-select"
-                        >
-                            <option value="daily">Diario</option>
-                            <option value="shift">Por Turno</option>
-                            <option value="weekly">Semanal</option>
-                            <option value="monthly">Mensual</option>
-                            <option value="custom">Personalizado</option>
-                        </select>
-                    </div>
-
-                    {/* Selector de Fechas */}
-                    <div className="filter-item">
-                        <label className="filter-label">
-                            {reportType === 'custom' ? 'Rango de Fechas' : 'Fecha'}
-                        </label>
+                        <label className="filter-label">Rango de Fechas</label>
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                             <DatePicker
                                 selected={dateRange.startDate}
-                                onChange={(date) => setDateRange(prev => ({ ...prev, startDate: date }))}
+                                onChange={(date) => {
+                                    setDateRange(prev => ({ ...prev, startDate: date }));
+                                    setReportType('custom');
+                                }}
                                 dateFormat="dd/MM/yyyy"
                                 locale={es}
                                 className="date-picker-input"
                                 wrapperClassName="date-picker"
                             />
-
-                            {reportType === 'custom' && (
-                                <>
-                                    <span style={{ color: '#666' }}>a</span>
-                                    <DatePicker
-                                        selected={dateRange.endDate}
-                                        onChange={(date) => setDateRange(prev => ({ ...prev, endDate: date }))}
-                                        dateFormat="dd/MM/yyyy"
-                                        locale={es}
-                                        className="date-picker-input"
-                                        wrapperClassName="date-picker"
-                                    />
-                                </>
-                            )}
+                            <span style={{ color: '#666' }}>a</span>
+                            <DatePicker
+                                selected={dateRange.endDate}
+                                onChange={(date) => {
+                                    setDateRange(prev => ({ ...prev, endDate: date }));
+                                    setReportType('custom');
+                                }}
+                                dateFormat="dd/MM/yyyy"
+                                locale={es}
+                                className="date-picker-input"
+                                wrapperClassName="date-picker"
+                            />
                         </div>
                     </div>
 
                     {/* Botones de Acción */}
                     <div className="filter-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
-                        {reportType === 'custom' && (
-                            <button
-                                className="action-button secondary"
-                                onClick={forceGenerateReport}
-                                disabled={loadingData || processingShift}
-                                style={{ padding: '8px 15px', height: '38px' }}
-                            >
-                                <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>search</span>
-                                Buscar Datos
-                            </button>
-                        )}
+                        <button
+                            className="action-button secondary"
+                            onClick={forceGenerateReport}
+                            disabled={loadingData || processingShift}
+                            style={{ padding: '8px 15px', height: '38px', backgroundColor: '#e2e8f0', color: '#1e293b' }}
+                        >
+                            <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>filter_list</span>
+                            Filtrar
+                        </button>
                         {currentReport && (
                             <button
                                 className="action-button primary"
@@ -1338,7 +1319,7 @@ const Reportes = () => {
                                 style={{ padding: '8px 15px', height: '38px', backgroundColor: '#4f46e5', color: 'white' }}
                             >
                                 <span className="material-icons" style={{ fontSize: '1.1rem', marginRight: '5px' }}>download</span>
-                                Descargar Reporte {reportType === 'daily' ? 'Diario' : reportType === 'weekly' ? 'Semanal' : reportType === 'monthly' ? 'Mensual' : 'Personalizado'}
+                                Descargar Reporte
                             </button>
                         )}
                     </div>
