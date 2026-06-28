@@ -605,13 +605,20 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 start_dt = ecuador_tz.localize(datetime.combine(data['date'], time.min))
                 end_dt = ecuador_tz.localize(datetime.combine(data['date'], time.max))
                 
+                print(f"[GASTOS-DAILY] Buscando gastos entre {start_dt} y {end_dt}")
+                print(f"[GASTOS-DAILY] Total CashMovements en DB: {CashMovement.objects.count()}")
+                print(f"[GASTOS-DAILY] CashMovements tipo 'out': {CashMovement.objects.filter(movement_type='out').count()}")
+                print(f"[GASTOS-DAILY] CashMovements razon 'expense': {CashMovement.objects.filter(reason='expense').count()}")
+                
                 expenses_qs = CashMovement.objects.filter(
                     movement_type='out',
                     reason='expense',
                     created_at__range=(start_dt, end_dt)
                 )
                 
+                print(f"[GASTOS-DAILY] Gastos encontrados en rango: {expenses_qs.count()}")
                 daily_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
+                print(f"[GASTOS-DAILY] Total gastos: {daily_expenses}")
                 summary_data['total_expenses'] = daily_expenses
                 
                 if include_orders_detail:

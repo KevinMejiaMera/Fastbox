@@ -844,10 +844,46 @@ const PanelCaja = () => {
                     {/* Historial de Cajas - COLUMNA DERECHA */}
                     {isAdmin && (
                         <div style={styles.card}>
-                            <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', color: '#1a1a2e' }}>
-                                <i className="bi bi-clock-history" style={{ marginRight: '0.5rem', color: 'var(--primary-color)' }}></i>
-                                Historial de Cajas
-                            </h2>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1a1a2e' }}>
+                                    <i className="bi bi-clock-history" style={{ marginRight: '0.5rem', color: 'var(--primary-color)' }}></i>
+                                    Historial de Cajas
+                                </h2>
+                                <button
+                                    onClick={async () => {
+                                        if (!window.confirm('¿Deseas recalcular los valores de cierres de caja que puedan estar en COP? Solo afecta cajas con valores mayores a $10,000.')) return;
+                                        try {
+                                            const exchangeRate = parseFloat(localStorage.getItem('usdExchangeRate')) || 4000;
+                                            const resp = await api.get('/api/pos/shifts/', { baseURL: getFastFoodBaseURL() });
+                                            const badShifts = resp.data.filter(s => parseFloat(s.closing_cash) > 10000);
+                                            if (badShifts.length === 0) { alert('No se encontraron cajas con valores incorrectos.'); return; }
+                                            for (const s of badShifts) {
+                                                const corrected = parseFloat(s.closing_cash) / exchangeRate;
+                                                await api.patch(`/api/pos/shifts/${s.id}/`, { closing_cash: corrected.toFixed(2) }, { baseURL: getFastFoodBaseURL() });
+                                            }
+                                            alert(`✅ Se corrigieron ${badShifts.length} caja(s) de COP a USD correctamente.`);
+                                            loadData();
+                                        } catch (err) {
+                                            console.error(err);
+                                            alert('Error al recalcular los valores.');
+                                        }
+                                    }}
+                                    style={{
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '8px',
+                                        backgroundColor: '#e8f4fd',
+                                        color: '#0d6efd',
+                                        border: '1px solid #0d6efd',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        fontSize: '0.85rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem'
+                                    }}>
+                                    <i className="bi bi-arrow-clockwise"></i> Actualizar Cajas
+                                </button>
+                            </div>
                             <div style={styles.tableContainer}>
                                 <table style={styles.table}>
                                     <thead>
