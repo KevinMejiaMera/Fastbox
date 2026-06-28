@@ -629,7 +629,7 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     DailySummary.generate_for_date(
                         date=current_date,
                         generated_by='system',  # ← MODIFICADO
-                        detailed=False
+                        detailed=True
                     )
                     current_date += timedelta(days=1)
                 
@@ -699,11 +699,9 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     from apps.payments.models import CashMovement
                     from django.utils import timezone
                     import datetime as dt
-                    import pytz
                     
-                    ecuador_tz = pytz.timezone('America/Guayaquil')
-                    start_dt = ecuador_tz.localize(dt.datetime.combine(start_date, dt.time.min))
-                    end_dt = ecuador_tz.localize(dt.datetime.combine(end_date, dt.time.max))
+                    start_dt = timezone.make_aware(dt.datetime.combine(start_date, dt.time.min))
+                    end_dt = timezone.make_aware(dt.datetime.combine(end_date, dt.time.max))
                     
                     expenses_qs = CashMovement.objects.filter(
                         movement_type='out',
