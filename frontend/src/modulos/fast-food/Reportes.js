@@ -1481,7 +1481,7 @@ const Reportes = () => {
                             </div>
 
                             {/* Alerta de Conexión - solo si no tenemos datos válidos */}
-                            {connectionError && !currentReport?.total_sales && (
+                            {connectionError && !currentReport && (
                                 <div className="alert warning-alert">
                                     <h4 className="alert-title">Nota importante</h4>
                                     <p>Estás viendo datos incompletos. Soluciona el error en el backend para ver datos en tiempo real y gráficos.</p>

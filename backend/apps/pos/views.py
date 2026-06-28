@@ -679,9 +679,6 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                                     sales_by_hour_dict[h] = 0
                                 sales_by_hour_dict[h] += float(total)
                 
-                consolidated_top_products = list(top_products_dict.values())
-                consolidated_top_products.sort(key=lambda x: x['quantity'], reverse=True)
-                
                 consolidated_sales_by_hour = [{'hour': h, 'total': t} for h, t in sales_by_hour_dict.items()]
                 consolidated_sales_by_hour.sort(key=lambda x: x['hour'])
 
