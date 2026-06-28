@@ -1042,11 +1042,44 @@ const Reportes = () => {
         );
     };
 
-    // Renderizar gráfico de ventas por hora
-    const renderSalesByHourChart = () => {
-        if (!currentReport?.sales_by_hour || !Array.isArray(currentReport.sales_by_hour) || currentReport.sales_by_hour.length === 0) {
-            return <div className="no-data-chart">No hay datos de ventas por hora disponibles.</div>;
+    // Renderizar gráfico de ventas por hora o por día
+    const renderSalesChart = () => {
+        if (currentReport?.sales_by_day && Array.isArray(currentReport.sales_by_day) && currentReport.sales_by_day.length > 0) {
+            const dayData = currentReport.sales_by_day.map(item => ({
+                fecha: item.date,
+                ventas: parseFloat(item.total_sales || 0),
+            }));
+
+            return (
+                <div className="chart-container">
+                    <h4 className="chart-title">Ventas por Día (MXN)</h4>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={dayData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                            <XAxis dataKey="fecha" style={{ fontSize: '10px' }} />
+                            <YAxis tickFormatter={(value) => formatCurrency(value).replace('$', '')} style={{ fontSize: '10px' }} />
+                            <Tooltip
+                                formatter={(value, name) => [formatCurrency(value), 'Ventas']}
+                                labelFormatter={(label) => `Día: ${label}`}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="ventas"
+                                stroke={COLORS[0]}
+                                fill={COLORS[0]}
+                                fillOpacity={0.2}
+                                name="Ventas"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            );
         }
+
+        if (!currentReport?.sales_by_hour || !Array.isArray(currentReport.sales_by_hour) || currentReport.sales_by_hour.length === 0) {
+            return <div className="no-data-chart">No hay datos de ventas disponibles.</div>;
+        }
+        
         const hourData = currentReport.sales_by_hour
             .filter(item => item && item.total_sales !== undefined)
             .map(item => ({
@@ -1545,7 +1578,7 @@ const Reportes = () => {
                             <h3 className="section-title chart-section" style={{ marginTop: '40px' }}>Análisis de Gráficos</h3>
 
                             <div className="charts-grid">
-                                {renderSalesByHourChart()}
+                                {renderSalesChart()}
                                 {renderTopProductsChart()}
                             </div>
 
@@ -1650,7 +1683,7 @@ const Reportes = () => {
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                             <div>
                                                 <h4 className="chart-title">Ventas por Hora</h4>
-                                                {renderSalesByHourChart()}
+                                                {renderSalesChart()}
                                             </div>
                                             <div>
                                                 <h4 className="chart-title">Productos Vendidos</h4>

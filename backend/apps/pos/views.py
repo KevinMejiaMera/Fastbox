@@ -597,13 +597,20 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 
                 # Calcular gastos del día
                 from apps.payments.models import CashMovement
+                import pytz
+                from datetime import datetime, time
                 from django.db.models import Sum as DSum
+                
+                ecuador_tz = pytz.timezone('America/Guayaquil')
+                start_dt = ecuador_tz.localize(datetime.combine(data['date'], time.min))
+                end_dt = ecuador_tz.localize(datetime.combine(data['date'], time.max))
                 
                 expenses_qs = CashMovement.objects.filter(
                     movement_type='out',
                     reason='expense',
-                    created_at__date=data['date']
+                    created_at__range=(start_dt, end_dt)
                 )
+                
                 daily_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
                 summary_data['total_expenses'] = daily_expenses
                 
@@ -675,9 +682,18 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 consolidated_top_products = list(top_products_dict.values())
                 consolidated_top_products.sort(key=lambda x: x['quantity'], reverse=True)
                 
-                consolidated_sales_by_hour = [{'hour': h, 'total': t} for h, t in sales_by_hour_dict.items()]
-                consolidated_sales_by_hour.sort(key=lambda x: x['hour'])
-
+                consolidated_sales_by_hour = [
+                    {'hour': h, 'hour_label': f'{h:02d}:00', 'total_sales': t}
+                    for h, t in sorted(sales_by_hour_dict.items())
+                ]
+                
+                sales_by_day = []
+                for s in summaries:
+                    sales_by_day.append({
+                        'date': s.date.strftime('%Y-%m-%d'),
+                        'total_sales': float(s.total_sales)
+                    })
+                
                 consolidated = {
                     'total_sales': sum(float(s.total_sales) for s in summaries),
                     'total_orders': sum(s.total_orders for s in summaries),
@@ -689,6 +705,7 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     'other_sales': sum(float(s.other_sales) for s in summaries if s.other_sales is not None),
                     'top_products': consolidated_top_products,
                     'sales_by_hour': consolidated_sales_by_hour,
+                    'sales_by_day': sales_by_day,
                     'average_order_value': 0,
                     'start_date': str(start_date),
                     'end_date': str(end_date),
@@ -709,13 +726,18 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 # Agregar gastos del rango de fechas
                 try:
                     from apps.payments.models import CashMovement
+                    import pytz
+                    from datetime import datetime, time
                     from django.db.models import Sum as DSum
+                    
+                    ecuador_tz = pytz.timezone('America/Guayaquil')
+                    start_dt = ecuador_tz.localize(datetime.combine(start_date, time.min))
+                    end_dt = ecuador_tz.localize(datetime.combine(end_date, time.max))
                     
                     expenses_qs = CashMovement.objects.filter(
                         movement_type='out',
                         reason='expense',
-                        created_at__date__gte=start_date,
-                        created_at__date__lte=end_date
+                        created_at__range=(start_dt, end_dt)
                     )
                     total_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
                     expense_list = list(expenses_qs.values('description', 'amount', 'created_at', 'performed_by').order_by('-created_at'))
