@@ -260,7 +260,7 @@ const Reportes = () => {
 
             const listResponse = await api.get('/api/pos/daily-summaries/', {
                 baseURL: getFastFoodBaseURL(),
-                params: { ordering: '-date', limit: 30 },
+                params: { ordering: '-date', limit: 100 },
                 timeout: 10000
             });
 
@@ -664,15 +664,13 @@ const Reportes = () => {
             case 'today':
                 newReportType = 'daily';
                 newRange = { startDate: today, endDate: today };
-                // Solo cargar reporte existente, no generar nuevo
-                loadDailyReport(today, false);
+                loadDailyReport(today, true);
                 break;
             case 'yesterday':
                 const yesterday = subDays(today, 1);
                 newReportType = 'daily';
                 newRange = { startDate: yesterday, endDate: yesterday };
-                // Solo cargar reporte existente, no generar nuevo
-                loadDailyReport(yesterday, false);
+                loadDailyReport(yesterday, true);
                 break;
             case 'thisWeek':
                 newReportType = 'weekly';
@@ -680,8 +678,7 @@ const Reportes = () => {
                     startDate: startOfWeek(today, { locale: es }),
                     endDate: today
                 };
-                // Solo filtrar reportes existentes
-                generateReport(newReportType, newRange, false);
+                generateReport(newReportType, newRange, true);
                 break;
             case 'lastWeek':
                 newReportType = 'weekly';
@@ -691,8 +688,7 @@ const Reportes = () => {
                     startDate: lastWeekStart,
                     endDate: lastWeekEnd
                 };
-                // Solo filtrar reportes existentes
-                generateReport(newReportType, newRange, false);
+                generateReport(newReportType, newRange, true);
                 break;
             case 'thisMonth':
                 newReportType = 'monthly';
@@ -700,13 +696,12 @@ const Reportes = () => {
                     startDate: startOfMonth(today),
                     endDate: today
                 };
-                // Solo filtrar reportes existentes
-                generateReport(newReportType, newRange, false);
+                generateReport(newReportType, newRange, true);
                 break;
             default:
                 newReportType = 'daily';
                 newRange = { startDate: today, endDate: today };
-                loadDailyReport(today, false);
+                loadDailyReport(today, true);
         }
 
         setReportType(newReportType);
