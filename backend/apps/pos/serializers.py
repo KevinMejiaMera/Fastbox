@@ -548,7 +548,7 @@ class ReportRequestSerializer(serializers.Serializer):
     """Serializer para solicitar reportes"""
     
     report_type = serializers.ChoiceField(
-        choices=[('daily', 'Diario'), ('weekly', 'Semanal'), ('monthly', 'Mensual')],
+        choices=[('daily', 'Diario'), ('weekly', 'Semanal'), ('monthly', 'Mensual'), ('range', 'Rango')],
         default='daily'
     )
     
