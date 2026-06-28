@@ -697,11 +697,19 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                 # Agregar gastos del rango de fechas
                 try:
                     from apps.payments.models import CashMovement
+                    from django.utils import timezone
+                    import datetime as dt
+                    import pytz
+                    
+                    ecuador_tz = pytz.timezone('America/Guayaquil')
+                    start_dt = ecuador_tz.localize(dt.datetime.combine(start_date, dt.time.min))
+                    end_dt = ecuador_tz.localize(dt.datetime.combine(end_date, dt.time.max))
+                    
                     expenses_qs = CashMovement.objects.filter(
                         movement_type='out',
                         reason='expense',
-                        created_at__date__gte=start_date,
-                        created_at__date__lte=end_date
+                        created_at__gte=start_dt,
+                        created_at__lte=end_dt
                     )
                     from django.db.models import Sum as DSum
                     total_expenses = float(expenses_qs.aggregate(total=DSum('amount'))['total'] or 0)
