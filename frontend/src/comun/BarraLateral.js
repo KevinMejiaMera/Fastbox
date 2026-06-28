@@ -27,6 +27,7 @@ const BarraLateral = () => {
         { path: '/fast-food/mezclas', icon: 'bi-arrow-repeat', label: 'Mezclas' },
         { path: '/fast-food/customers', icon: 'bi-person-badge', label: 'Clientes' },
         { path: '/fast-food/shift', icon: 'bi-cash-coin', label: 'Caja' },
+        { path: '/fast-food/gastos', icon: 'bi-wallet2', label: 'Gastos' },
         { path: '/fast-food/reports', icon: 'bi-graph-up', label: 'Reportes' },
         { path: '/fast-food/printers', icon: 'bi-printer-fill', label: 'Impresoras' },
         { path: '/users', icon: 'bi-people-fill', label: 'Usuarios' },
