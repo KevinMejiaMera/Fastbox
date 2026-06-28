@@ -215,6 +215,10 @@ export const generateDetailedPDF = (report, reportType, dateRangeStr) => {
                 }
             }
         });
+    } else if (report.cash_sales !== undefined || report.card_sales !== undefined) {
+        // Reporte de rango consolidado: usar campos directos
+        paymentStats.efectivo.amount = parseFloat(report.cash_sales || 0);
+        paymentStats.transferencia.amount = parseFloat((parseFloat(report.card_sales || 0)) + (parseFloat(report.other_sales || 0)));
     }
 
     doc.setFontSize(12);

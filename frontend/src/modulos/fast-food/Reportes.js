@@ -1369,7 +1369,7 @@ const Reportes = () => {
                             <div className="no-reports">No hay reportes generados.</div>
                         ) : (
                             <div className="reports-item-list">
-                                {reports.slice(0, 20).map((report, index) => {
+                                {reports.map((report, index) => {
                                     // Lógica de renderizado diferenciada para Turnos vs Reportes Diarios
                                     const isShiftItem = report.shift_number !== undefined;
 
