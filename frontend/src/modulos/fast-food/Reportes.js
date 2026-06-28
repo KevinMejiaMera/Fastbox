@@ -532,7 +532,7 @@ const Reportes = () => {
 
             const response = await api.post('/api/pos/daily-summaries/get_report/', payload, {
                 baseURL: getFastFoodBaseURL(),
-                timeout: 15000
+                timeout: 60000
             });
 
             const newReport = response.data.data || response.data;
@@ -804,13 +804,16 @@ const Reportes = () => {
         }
     }, [currentReport, fetchDayShifts]);
 
-    // POLLING: Actualización en tiempo real (Optimizado)
+    // POLLING: Actualización en tiempo real
     useEffect(() => {
         const POLL_INTERVAL = 30000; // 30 segundos
 
         const performPoll = async () => {
             // Solo hacer polling si la pestaña está visible
             if (document.visibilityState !== 'visible') return;
+
+            // Si hay un reporte de rango activo, no hacer polling para no sobreescribirlo
+            if (currentReport?.start_date && currentReport?.end_date) return;
 
             console.log('🔄 Actualizando datos en tiempo real (polling)...');
             try {
@@ -827,7 +830,6 @@ const Reportes = () => {
 
         const interval = setInterval(performPoll, POLL_INTERVAL);
 
-        // También escuchar cuando se vuelve a la pestaña
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 performPoll();
@@ -839,7 +841,7 @@ const Reportes = () => {
             clearInterval(interval);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [checkCurrentShift, fetchReports, fetchDashboardStats, refreshCurrentData]);
+    }, [checkCurrentShift, fetchReports, fetchDashboardStats, refreshCurrentData, currentReport]);
 
     // --- Funciones de Renderizado ---
 
@@ -1452,7 +1454,16 @@ const Reportes = () => {
                             {/* Header del Reporte */}
                             <div className="detail-header">
                                 <div>
-                                    <h2 className="detail-title">Reporte {reportType === 'daily' ? 'Diario' : reportType === 'weekly' ? 'Semanal' : reportType === 'monthly' ? 'Mensual' : 'Personalizado'}</h2>
+                                    <h2 className="detail-title">
+                                        {currentReport.period_name
+                                            ? currentReport.period_name
+                                            : reportType === 'daily' ? 'Reporte Diario'
+                                            : reportType === 'weekly' ? 'Reporte Semanal'
+                                            : reportType === 'monthly' ? 'Reporte Mensual'
+                                            : (currentReport.start_date && currentReport.end_date) ? 'Reporte Personalizado'
+                                            : 'Reporte Diario'
+                                        }
+                                    </h2>
                                     <div className="detail-metadata">
                                         <span className="metadata-item">Fecha: {formatDate(currentReport.date || currentReport.start_date)}
                                             {currentReport.end_date && currentReport.date !== currentReport.end_date && currentReport.start_date !== currentReport.end_date &&
@@ -1469,8 +1480,8 @@ const Reportes = () => {
                                 </div>
                             </div>
 
-                            {/* Alerta de Conexión */}
-                            {connectionError && (
+                            {/* Alerta de Conexión - solo si no tenemos datos válidos */}
+                            {connectionError && !currentReport?.total_sales && (
                                 <div className="alert warning-alert">
                                     <h4 className="alert-title">Nota importante</h4>
                                     <p>Estás viendo datos incompletos. Soluciona el error en el backend para ver datos en tiempo real y gráficos.</p>

@@ -678,23 +678,30 @@ class DailySummaryViewSet(viewsets.ReadOnlyModelViewSet):
                     'top_products': consolidated_top_products,
                     'sales_by_hour': consolidated_sales_by_hour,
                     'average_order_value': 0,
-                    'daily_summaries': DailySummarySerializer(summaries, many=True).data,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'is_closed': all(s.is_closed for s in summaries) if summaries.exists() else False
+                    'start_date': str(start_date),
+                    'end_date': str(end_date),
+                    'is_closed': all(s.is_closed for s in summaries) if summaries.exists() else False,
+                    'daily_breakdown': [
+                        {
+                            'date': str(s.date),
+                            'total_sales': float(s.total_sales),
+                            'total_orders': s.total_orders,
+                            'cash_sales': float(s.cash_sales) if s.cash_sales else 0,
+                            'card_sales': float(s.card_sales) if s.card_sales else 0,
+                            'other_sales': float(s.other_sales) if s.other_sales else 0,
+                            'is_closed': s.is_closed,
+                        } for s in summaries
+                    ]
                 }
                 
                 if consolidated['total_orders'] > 0:
                     consolidated['average_order_value'] = consolidated['total_sales'] / consolidated['total_orders']
                 
-                if include_orders_detail:
-                    consolidated['orders_detail'] = self._get_orders_detail(start_date, end_date)
-                
                 return Response({
                     'report_type': report_type,
                     'period_name': period_name,
-                    'start_date': start_date,
-                    'end_date': end_date,
+                    'start_date': str(start_date),
+                    'end_date': str(end_date),
                     'data': consolidated
                 })
             
