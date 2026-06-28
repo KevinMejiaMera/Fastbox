@@ -226,101 +226,80 @@ const PanelCaja = () => {
             lines.push(center("CAJA"));
             lines.push("-".repeat(chars_per_line));
             
-            if (isCierreCiegoV2) {
-                // PESOS COP
-                lines.push("[EFECTIVO COP]");
-                lines.push(rightAlign("SISTEMA", efectivoEsperadoFinal.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", fisicoEfectivoCOP.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", (fisicoEfectivoCOP - efectivoEsperadoFinal).toFixed(2)));
-                lines.push("");
+            // FORMATO CLASICO (Como antes, pero con el desglose de GASTOS en SISTEMA)
+            lines.push("[EFECTIVO]");
+            
+            // Si hay gastos, mostramos el desglose
+            if (totalExpensesVal > 0) {
+                lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
+                lines.push(rightAlign("GASTOS", totalExpensesVal.toFixed(2)));
+            }
+            
+            const efectivoEsperado = efectivoTotalBruto - totalExpensesVal;
+            const efectivoFisicoReal = isCierreCiegoV2 ? fisicoEfectivoUSD : efectivoFisicoDeclarado;
+            const difEfectivo = efectivoFisicoReal - efectivoEsperado;
+            
+            lines.push(rightAlign(totalExpensesVal > 0 ? "ESPERADO" : "SISTEMA", efectivoEsperado.toFixed(2)));
+            lines.push(rightAlign("CONTEO FISICO", efectivoFisicoReal.toFixed(2)));
+            lines.push(rightAlign("DIFERENCIA", difEfectivo.toFixed(2)));
+            lines.push("");
 
-                lines.push("[TRANSFERENCIA COP]");
-                lines.push(rightAlign("SISTEMA", transferenciasSistema.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", fisicoTransferCOP.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", (fisicoTransferCOP - transferenciasSistema).toFixed(2)));
-                lines.push("");
+            lines.push("[TRANSFERENCIA]");
+            const transferSistReal = transferenciasSistema;
+            const transferFisicReal = isCierreCiegoV2 ? fisicoTransferUSD : transferenciasFisico;
+            const difTransfer = transferFisicReal - transferSistReal;
+            
+            lines.push(rightAlign("SISTEMA", transferSistReal.toFixed(2)));
+            lines.push(rightAlign("CONTEO FISICO", transferFisicReal.toFixed(2)));
+            lines.push(rightAlign("DIFERENCIA", difTransfer.toFixed(2)));
+            lines.push("");
 
-                // DOLARES USD
-                lines.push("[EFECTIVO USD]");
-                lines.push(rightAlign("SISTEMA", dolaresEfectivoSistema.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", fisicoEfectivoUSD.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", (fisicoEfectivoUSD - dolaresEfectivoSistema).toFixed(2)));
-                lines.push("");
+            const totalSistema = efectivoEsperado + transferSistReal;
+            const totalConteo = efectivoFisicoReal + transferFisicReal;
+            const totalDiferencia = totalConteo - totalSistema;
 
-                lines.push("[TRANSFERENCIA USD]");
-                lines.push(rightAlign("SISTEMA", dolaresTransferenciaSistema.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", fisicoTransferUSD.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", (fisicoTransferUSD - dolaresTransferenciaSistema).toFixed(2)));
-                lines.push("");
-                
-                // RESUMEN GLOBAL (COP + USD convertido)
-                const totalGlobalSist = efectivoEsperadoFinal + transferenciasSistema + ((dolaresEfectivoSistema + dolaresTransferenciaSistema) * exchangeRate);
-                const totalGlobalConteo = fisicoEfectivoCOP + fisicoTransferCOP + ((fisicoEfectivoUSD + fisicoTransferUSD) * exchangeRate);
-                lines.push("-".repeat(chars_per_line));
-                lines.push(center("RESUMEN GLOBAL (CONVERTIDO A COP)"));
-                lines.push(rightAlign("TOTAL SISTEMA", totalGlobalSist.toFixed(2)));
-                lines.push(rightAlign("TOTAL FISICO", totalGlobalConteo.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA GLOBAL", (totalGlobalConteo - totalGlobalSist).toFixed(2)));
-                lines.push("");
+            lines.push("RESUMEN:");
+            lines.push(rightAlign("SISTEMA", totalSistema.toFixed(2)));
+            lines.push(rightAlign("CONTEO FISICO", totalConteo.toFixed(2)));
+            lines.push(rightAlign("DIFERENCIA", totalDiferencia.toFixed(2)));
+            lines.push("");
 
-                lines.push("-".repeat(chars_per_line));
-                lines.push(center("DETALLE DE CONTEO FISICO"));
-                if (cierreCiegoDetalle) {
-                    const detLines = cierreCiegoDetalle.split('\n');
-                    detLines.forEach(l => {
-                        if (l.trim()) lines.push(l);
+            if (shift_info.closing_notes) {
+                lines.push("NOTAS DE CIERRE:");
+                const shortNotes = shift_info.closing_notes.split('---')[0].trim();
+                if (shortNotes) {
+                    const noteLines = shortNotes.split('\n');
+                    noteLines.forEach(l => {
+                        if (!l.includes('COP') && !l.includes('[CIERRE_CIEGO_V2]')) {
+                            lines.push(l);
+                        }
                     });
                 }
-            } else {
-                lines.push("[EFECTIVO]");
-                lines.push(rightAlign("SISTEMA", efectivoEsperadoFinal.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
-                lines.push("");
-
-                lines.push("[TRANSFERENCIA]");
-                lines.push(rightAlign("SISTEMA", transferenciasSistema.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", transferenciasFisico.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", sobranteTransferencia.toFixed(2)));
-                lines.push("");
-
-                const totalSistema = efectivoEsperadoFinal + transferenciasSistema;
-                const totalConteo = efectivoFisicoDeclarado + transferenciasFisico;
-                const totalDiferencia = sobranteEfectivo + sobranteTransferencia;
-
-                lines.push("RESUMEN:");
-                lines.push(rightAlign("SISTEMA", totalSistema.toFixed(2)));
-                lines.push(rightAlign("CONTEO FISICO", totalConteo.toFixed(2)));
-                lines.push(rightAlign("DIFERENCIA", totalDiferencia.toFixed(2)));
-                lines.push("");
-
-                if (dolaresEfectivoSistema > 0 || dolaresTransferenciaSistema > 0) {
+                
+                if (cierreCiegoDetalle) {
                     lines.push("-".repeat(chars_per_line));
-                    lines.push(center("CAJA DOLARES (USD)"));
-                    lines.push("-".repeat(chars_per_line));
-                    lines.push("[EFECTIVO USD]");
-                    lines.push(rightAlign("SISTEMA", dolaresEfectivoSistema.toFixed(2)));
-                    lines.push("");
-                    lines.push("[TRANSFERENCIA USD]");
-                    lines.push(rightAlign("SISTEMA", dolaresTransferenciaSistema.toFixed(2)));
-                    lines.push("");
-                }
-
-                if (shift_info.closing_notes) {
-                    if (shift_info.closing_notes.includes('Cierre Ciego')) {
-                        lines.push(center("Conteo de monedas y billetes:"));
-                        let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
-                        notesText = notesText.replace(/, /g, '\n');
-                        const notesLines = notesText.split('\n');
-                        notesLines.forEach(l => lines.push(l));
-                    } else {
-                        lines.push("NOTAS DE CIERRE:");
-                        const notesText = shift_info.closing_notes;
-                        for(let i=0; i<notesText.length; i+=chars_per_line) {
-                            lines.push(notesText.substring(i, i+chars_per_line));
+                    // Formatear monedas horizontalmente
+                    const detLines = cierreCiegoDetalle.split('\n');
+                    let horiz = [];
+                    detLines.forEach(l => {
+                        const match = l.match(/([^:]+):\s*(\d+)/);
+                        if (match && !l.includes('USD') && !l.includes('COP') && !l.includes('Fisico')) {
+                            let name = match[1].trim().replace('Billetes de ', 'B.');
+                            horiz.push(`${name}=${match[2]}`);
                         }
+                    });
+                    if (horiz.length > 0) {
+                        lines.push("DETALLE DE MONEDAS:");
+                        let outLine = "";
+                        horiz.forEach(item => {
+                            if ((outLine + item).length > chars_per_line) {
+                                lines.push(outLine.trim());
+                                outLine = "";
+                            }
+                            outLine += item + "  ";
+                        });
+                        if (outLine) lines.push(outLine.trim());
                     }
-                    lines.push("-".repeat(chars_per_line));
                 }
             }
 
