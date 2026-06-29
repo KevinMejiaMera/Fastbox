@@ -229,17 +229,14 @@ const PanelCaja = () => {
             // FORMATO CLASICO (Como antes, pero con el desglose de GASTOS en SISTEMA)
             lines.push("[EFECTIVO]");
             
-            // Si hay gastos, mostramos el desglose
-            if (totalExpensesVal > 0) {
-                lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
-                lines.push(rightAlign("GASTOS", totalExpensesVal.toFixed(2)));
-            }
-            
+            lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
+            lines.push(rightAlign("- GASTOS", totalExpensesVal.toFixed(2)));
+
             const efectivoEsperado = efectivoTotalBruto - totalExpensesVal;
             const efectivoFisicoReal = isCierreCiegoV2 ? fisicoEfectivoUSD : efectivoFisicoDeclarado;
             const difEfectivo = efectivoFisicoReal - efectivoEsperado;
             
-            lines.push(rightAlign(totalExpensesVal > 0 ? "ESPERADO" : "SISTEMA", efectivoEsperado.toFixed(2)));
+            lines.push(rightAlign("ESPERADO", efectivoEsperado.toFixed(2)));
             lines.push(rightAlign("CONTEO FISICO", efectivoFisicoReal.toFixed(2)));
             lines.push(rightAlign("DIFERENCIA", difEfectivo.toFixed(2)));
             lines.push("");

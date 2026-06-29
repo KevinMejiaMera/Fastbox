@@ -209,10 +209,8 @@ const ReporteCaja = ({ shiftId }) => {
         
         lines.push("[EFECTIVO]");
         lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
-        if (totalExpenses > 0) {
-            lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
-            lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
-        }
+        lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+        lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
         lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
         lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
         lines.push("");
