@@ -55,11 +55,12 @@ const ReporteCaja = ({ shiftId }) => {
     const totalExpenses = parseFloat(reportData.summary?.total_expenses || reportData.total_expenses || 0);
     const expensesList = reportData.expenses || [];
 
-    // Desglose de métodos de pago (Sistema)
     let paymentStats = {
         efectivo: 0,
         transferencia: 0,
-        tarjeta: 0
+        tarjeta: 0,
+        efectivo_cop_in_usd: 0,
+        transferencia_cop_in_usd: 0
     };
     let cancelledStats = { count: 0, total: 0 };
     let employeeStats = { count: 0, total: 0 };
@@ -80,7 +81,11 @@ const ReporteCaja = ({ shiftId }) => {
         reportData.payment_methods.forEach(pm => {
             const method = String(pm.payment_method__name || pm.method || pm.name || '').toLowerCase();
             const amount = parseFloat(pm.total || pm.amount || 0);
-            if (method.includes('efectivo') || method === 'cash') {
+            if (method === 'efectivo_cop') {
+                paymentStats.efectivo_cop_in_usd += amount;
+            } else if (method === 'transferencia_cop') {
+                paymentStats.transferencia_cop_in_usd += amount;
+            } else if (method.includes('efectivo') || method === 'cash') {
                 paymentStats.efectivo += amount;
             } else if (method.includes('transferencia') || method.includes('transfer')) {
                 paymentStats.transferencia += amount;
@@ -93,7 +98,11 @@ const ReporteCaja = ({ shiftId }) => {
             if (['delivered', 'completed'].includes(order.status) || order.payment_status === 'paid') {
                 const method = String(order.payment_method_display || order.payment_method || '').toLowerCase();
                 const total = parseFloat(order.total_amount || order.total || 0);
-                if (method.includes('efectivo') || method === 'cash') {
+                if (method === 'efectivo_cop') {
+                    paymentStats.efectivo_cop_in_usd += total;
+                } else if (method === 'transferencia_cop') {
+                    paymentStats.transferencia_cop_in_usd += total;
+                } else if (method.includes('efectivo') || method === 'cash') {
                     paymentStats.efectivo += total;
                 } else if (method.includes('transferencia') || method.includes('transfer')) {
                     paymentStats.transferencia += total;
@@ -107,6 +116,9 @@ const ReporteCaja = ({ shiftId }) => {
     // EXTRAER TRANSFERENCIAS Y EFECTIVO FÍSICO DE LAS NOTAS (Caja Ciega)
     let transferenciasFisico = 0;
     let efectivoFisicoDeclarado = closingCash;
+    let transferenciasFisicoCOP = 0;
+    let efectivoFisicoDeclaradoCOP = 0;
+    
     if (shift_info.closing_notes) {
         // Formato antiguo
         if (shift_info.closing_notes.includes('Transferencias: $')) {
@@ -128,16 +140,37 @@ const ReporteCaja = ({ shiftId }) => {
             } else {
                 efectivoFisicoDeclarado = closingCash - transferenciasFisico;
             }
+            // COP
+            const matchTCop = shift_info.closing_notes.match(/FisicoTransferCOP=([\d.]+)/);
+            if (matchTCop) transferenciasFisicoCOP = parseFloat(matchTCop[1]);
+            const matchECop = shift_info.closing_notes.match(/FisicoEfectivoCOP=([\d.]+)/);
+            if (matchECop) efectivoFisicoDeclaradoCOP = parseFloat(matchECop[1]);
         }
     }
 
+    const exchangeRate = parseFloat(localStorage.getItem('usdExchangeRate')) || 4000;
+    
+    // Gastos separados
+    const expensesListUSD = expensesList.filter(e => e.description && e.description.startsWith('[USD]'));
+    const expensesListCOP = expensesList.filter(e => !e.description || !e.description.startsWith('[USD]'));
+    const totalExpensesUSD = expensesListUSD.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const totalExpensesCOP = expensesListCOP.reduce((sum, e) => sum + (parseFloat(e.amount) * exchangeRate), 0);
+
     const efectivoTotalBruto = openingCash + paymentStats.efectivo;
-    const efectivoEsperadoFinal = efectivoTotalBruto - totalExpenses; 
+    const efectivoEsperadoFinal = efectivoTotalBruto - totalExpensesUSD; 
     
     const sobranteEfectivo = efectivoFisicoDeclarado - efectivoEsperadoFinal;
     
     const transferenciasSistema = paymentStats.transferencia;
     const sobranteTransferencia = transferenciasFisico - transferenciasSistema;
+
+    // COP Totals
+    const efectivoTotalBrutoCOP = paymentStats.efectivo_cop_in_usd * exchangeRate;
+    const efectivoEsperadoFinalCOP = efectivoTotalBrutoCOP - totalExpensesCOP;
+    const sobranteEfectivoCOP = efectivoFisicoDeclaradoCOP - efectivoEsperadoFinalCOP;
+    
+    const transferenciasSistemaCOP = paymentStats.transferencia_cop_in_usd * exchangeRate;
+    const sobranteTransferenciaCOP = transferenciasFisicoCOP - transferenciasSistemaCOP;
 
     const handlePrintCaja = async () => {
         const countSales = reportData.orders_detail ? reportData.orders_detail.length : 0;
@@ -209,7 +242,7 @@ const ReporteCaja = ({ shiftId }) => {
         
         lines.push("[EFECTIVO]");
         lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
-        lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+        lines.push(rightAlign("- GASTOS", totalExpensesUSD.toFixed(2)));
         lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
         lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
         lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
@@ -338,7 +371,7 @@ const ReporteCaja = ({ shiftId }) => {
         
         lines.push("[EFECTIVO]");
         lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
-        lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+        lines.push(rightAlign("- GASTOS", totalExpensesUSD.toFixed(2)));
         lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
         lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
         lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));

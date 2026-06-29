@@ -870,6 +870,12 @@ class PrintReceiptView(APIView):
             lines.append(f"{'Descuento:':<30} -${discount:>10.2f}")
         lines.append("=" * chars_per_line)
         lines.append(f"{'TOTAL:':<30} ${total:>10.2f}")
+        
+        # Total en COP si existe
+        total_cop = order_data.get('total_cop')
+        if total_cop:
+            lines.append(f"{'TOTAL COP:':<30} ${total_cop:>10.2f}")
+            
         lines.append("=" * chars_per_line)
     
         # Info de Pago

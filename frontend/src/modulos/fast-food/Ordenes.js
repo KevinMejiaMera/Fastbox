@@ -7,7 +7,15 @@ const Ordenes = () => {
     const roleName = user?.role_details?.name;
     const isAdmin = roleName === 'SUPER_ADMIN' || roleName === 'ADMIN_FAST_FOOD' || user?.is_superuser;
 
-    const [orders, setOrders] = useState([]);
+    const exchangeRate = parseFloat(localStorage.getItem('usdExchangeRate')) || 4000;
+    const formatOrderValue = (val, method) => {
+        const isCop = method && typeof method === 'string' && method.toLowerCase().includes('cop');
+        const numericVal = parseFloat(val) || 0;
+        if (isCop) {
+            return `COP ${(numericVal * exchangeRate).toLocaleString('es-CO')}`;
+        }
+        return `$${numericVal.toFixed(2)}`;
+    };    const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -388,7 +396,7 @@ const Ordenes = () => {
                                                 </td>
                                                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                                                     <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>
-                                                        ${order.total}
+                                                        {formatOrderValue(order.total, order.payment_method)}
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
@@ -673,7 +681,7 @@ const Ordenes = () => {
                                                                 {item.product_details?.name || item.product_name || 'Producto'}
                                                             </p>
                                                             <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-                                                                Cantidad: {item.quantity} × ${item.unit_price}
+                                                                Cantidad: {item.quantity} × {formatOrderValue(item.unit_price, selectedOrder.payment_method)}
                                                                 {hasDiscount && (
                                                                     <span style={{ marginLeft: '8px', color: '#10b981', fontWeight: '500' }}>
                                                                         (Desc: {parseFloat(item.discount_percentage)}%)
@@ -689,11 +697,11 @@ const Ordenes = () => {
                                                         <div style={{ textAlign: 'right' }}>
                                                             {hasDiscount && (
                                                                 <p style={{ margin: '0 0 2px 0', fontSize: '12px', textDecoration: 'line-through', color: '#9ca3af' }}>
-                                                                    ${originalTotal.toFixed(2)}
+                                                                    {formatOrderValue(originalTotal, selectedOrder.payment_method)}
                                                                 </p>
                                                             )}
                                                             <p style={{ margin: 0, fontWeight: '600', color: hasDiscount ? '#10b981' : 'var(--primary-color)' }}>
-                                                                ${item.line_total || item.subtotal}
+                                                                {formatOrderValue(item.line_total || item.subtotal, selectedOrder.payment_method)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -712,23 +720,23 @@ const Ordenes = () => {
                             <div style={{ backgroundColor: 'var(--sidebar-bg)', padding: '16px', borderRadius: '8px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                     <span style={{ color: '#6b7280' }}>Subtotal:</span>
-                                    <span style={{ fontWeight: '500', color: '#1f2937' }}>${selectedOrder.subtotal}</span>
+                                    <span style={{ fontWeight: '500', color: '#1f2937' }}>{formatOrderValue(selectedOrder.subtotal, selectedOrder.payment_method)}</span>
                                 </div>
                                 {selectedOrder.tax_amount > 0 && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                         <span style={{ color: '#6b7280' }}>Impuestos:</span>
-                                        <span style={{ fontWeight: '500', color: '#1f2937' }}>${selectedOrder.tax_amount}</span>
+                                        <span style={{ fontWeight: '500', color: '#1f2937' }}>{formatOrderValue(selectedOrder.tax_amount, selectedOrder.payment_method)}</span>
                                     </div>
                                 )}
                                 {selectedOrder.discount_amount > 0 && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                         <span style={{ color: '#6b7280' }}>Descuento:</span>
-                                        <span style={{ fontWeight: '500', color: '#ef4444' }}>-${selectedOrder.discount_amount}</span>
+                                        <span style={{ fontWeight: '500', color: '#ef4444' }}>-{formatOrderValue(selectedOrder.discount_amount, selectedOrder.payment_method)}</span>
                                     </div>
                                 )}
                                 <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
                                     <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>Total:</span>
-                                    <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary-color)' }}>${selectedOrder.total}</span>
+                                    <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary-color)' }}>{formatOrderValue(selectedOrder.total, selectedOrder.payment_method)}</span>
                                 </div>
                             </div>
 

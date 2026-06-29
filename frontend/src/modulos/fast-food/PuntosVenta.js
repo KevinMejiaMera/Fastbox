@@ -76,6 +76,8 @@ const PuntosVenta = () => {
     // 3.5 ESTADO DE CALCULADORA DE VUELTO
     const [cashGiven, setCashGiven] = useState(null);
     const [inputCash, setInputCash] = useState('');
+    const [currency, setCurrency] = useState('USD');
+    const [exchangeRate, setExchangeRate] = useState(parseFloat(localStorage.getItem('usdExchangeRate')) || 4000);
 
     // 3. ESTADO DE CLIENTES
     const [customers, setCustomers] = useState([]);
@@ -534,10 +536,16 @@ const PuntosVenta = () => {
         if (isEmployeeDiscount) {
             orderNotes += '[VENTA_EMPLEADO]';
         }
-        if (cashGiven) {
-            const change = cashGiven - calculateTotal;
+        if (currency === 'COP') {
             if (orderNotes) orderNotes += ' | ';
-            orderNotes += `Pago con: ${formatCurrency(cashGiven)} - Cambio: ${formatCurrency(change)}`;
+            orderNotes += `[PAGADO_EN_COP] Tasa: ${exchangeRate}`;
+        }
+        if (cashGiven) {
+            const displayTotal = currency === 'COP' ? calculateTotal * exchangeRate : calculateTotal;
+            const change = cashGiven - displayTotal;
+            if (orderNotes) orderNotes += ' | ';
+            const currSymbol = currency === 'COP' ? 'COP' : '$';
+            orderNotes += `Pago con: ${currSymbol} ${cashGiven} - Cambio: ${currSymbol} ${change}`;
         }
 
         // Modificado para incluir notas en los items y porcentajes de descuento
@@ -546,7 +554,7 @@ const PuntosVenta = () => {
             table_number: tableNumber,
             notes: orderNotes, // Nueva nota general
             discount_percentage: parseFloat(orderDiscountPercentage) || 0,
-            payment_method: paymentMethod,
+            payment_method: currency === 'COP' ? `${paymentMethod}_cop` : paymentMethod,
             payment_reference: transferReference,
             items: cart.map(item => ({
                 product_id: item.product_id,
@@ -588,10 +596,14 @@ const PuntosVenta = () => {
                 discount: parseFloat(calculateDiscountAmount),
                 tax: parseFloat(calculateSubtotal * 0.12), // IVA 12%
                 total: parseFloat(calculateTotal),
-                payment_method: paymentMethod,
+                payment_method: currency === 'COP' ? `${paymentMethod}_cop` : paymentMethod,
                 payment_reference: transferReference,
                 printed_at: new Date().toISOString() // Hora del cliente para el ticket
             };
+
+            if (currency === 'COP') {
+                receiptData.total_cop = parseFloat(calculateTotal * exchangeRate);
+            }
 
             // 3. ENVIAR A IMPRIMIR (esto abre la caja automáticamente)
             try {
@@ -627,6 +639,7 @@ const PuntosVenta = () => {
             setCustomerSearch('');
             setCashGiven(null); // Resetear calculadora
             setInputCash('');
+            setCurrency('USD'); // Resetear moneda a USD
 
         } catch (err) {
             console.error('❌ Error al procesar la orden:', err);
@@ -1010,6 +1023,49 @@ const PuntosVenta = () => {
                 </table>
             </div>
 
+            {/* SECCIÓN: MONEDA DE PAGO */}
+            <div style={{
+                marginTop: '1rem',
+                padding: '1rem',
+                backgroundColor: 'var(--sidebar-bg)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)'
+            }}>
+                <h4 style={{
+                    margin: '0 0 0.5rem 0',
+                    color: 'var(--primary-color)',
+                    fontSize: screenWidth <= 1366 ? '0.9rem' : '1rem'
+                }}>
+                    Moneda de Pago
+                </h4>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <button
+                        onClick={() => { setCurrency('USD'); setCashGiven(null); setInputCash(''); }}
+                        style={{
+                            flex: 1, padding: '0.75rem', borderRadius: '8px',
+                            backgroundColor: currency === 'USD' ? '#0d47a1' : '#ffffff',
+                            color: currency === 'USD' ? '#ffffff' : '#4b5563',
+                            border: `2px solid ${currency === 'USD' ? '#0d47a1' : '#d1d5db'}`,
+                            fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                    >
+                        🇺🇸 Dólares (USD)
+                    </button>
+                    <button
+                        onClick={() => { setCurrency('COP'); setCashGiven(null); setInputCash(''); }}
+                        style={{
+                            flex: 1, padding: '0.75rem', borderRadius: '8px',
+                            backgroundColor: currency === 'COP' ? '#1b5e20' : '#ffffff',
+                            color: currency === 'COP' ? '#ffffff' : '#4b5563',
+                            border: `2px solid ${currency === 'COP' ? '#1b5e20' : '#d1d5db'}`,
+                            fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                    >
+                        🇨🇴 Pesos (COP)
+                    </button>
+                </div>
+            </div>
+
             {/* SECCIÓN: MÉTODO DE PAGO */}
             <div style={{
                 marginTop: '1rem',
@@ -1106,7 +1162,7 @@ const PuntosVenta = () => {
                     color: 'var(--primary-color)',
                     fontSize: screenWidth <= 1366 ? '0.9rem' : '1rem'
                 }}>
-                    Calculadora de Vuelto
+                    Calculadora de Vuelto {currency === 'COP' ? '(COP)' : '(USD)'}
                 </h4>
 
                 <div style={{ marginBottom: '1rem' }}>
@@ -1152,7 +1208,7 @@ const PuntosVenta = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-                    {[1, 2, 5, 10, 20, 50, 100].map(bill => (
+                    {(currency === 'COP' ? [2000, 5000, 10000, 20000, 50000, 100000] : [1, 2, 5, 10, 20, 50, 100]).map(bill => (
                         <button
                             key={bill}
                             onClick={() => {
@@ -1172,7 +1228,7 @@ const PuntosVenta = () => {
                                 minHeight: TOUCH_MIN_SIZE
                             }}
                         >
-                            + ${bill}
+                            + {currency === 'COP' ? 'COP ' : '$'}{bill}
                         </button>
                     ))}
                 </div>
@@ -1187,11 +1243,19 @@ const PuntosVenta = () => {
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                             <span style={{ color: '#6b7280' }}>Total a Pagar:</span>
-                            <span style={{ fontWeight: 'bold' }}>{formatCurrency(calculateTotal)}</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                                {currency === 'COP' 
+                                    ? `COP ${(calculateTotal * exchangeRate).toLocaleString('es-CO')}` 
+                                    : formatCurrency(calculateTotal)}
+                            </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                             <span style={{ color: '#6b7280' }}>Efectivo Recibido:</span>
-                            <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{formatCurrency(cashGiven)}</span>
+                            <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>
+                                {currency === 'COP' 
+                                    ? `COP ${cashGiven.toLocaleString('es-CO')}` 
+                                    : formatCurrency(cashGiven)}
+                            </span>
                         </div>
                         <div style={{
                             display: 'flex',
@@ -1203,11 +1267,13 @@ const PuntosVenta = () => {
                             fontWeight: '800'
                         }}>
                             <span style={{ color: 'var(--primary-color)' }}>VUELTO:</span>
-                            <span style={{ color: (cashGiven - calculateTotal) < 0 ? '#ef4444' : 'var(--primary-color)' }}>
-                                {formatCurrency(cashGiven - calculateTotal)}
+                            <span style={{ color: (cashGiven - (currency === 'COP' ? calculateTotal * exchangeRate : calculateTotal)) < 0 ? '#ef4444' : 'var(--primary-color)' }}>
+                                {currency === 'COP' 
+                                    ? `COP ${(cashGiven - (calculateTotal * exchangeRate)).toLocaleString('es-CO')}`
+                                    : formatCurrency(cashGiven - calculateTotal)}
                             </span>
                         </div>
-                        {(cashGiven - calculateTotal) < 0 && (
+                        {(cashGiven - (currency === 'COP' ? calculateTotal * exchangeRate : calculateTotal)) < 0 && (
                             <p style={{ color: '#ef4444', fontSize: '0.8rem', margin: '0.5rem 0 0 0' }}>
                                 ⚠️ Monto insuficiente
                             </p>
@@ -1225,7 +1291,7 @@ const PuntosVenta = () => {
                     color: '#6b7280'
                 }}>
                     <span>Subtotal</span>
-                    <span>{formatCurrency(calculateSubtotal)}</span>
+                    <span>{currency === 'COP' ? `COP ${(calculateSubtotal * exchangeRate).toLocaleString('es-CO')}` : formatCurrency(calculateSubtotal)}</span>
                 </div>
 
                 {appliedDiscount && (
@@ -1250,7 +1316,7 @@ const PuntosVenta = () => {
                     paddingTop: '0.75rem'
                 }}>
                     <span>Total Final</span>
-                    <span style={{ color: 'var(--primary-color)' }}>{formatCurrency(calculateTotal)}</span>
+                    <span style={{ color: 'var(--primary-color)' }}>{currency === 'COP' ? `COP ${(calculateTotal * exchangeRate).toLocaleString('es-CO')}` : formatCurrency(calculateTotal)}</span>
                 </div>
             </div>
         </div>
@@ -1890,7 +1956,7 @@ const PuntosVenta = () => {
                                         color: '#6b7280'
                                     }}>
                                         <span>Subtotal</span>
-                                        <span style={{ fontWeight: '600' }}>{formatCurrency(calculateSubtotal)}</span>
+                                        <span style={{ fontWeight: '600' }}>{currency === 'COP' ? `COP ${(calculateSubtotal * exchangeRate).toLocaleString('es-CO')}` : formatCurrency(calculateSubtotal)}</span>
                                     </div>
 
                                     {appliedDiscount && (
@@ -1917,7 +1983,7 @@ const PuntosVenta = () => {
                                         color: '#111827'
                                     }}>
                                         <span>Total</span>
-                                        <span style={{ color: 'var(--primary-color)' }}>{formatCurrency(calculateTotal)}</span>
+                                        <span style={{ color: 'var(--primary-color)' }}>{currency === 'COP' ? `COP ${(calculateTotal * exchangeRate).toLocaleString('es-CO')}` : formatCurrency(calculateTotal)}</span>
                                     </div>
                                 </div>
 
@@ -2556,7 +2622,7 @@ const PuntosVenta = () => {
                                         color: '#6b7280'
                                     }}>
                                         <span>Subtotal</span>
-                                        <span style={{ fontWeight: '600' }}>{formatCurrency(calculateSubtotal)}</span>
+                                        <span style={{ fontWeight: '600' }}>{currency === 'COP' ? `COP ${(calculateSubtotal * exchangeRate).toLocaleString('es-CO')}` : formatCurrency(calculateSubtotal)}</span>
                                     </div>
 
                                     {appliedDiscount && (
@@ -2583,7 +2649,7 @@ const PuntosVenta = () => {
                                         color: '#111827'
                                     }}>
                                         <span>Total</span>
-                                        <span style={{ color: 'var(--primary-color)' }}>{formatCurrency(calculateTotal)}</span>
+                                        <span style={{ color: 'var(--primary-color)' }}>{currency === 'COP' ? `COP ${(calculateTotal * exchangeRate).toLocaleString('es-CO')}` : formatCurrency(calculateTotal)}</span>
                                     </div>
                                 </div>
 
