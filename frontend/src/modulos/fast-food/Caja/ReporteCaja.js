@@ -104,21 +104,35 @@ const ReporteCaja = ({ shiftId }) => {
         });
     }
 
-    // EXTRAER TRANSFERENCIAS Y TARJETAS FÍSICAS DE LAS NOTAS (Caja Ciega)
+    // EXTRAER TRANSFERENCIAS Y EFECTIVO FÍSICO DE LAS NOTAS (Caja Ciega)
     let transferenciasFisico = 0;
+    let efectivoFisicoDeclarado = closingCash;
     if (shift_info.closing_notes) {
+        // Formato antiguo
         if (shift_info.closing_notes.includes('Transferencias: $')) {
             const matchT = shift_info.closing_notes.match(/Transferencias:\s*\$?([\d.]+)/);
             if (matchT) {
                 transferenciasFisico = parseFloat(matchT[1]);
             }
+            efectivoFisicoDeclarado = closingCash - transferenciasFisico;
+        }
+        // Formato nuevo
+        if (shift_info.closing_notes.includes('FisicoTransferUSD=')) {
+            const matchT = shift_info.closing_notes.match(/FisicoTransferUSD=([\d.]+)/);
+            if (matchT) {
+                transferenciasFisico = parseFloat(matchT[1]);
+            }
+            const matchE = shift_info.closing_notes.match(/FisicoEfectivoUSD=([\d.]+)/);
+            if (matchE) {
+                efectivoFisicoDeclarado = parseFloat(matchE[1]);
+            } else {
+                efectivoFisicoDeclarado = closingCash - transferenciasFisico;
+            }
         }
     }
 
     const efectivoTotalBruto = openingCash + paymentStats.efectivo;
-    const efectivoEsperadoFinal = efectivoTotalBruto - totalExpenses;
-    
-    const efectivoFisicoDeclarado = closingCash - transferenciasFisico; 
+    const efectivoEsperadoFinal = efectivoTotalBruto - totalExpenses; 
     
     const sobranteEfectivo = efectivoFisicoDeclarado - efectivoEsperadoFinal;
     
