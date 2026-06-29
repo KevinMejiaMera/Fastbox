@@ -154,6 +154,7 @@ const PuntosVenta = () => {
                 if (!isMounted) return;
 
                 const loadedProducts = productsRes.data.results || productsRes.data || [];
+                loadedProducts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 setProducts(loadedProducts);
 
             } catch (err) {
@@ -168,6 +169,7 @@ const PuntosVenta = () => {
                 if (!isMounted) return;
 
                 const loadedCategories = categoriesRes.data.results || categoriesRes.data || [];
+                loadedCategories.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 setCategories(loadedCategories);
 
             } catch (err) {
