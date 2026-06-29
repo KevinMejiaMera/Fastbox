@@ -302,8 +302,8 @@ const PanelCaja = () => {
                     }
                 }
             }
-
-            const ticketContent = lines.join("\n");
+            const left_margin = "      "; // 6 espacios
+            const ticketContent = lines.map(l => left_margin + l).join("\n");
 
             await printerService.printCustomTicket(ticketContent, 'report');
             alert('✅ Comprobante de cierre de caja enviado a la impresora automáticamente.');

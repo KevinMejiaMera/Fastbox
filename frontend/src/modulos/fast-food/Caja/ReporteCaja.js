@@ -256,8 +256,8 @@ const ReporteCaja = ({ shiftId }) => {
             }
             lines.push("-".repeat(chars_per_line));
         }
-
-        const ticketContent = lines.join("\n");
+        const left_margin = "      "; // 6 espacios
+        const ticketContent = lines.map(l => left_margin + l).join("\n");
 
         try {
             await printerService.printCustomTicket(ticketContent, 'report');
