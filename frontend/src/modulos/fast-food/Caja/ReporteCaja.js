@@ -264,6 +264,7 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(rightAlign("DIFERENCIA", totalDiferencia.toFixed(2)));
         lines.push("");
 
+        let horizCOP_ticket = [];
         if (shift_info.closing_notes) {
             let notesText = shift_info.closing_notes;
             if (notesText.includes('[CIERRE_CIEGO_V2]')) {
@@ -277,11 +278,20 @@ const ReporteCaja = ({ shiftId }) => {
             if (notesText) {
                 const detLines = notesText.split('\n');
                 let horiz = [];
+                let inCOPSection = false;
                 detLines.forEach(l => {
+                    if (l.includes('PESOS (COP):') || l.includes('Caja COP:')) {
+                        inCOPSection = true;
+                        return;
+                    }
                     const match = l.match(/([^:]+):\s*(\d+)/);
                     if (match && !l.includes('USD') && !l.includes('COP') && !l.includes('Fisico')) {
                         let name = match[1].trim().replace('Billetes de ', 'B.');
-                        horiz.push(`${name}=${match[2]}`);
+                        if (inCOPSection) {
+                            horizCOP_ticket.push(`${name}=${match[2]}`);
+                        } else {
+                            horiz.push(`${name}=${match[2]}`);
+                        }
                     }
                 });
 
@@ -298,8 +308,50 @@ const ReporteCaja = ({ shiftId }) => {
                     if (outLine) lines.push(outLine.trim());
                 }
             }
+        }
+        
+        lines.push("");
+        lines.push(center("CAJA (COP)"));
+        lines.push("-".repeat(chars_per_line));
+        
+        if (horizCOP_ticket.length > 0) {
+            lines.push("DETALLE DE MONEDAS:");
+            let outLine = "";
+            horizCOP_ticket.forEach(item => {
+                if ((outLine + item).length > chars_per_line) {
+                    lines.push(outLine.trim());
+                    outLine = "";
+                }
+                outLine += item + "  ";
+            });
+            if (outLine) lines.push(outLine.trim());
             lines.push("-".repeat(chars_per_line));
         }
+
+        lines.push("[EFECTIVO]");
+        lines.push(rightAlign("SISTEMA", efectivoTotalBrutoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("- GASTOS", totalExpensesCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("ESPERADO", efectivoEsperadoFinalCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclaradoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("DIFERENCIA", sobranteEfectivoCOP.toLocaleString('es-CO')));
+        lines.push("");
+
+        lines.push("[TRANSFERENCIA]");
+        lines.push(rightAlign("SISTEMA", transferenciasSistemaCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("CONTEO FISICO", transferenciasFisicoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("DIFERENCIA", sobranteTransferenciaCOP.toLocaleString('es-CO')));
+        lines.push("");
+
+        const totalSistemaCOP = efectivoEsperadoFinalCOP + transferenciasSistemaCOP;
+        const totalConteoCOP = efectivoFisicoDeclaradoCOP + transferenciasFisicoCOP;
+        const totalDiferenciaCOP = sobranteEfectivoCOP + sobranteTransferenciaCOP;
+
+        lines.push("RESUMEN:");
+        lines.push(rightAlign("SISTEMA", totalSistemaCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("CONTEO FISICO", totalConteoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("DIFERENCIA", totalDiferenciaCOP.toLocaleString('es-CO')));
+        lines.push("");
+        lines.push("-".repeat(chars_per_line));
         
         const ticketContent = lines.join("\n");
 
@@ -393,6 +445,7 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push(rightAlign("DIFERENCIA", totalDiferencia.toFixed(2)));
         lines.push("");
 
+        let horizCOP_pdf = [];
         if (shift_info.closing_notes) {
             let notesText = shift_info.closing_notes;
             if (notesText.includes('[CIERRE_CIEGO_V2]')) {
@@ -406,11 +459,20 @@ const ReporteCaja = ({ shiftId }) => {
             if (notesText) {
                 const detLines = notesText.split('\n');
                 let horiz = [];
+                let inCOPSection = false;
                 detLines.forEach(l => {
+                    if (l.includes('PESOS (COP):') || l.includes('Caja COP:')) {
+                        inCOPSection = true;
+                        return;
+                    }
                     const match = l.match(/([^:]+):\s*(\d+)/);
                     if (match && !l.includes('USD') && !l.includes('COP') && !l.includes('Fisico')) {
                         let name = match[1].trim().replace('Billetes de ', 'B.');
-                        horiz.push(`${name}=${match[2]}`);
+                        if (inCOPSection) {
+                            horizCOP_pdf.push(`${name}=${match[2]}`);
+                        } else {
+                            horiz.push(`${name}=${match[2]}`);
+                        }
                     }
                 });
 
@@ -427,8 +489,50 @@ const ReporteCaja = ({ shiftId }) => {
                     if (outLine) lines.push(outLine.trim());
                 }
             }
+        }
+        
+        lines.push("");
+        lines.push(center("CAJA (COP)"));
+        lines.push("-".repeat(chars_per_line));
+        
+        if (horizCOP_pdf.length > 0) {
+            lines.push("DETALLE DE MONEDAS:");
+            let outLine = "";
+            horizCOP_pdf.forEach(item => {
+                if ((outLine + item).length > chars_per_line) {
+                    lines.push(outLine.trim());
+                    outLine = "";
+                }
+                outLine += item + "  ";
+            });
+            if (outLine) lines.push(outLine.trim());
             lines.push("-".repeat(chars_per_line));
         }
+
+        lines.push("[EFECTIVO]");
+        lines.push(rightAlign("SISTEMA", efectivoTotalBrutoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("- GASTOS", totalExpensesCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("ESPERADO", efectivoEsperadoFinalCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclaradoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("DIFERENCIA", sobranteEfectivoCOP.toLocaleString('es-CO')));
+        lines.push("");
+
+        lines.push("[TRANSFERENCIA]");
+        lines.push(rightAlign("SISTEMA", transferenciasSistemaCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("CONTEO FISICO", transferenciasFisicoCOP.toLocaleString('es-CO')));
+        lines.push(rightAlign("DIFERENCIA", sobranteTransferenciaCOP.toLocaleString('es-CO')));
+        lines.push("");
+
+        const totalSistemaCOP2 = efectivoEsperadoFinalCOP + transferenciasSistemaCOP;
+        const totalConteoCOP2 = efectivoFisicoDeclaradoCOP + transferenciasFisicoCOP;
+        const totalDiferenciaCOP2 = sobranteEfectivoCOP + sobranteTransferenciaCOP;
+
+        lines.push("RESUMEN:");
+        lines.push(rightAlign("SISTEMA", totalSistemaCOP2.toLocaleString('es-CO')));
+        lines.push(rightAlign("CONTEO FISICO", totalConteoCOP2.toLocaleString('es-CO')));
+        lines.push(rightAlign("DIFERENCIA", totalDiferenciaCOP2.toLocaleString('es-CO')));
+        lines.push("");
+        lines.push("-".repeat(chars_per_line));
 
         const lineSpacing = 3.5;
         const docHeight = Math.max(60, (lines.length * lineSpacing) + 15);
