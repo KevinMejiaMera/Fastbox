@@ -337,10 +337,72 @@ const ReporteCaja = ({ shiftId }) => {
         
         lines.push("[EFECTIVO]");
         lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
-        if (totalExpenses > 0) {
-            lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
-            lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
+        lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+        lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
+        lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
+        lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
+        lines.push("");
+
+        lines.push("[TRANSFERENCIA]");
+        lines.push(rightAlign("SISTEMA", transferenciasSistema.toFixed(2)));
+        lines.push(rightAlign("CONTEO FISICO", transferenciasFisico.toFixed(2)));
+        lines.push(rightAlign("DIFERENCIA", sobranteTransferencia.toFixed(2)));
+        lines.push("");
+
+        const totalSistema = efectivoEsperadoFinal + transferenciasSistema;
+        const totalConteo = efectivoFisicoDeclarado + transferenciasFisico;
+        const totalDiferencia = sobranteEfectivo + sobranteTransferencia;
+            let labelPad = label.length > 16 ? label.substring(0, 16) : label.padEnd(16, ' ');
+            let countPad = countStr.length > 6 ? countStr.substring(0, 6) : countStr.padEnd(6, ' ');
+            let amountPad = amountStr.padStart(10, ' ');
+            return labelPad + countPad + amountPad;
+        };
+
+        const current_time = new Date();
+        const pad0 = (n) => n.toString().padStart(2, '0');
+        const dateStr = `${current_time.getFullYear()}-${pad0(current_time.getMonth()+1)}-${pad0(current_time.getDate())} ${pad0(current_time.getHours())}:${pad0(current_time.getMinutes())}:${pad0(current_time.getSeconds())}`;
+        
+        lines.push(center("CIERRE DE CAJA"));
+        lines.push(center(`#${shift_info.number}`));
+        lines.push(center(dateStr));
+        lines.push(center(`USUARIO: ${shift_info.user || shift_info.manager_name}`));
+        lines.push("");
+
+        if (expensesList.length > 0) {
+            lines.push(center("GASTOS DE CAJA"));
+            expensesList.forEach(exp => {
+                const desc = "- " + exp.description;
+                const val = `-${parseFloat(exp.amount).toFixed(2)}`;
+                const maxDescLen = chars_per_line - val.length - 1;
+                const truncatedDesc = desc.length > maxDescLen ? desc.substring(0, maxDescLen) : desc;
+                lines.push(rightAlign(truncatedDesc, val));
+            });
+            lines.push("-".repeat(chars_per_line));
         }
+
+        lines.push(center("RESUMEN DEL CIERRE"));
+        lines.push("-".repeat(chars_per_line));
+        
+        lines.push(formatRow3("TOTAL VENTAS", countSales, totalSales));
+        lines.push(formatRow3("VENTAS ANULADAS", cancelledStats.count, cancelledStats.total));
+        lines.push("-".repeat(chars_per_line));
+        
+        lines.push(rightAlign("EFECTIVO", paymentStats.efectivo.toFixed(2)));
+        lines.push(rightAlign("TRANSFERENCIA", paymentStats.transferencia.toFixed(2)));
+        lines.push("-".repeat(chars_per_line));
+        
+        lines.push(formatRow3("TOTAL GASTOS", expensesList.length, `-${totalExpenses.toFixed(2)}`));
+        lines.push(formatRow3("TOTAL INGRESOS", 0, "0.00"));
+        lines.push(formatRow3("OTROS/EXTRAS", 0, "0.00"));
+        lines.push("");
+
+        lines.push(center("CAJA"));
+        lines.push("-".repeat(chars_per_line));
+        
+        lines.push("[EFECTIVO]");
+        lines.push(rightAlign("SISTEMA", efectivoTotalBruto.toFixed(2)));
+        lines.push(rightAlign("- GASTOS", totalExpenses.toFixed(2)));
+        lines.push(rightAlign("ESPERADO", efectivoEsperadoFinal.toFixed(2)));
         lines.push(rightAlign("CONTEO FISICO", efectivoFisicoDeclarado.toFixed(2)));
         lines.push(rightAlign("DIFERENCIA", sobranteEfectivo.toFixed(2)));
         lines.push("");
@@ -362,22 +424,17 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push("");
 
         if (shift_info.closing_notes) {
-            lines.push("NOTAS DE CIERRE:");
-            const shortNotes = shift_info.closing_notes.split('---')[0].trim();
-            if (shortNotes) {
-                const noteLines = shortNotes.split('\n');
-                noteLines.forEach(l => {
-                    if (!l.includes('COP') && !l.includes('[CIERRE_CIEGO_V2]')) {
-                        lines.push(l);
-                    }
-                });
+            let notesText = shift_info.closing_notes;
+            if (notesText.includes('[CIERRE_CIEGO_V2]')) {
+                const parts = notesText.split('---\n');
+                notesText = parts.length > 1 ? parts[1] : '';
+            } else if (notesText.includes('Cierre Ciego. Desglose:\n')) {
+                notesText = notesText.replace('Cierre Ciego. Desglose:\n', '');
             }
             
-            const parts = shift_info.closing_notes.split('---');
-            if (parts.length > 1) {
-                const cierreCiegoDetalle = parts[1];
-                lines.push("-".repeat(chars_per_line));
-                const detLines = cierreCiegoDetalle.split('\n');
+            notesText = notesText.trim();
+            if (notesText) {
+                const detLines = notesText.split('\n');
                 let horiz = [];
                 detLines.forEach(l => {
                     const match = l.match(/([^:]+):\s*(\d+)/);
@@ -386,6 +443,7 @@ const ReporteCaja = ({ shiftId }) => {
                         horiz.push(`${name}=${match[2]}`);
                     }
                 });
+
                 if (horiz.length > 0) {
                     lines.push("DETALLE DE MONEDAS:");
                     let outLine = "";
@@ -399,6 +457,7 @@ const ReporteCaja = ({ shiftId }) => {
                     if (outLine) lines.push(outLine.trim());
                 }
             }
+            lines.push("-".repeat(chars_per_line));
         }
 
         const lineSpacing = 3.5;
