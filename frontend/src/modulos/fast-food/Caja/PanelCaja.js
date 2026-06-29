@@ -163,7 +163,7 @@ const PanelCaja = () => {
             const countSales = reportData.orders_detail ? reportData.orders_detail.length : 0;
             const totalSales = parseFloat(reportData.total_sales || 0);
 
-            const chars_per_line = 54;
+            const chars_per_line = 48;
             let lines = [];
             const center = (text) => ' '.repeat(Math.max(0, Math.floor((chars_per_line - text.length) / 2))) + text;
             const rightAlign = (label, value) => {
@@ -175,8 +175,8 @@ const PanelCaja = () => {
                 const countStr = `: ${count}`;
                 const amountStr = `(${parseFloat(amount).toFixed(2)})`;
                 const labelPad = label.padEnd(22, ' ');
-                const countPad = countStr.padEnd(12, ' ');
-                const amountPad = amountStr.padStart(20, ' ');
+                const countPad = countStr.padEnd(6, ' ');
+                const amountPad = amountStr.padStart(16, ' ');
                 return labelPad + countPad + amountPad;
             };
 
@@ -265,19 +265,7 @@ const PanelCaja = () => {
             lines.push("");
 
             if (shift_info.closing_notes) {
-                lines.push("NOTAS DE CIERRE:");
-                const shortNotes = shift_info.closing_notes.split('---')[0].trim();
-                if (shortNotes) {
-                    const noteLines = shortNotes.split('\n');
-                    noteLines.forEach(l => {
-                        if (!l.includes('COP') && !l.includes('[CIERRE_CIEGO_V2]')) {
-                            lines.push(l);
-                        }
-                    });
-                }
-                
                 if (cierreCiegoDetalle) {
-                    lines.push("-".repeat(chars_per_line));
                     // Formatear monedas horizontalmente
                     const detLines = cierreCiegoDetalle.split('\n');
                     let horiz = [];
@@ -302,8 +290,8 @@ const PanelCaja = () => {
                     }
                 }
             }
-            const left_margin = "      "; // 6 espacios
-            const ticketContent = lines.map(l => left_margin + l).join("\n");
+            lines.push("-".repeat(chars_per_line));
+            const ticketContent = lines.join("\n");
 
             await printerService.printCustomTicket(ticketContent, 'report');
             alert('✅ Comprobante de cierre de caja enviado a la impresora automáticamente.');

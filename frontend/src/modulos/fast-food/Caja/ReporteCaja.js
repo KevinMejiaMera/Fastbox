@@ -143,7 +143,7 @@ const ReporteCaja = ({ shiftId }) => {
         const countSales = reportData.orders_detail ? reportData.orders_detail.length : 0;
         const totalSales = parseFloat(reportData.total_sales || 0);
 
-        const chars_per_line = 32;
+        const chars_per_line = 48;
         let lines = [];
         
         const center = (text) => {
@@ -234,30 +234,43 @@ const ReporteCaja = ({ shiftId }) => {
         lines.push("");
 
         if (shift_info.closing_notes) {
-            if (shift_info.closing_notes.includes('Cierre Ciego')) {
-                lines.push(center("Conteo de monedas y billetes:"));
-                let notesText = shift_info.closing_notes.replace('Cierre Ciego. Desglose:\n', '');
-                const notesLines = notesText.split('\n');
-                notesLines.forEach(nLine => {
-                    if (nLine.length === 0) lines.push('');
-                    for(let i=0; i<nLine.length; i+=chars_per_line) {
-                        lines.push(nLine.substring(i, i+chars_per_line));
+            let notesText = shift_info.closing_notes;
+            if (notesText.includes('[CIERRE_CIEGO_V2]')) {
+                const parts = notesText.split('---\n');
+                notesText = parts.length > 1 ? parts[1] : '';
+            } else if (notesText.includes('Cierre Ciego. Desglose:\n')) {
+                notesText = notesText.replace('Cierre Ciego. Desglose:\n', '');
+            }
+            
+            notesText = notesText.trim();
+            if (notesText) {
+                const detLines = notesText.split('\n');
+                let horiz = [];
+                detLines.forEach(l => {
+                    const match = l.match(/([^:]+):\s*(\d+)/);
+                    if (match && !l.includes('USD') && !l.includes('COP') && !l.includes('Fisico')) {
+                        let name = match[1].trim().replace('Billetes de ', 'B.');
+                        horiz.push(`${name}=${match[2]}`);
                     }
                 });
-            } else {
-                lines.push("NOTAS DE CIERRE:");
-                const notesLines = shift_info.closing_notes.split('\n');
-                notesLines.forEach(nLine => {
-                    if (nLine.length === 0) lines.push('');
-                    for(let i=0; i<nLine.length; i+=chars_per_line) {
-                        lines.push(nLine.substring(i, i+chars_per_line));
-                    }
-                });
+
+                if (horiz.length > 0) {
+                    lines.push("DETALLE DE MONEDAS:");
+                    let outLine = "";
+                    horiz.forEach(item => {
+                        if ((outLine + item).length > chars_per_line) {
+                            lines.push(outLine.trim());
+                            outLine = "";
+                        }
+                        outLine += item + "  ";
+                    });
+                    if (outLine) lines.push(outLine.trim());
+                }
             }
             lines.push("-".repeat(chars_per_line));
         }
-        const left_margin = "      "; // 6 espacios
-        const ticketContent = lines.map(l => left_margin + l).join("\n");
+        
+        const ticketContent = lines.join("\n");
 
         try {
             await printerService.printCustomTicket(ticketContent, 'report');
