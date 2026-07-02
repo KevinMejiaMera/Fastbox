@@ -174,7 +174,7 @@ class ShiftCloseSerializer(serializers.Serializer):
     """Serializer para cerrar turno"""
     
     closing_cash = serializers.DecimalField(
-        max_digits=10,
+        max_digits=14,
         decimal_places=2,
         min_value=0,
         required=True,

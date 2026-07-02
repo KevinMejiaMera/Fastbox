@@ -95,7 +95,7 @@ class Shift(models.Model):
     )
     
     closing_cash = models.DecimalField(
-        max_digits=10,
+        max_digits=14,
         decimal_places=2,
         null=True,
         blank=True,
