@@ -100,7 +100,16 @@ class Shift(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(0)],
-        verbose_name='Efectivo Final'
+        verbose_name='Efectivo Final (USD)'
+    )
+
+    closing_cash_cop = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Efectivo Final (COP)'
     )
     
     # ============ TOTALES (calculados al cerrar) ============
@@ -196,7 +205,7 @@ class Shift(models.Model):
         random_suffix = str(uuid.uuid4().hex[:3]).upper()
         return f'SHF-{timestamp}-{random_suffix}'
     
-    def close_shift(self, closing_cash, closing_notes=''):
+    def close_shift(self, closing_cash, closing_cash_cop=None, closing_notes=''):
         """Cierra el turno y calcula totales"""
         if self.status == 'closed':
             return False, 'El turno ya está cerrado'
@@ -264,6 +273,7 @@ class Shift(models.Model):
         # Calcular diferencia de caja
         expected_cash = self.opening_cash + self.total_cash_sales
         self.closing_cash = closing_cash
+        self.closing_cash_cop = closing_cash_cop
         self.cash_difference = self.closing_cash - expected_cash
         self.closing_notes = closing_notes
         

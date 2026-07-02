@@ -178,7 +178,15 @@ class ShiftCloseSerializer(serializers.Serializer):
         decimal_places=2,
         min_value=0,
         required=True,
-        help_text='Efectivo contado al cerrar caja'
+        help_text='Efectivo contado al cerrar caja (USD)'
+    )
+    closing_cash_cop = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        min_value=0,
+        required=False,
+        allow_null=True,
+        help_text='Efectivo contado al cerrar caja (COP)'
     )
     closing_notes = serializers.CharField(
         required=False,

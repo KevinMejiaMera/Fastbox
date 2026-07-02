@@ -628,6 +628,12 @@ const ReporteCaja = ({ shiftId }) => {
                     <span>Efec. Físico (Cajero):</span> 
                     <span>${efectivoFisicoDeclarado.toFixed(2)}</span>
                 </div>
+                {shift_info.closing_cash_cop != null && (
+                    <div style={{ ...styles.textRow }}>
+                        <span>Efec. Físico COP:</span> 
+                        <span style={{ color: '#0d47a1' }}>${parseFloat(shift_info.closing_cash_cop).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    </div>
+                )}
                 <div style={{ ...styles.textTotal, border: 'none', color: sobranteEfectivo >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontSize: '1.1rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                     <span>SOBRANTE / FALTANTE EFEC.:</span> 
                     <span>{sobranteEfectivo >= 0 ? '+' : ''}${sobranteEfectivo.toFixed(2)}</span>

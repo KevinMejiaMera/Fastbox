@@ -344,7 +344,7 @@ const PanelCaja = () => {
 
         try {
             await api.post(`/api/pos/shifts/${currentShift.id}/close/`, {
-                closing_cash: parseFloat(closingCash) || 0,
+                closing_cash: Math.round(parseFloat(closingCash) * 100) / 100 || 0,
                 closing_notes: notes || 'Cierre de Caja'
             }, { baseURL: getFastFoodBaseURL() });
 
@@ -402,8 +402,8 @@ const PanelCaja = () => {
         const totalCOP = totalCoinsBillsCOP + totalTransferCOP;
 
         const exchangeRate = parseFloat(localStorage.getItem('usdExchangeRate')) || 4000;
-        const finalTotalCOP = totalCOP + (totalUSD * exchangeRate);
-        const finalTotalUSD = totalUSD + (totalCOP / exchangeRate);
+        const totalEnCOP = totalCOP + (totalUSD * exchangeRate);
+        const finalTotalUSD = Math.round(totalUSD * 100) / 100;
 
         let det = "";
         
@@ -451,7 +451,8 @@ const PanelCaja = () => {
 
         try {
             await api.post(`/api/pos/shifts/${currentShift.id}/close/`, {
-                closing_cash: finalTotalUSD,
+                closing_cash: finalTotalUSD || 0,
+                closing_cash_cop: totalCOP || 0,
                 closing_notes: notesStr
             }, { baseURL: getFastFoodBaseURL() });
 
@@ -884,6 +885,9 @@ const PanelCaja = () => {
                                                             <div style={{ color: '#212529' }}>{new Date(shift.closed_at).toLocaleDateString()}</div>
                                                             <div style={{ fontSize: '0.85rem', color: '#6c757d' }}>{new Date(shift.closed_at).toLocaleTimeString()}</div>
                                                             <div style={{ color: 'var(--primary-color)', fontWeight: '600', marginTop: '0.25rem' }}>${parseFloat(shift.closing_cash || 0).toFixed(2)}</div>
+                                                            {shift.closing_cash_cop != null && (
+                                                                <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.15rem' }}>COP ${parseFloat(shift.closing_cash_cop).toLocaleString()}</div>
+                                                            )}
                                                         </>
                                                     ) : <span style={{ color: '#adb5bd', fontStyle: 'italic' }}>En curso</span>}
                                                 </td>

@@ -101,6 +101,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
         
         success, message = shift.close_shift(
             closing_cash=serializer.validated_data['closing_cash'],
+            closing_cash_cop=serializer.validated_data.get('closing_cash_cop'),
             closing_notes=serializer.validated_data.get('closing_notes', '')
         )
         
