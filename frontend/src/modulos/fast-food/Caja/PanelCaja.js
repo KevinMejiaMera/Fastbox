@@ -359,7 +359,8 @@ const PanelCaja = () => {
             alert('Caja cerrada correctamente. Puedes ver el detalle a continuación.');
         } catch (err) {
             console.error('Error closing shift:', err);
-            setError('Error al cerrar la caja.');
+            const serverMsg = err.response?.data?.error || err.response?.data ? JSON.stringify(err.response.data) : err.message;
+            setError('Error al cerrar caja: ' + serverMsg);
         }
     };
 
@@ -472,7 +473,8 @@ const PanelCaja = () => {
             alert('Caja cerrada correctamente. Puedes ver el detalle a continuación.');
         } catch (err) {
             console.error('Error closing blind shift:', err);
-            setError('Error al cerrar la caja.');
+            const serverMsg = err.response?.data?.error || err.response?.data ? JSON.stringify(err.response.data) : err.message;
+            setError('Error al cerrar caja: ' + serverMsg);
         }
     };
 
